@@ -1,0 +1,3 @@
+[submodule "CaffeConTroll"]
+	path = CaffeConTroll
+	url = https://github.com/HazyResearch/CaffeConTroll.git
