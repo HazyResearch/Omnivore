@@ -1,0 +1,2391 @@
+StarCluster - (http://star.mit.edu/cluster) (v. 0.95.6)
+Software Tools for Academics and Researchers (STAR)
+Please submit bug reports to starcluster@mit.edu
+
+I1105 01:36:20.670243  2821 main.cpp:62] Initializing ConvComputeServer from configs/ConvComputeServer18.cfg
+I1105 01:36:20.670326  2821 main.cpp:69] NAME    = Example ConvComputeServer on 5564
+I1105 01:36:20.670332  2821 main.cpp:70] CONVBIND= tcp://master:5572
+I1105 01:36:20.670336  2821 main.cpp:71] FCBIND  = tcp://node002:6572
+I1105 01:36:20.670337  2821 main.cpp:72] NMODEL  = 5
+I1105 01:36:20.670346  2821 main.cpp:86] conv1 11 3 96
+I1105 01:36:20.670353  2821 main.cpp:86] conv2 5 96 256
+I1105 01:36:20.670358  2821 main.cpp:86] conv3 3 256 384
+I1105 01:36:20.670362  2821 main.cpp:86] conv4 3 384 384
+I1105 01:36:20.670367  2821 main.cpp:86] conv5 3 384 256
+I1105 01:36:20.670369  2821 main.cpp:90] NELEMS = 3745824 FLOATS
+I1105 01:36:20.670379  2821 ConvComputeServer.h:43] Starting ConvComputeServer[Example ConvComputeServer on 5564]...
+I1105 01:36:20.671725  2821 ConvComputeServer.h:58] Allocating 14.2892 MB for model
+I1105 01:36:20.671875  2821 ConvComputeServer.h:77] Allocating 42.25 MB for output data
+I1105 01:36:20.671892  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:20.671900  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:20.671902  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:20.707254  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:20.707273  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:20.707278  2821 ConvComputeServer.h:105] WAIT 0.0353851 seconds to get the model...
+I1105 01:36:20.707285  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:20.707290  2821 ConvComputeServer.h:110] NEW GRADIENT 75.3077
+I1105 01:36:20.707295  2821 ConvComputeServer.h:112] 75.3077    3745824     -1024
+~100
+I1105 01:36:21.023901  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:21.023921  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:21.023923  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:21.047483  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235453 seconds...
+I1105 01:36:21.047526  2821 ConvComputeServer.h:131]      1794.41 MB/s
+I1105 01:36:21.047531  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:21.047534  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:21.299942  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:21.299999  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:21.300004  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:21.904603  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:21.904618  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:21.904621  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:21.911865  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00723487 seconds...
+I1105 01:36:21.911885  2821 ConvComputeServer.h:159]      1975.04 MB/s
+I1105 01:36:21.951944  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:21.951956  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:21.951959  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:21.951962  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:21.951966  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:21.980731  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:21.980756  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:21.980759  2821 ConvComputeServer.h:105] WAIT 0.0287997 seconds to get the model...
+I1105 01:36:21.980770  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:21.980773  2821 ConvComputeServer.h:110] NEW GRADIENT 75.4877
+I1105 01:36:21.980778  2821 ConvComputeServer.h:112] 75.4877    3745824     -1024
+~100
+I1105 01:36:22.285859  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:22.285881  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:22.285884  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:22.309463  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235609 seconds...
+I1105 01:36:22.309510  2821 ConvComputeServer.h:131]      1793.22 MB/s
+I1105 01:36:22.309516  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:22.309520  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:22.526101  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:22.526160  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:22.526163  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:23.127728  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:23.127744  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:23.127748  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:23.130964  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00321049 seconds...
+I1105 01:36:23.130983  2821 ConvComputeServer.h:159]      4450.78 MB/s
+I1105 01:36:23.165050  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:23.165061  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:23.165066  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:23.165067  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:23.165071  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:23.192844  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:23.192867  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:23.192872  2821 ConvComputeServer.h:105] WAIT 0.0278063 seconds to get the model...
+I1105 01:36:23.192881  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:23.192884  2821 ConvComputeServer.h:110] NEW GRADIENT 75.6578
+I1105 01:36:23.192888  2821 ConvComputeServer.h:112] 75.6578    3745824     -1024
+~100
+I1105 01:36:23.498050  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:23.498071  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:23.498075  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:23.521559  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234684 seconds...
+I1105 01:36:23.521603  2821 ConvComputeServer.h:131]      1800.29 MB/s
+I1105 01:36:23.521608  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:23.521611  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:23.784389  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:23.784447  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:23.784451  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:24.386157  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:24.386204  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:24.386207  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:24.389395  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.0031812 seconds...
+I1105 01:36:24.389425  2821 ConvComputeServer.h:159]      4491.76 MB/s
+I1105 01:36:24.421643  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:24.421658  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:24.421663  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:24.421664  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:24.421668  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:24.449743  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:24.449761  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:24.449765  2821 ConvComputeServer.h:105] WAIT 0.0281036 seconds to get the model...
+I1105 01:36:24.449780  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:24.449784  2821 ConvComputeServer.h:110] NEW GRADIENT 75.8378
+I1105 01:36:24.449789  2821 ConvComputeServer.h:112] 75.8378    3745824     -1024
+~100
+I1105 01:36:24.754802  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:24.754823  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:24.754827  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:24.778293  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234485 seconds...
+I1105 01:36:24.778340  2821 ConvComputeServer.h:131]      1801.82 MB/s
+I1105 01:36:24.778347  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:24.778349  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:25.004984  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:25.005044  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:25.005048  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:25.606817  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:25.606863  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:25.606866  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:25.610000  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00312822 seconds...
+I1105 01:36:25.610028  2821 ConvComputeServer.h:159]      4567.84 MB/s
+I1105 01:36:25.644047  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:25.644058  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:25.644062  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:25.644064  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:25.644068  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:25.671742  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:25.671763  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:25.671767  2821 ConvComputeServer.h:105] WAIT 0.0277054 seconds to get the model...
+I1105 01:36:25.671777  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:25.671780  2821 ConvComputeServer.h:110] NEW GRADIENT 76.0178
+I1105 01:36:25.671784  2821 ConvComputeServer.h:112] 76.0178    3745824     -1024
+~100
+I1105 01:36:25.976847  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:25.976868  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:25.976871  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:26.000398  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235093 seconds...
+I1105 01:36:26.000447  2821 ConvComputeServer.h:131]      1797.16 MB/s
+I1105 01:36:26.000453  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:26.000457  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:26.229969  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:26.230029  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:26.230033  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:26.831603  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:26.831619  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:26.831621  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:26.834807  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00317862 seconds...
+I1105 01:36:26.834826  2821 ConvComputeServer.h:159]      4495.4 MB/s
+I1105 01:36:26.874817  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:26.874828  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:26.874832  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:26.874835  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:26.874838  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:26.903003  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:26.903026  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:26.903030  2821 ConvComputeServer.h:105] WAIT 0.028198 seconds to get the model...
+I1105 01:36:26.903041  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:26.903044  2821 ConvComputeServer.h:110] NEW GRADIENT 76.1979
+I1105 01:36:26.903048  2821 ConvComputeServer.h:112] 76.1979    3745824     -1024
+~100
+I1105 01:36:27.208142  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:27.208163  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:27.208165  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:27.231669  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234868 seconds...
+I1105 01:36:27.231715  2821 ConvComputeServer.h:131]      1798.88 MB/s
+I1105 01:36:27.231721  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:27.231724  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:27.448429  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:27.448487  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:27.448490  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:28.050040  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:28.050055  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:28.050058  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:28.053241  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00317667 seconds...
+I1105 01:36:28.053258  2821 ConvComputeServer.h:159]      4498.17 MB/s
+I1105 01:36:28.082574  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:28.082587  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:28.082590  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:28.082593  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:28.082595  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:28.109935  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:28.109958  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:28.109962  2821 ConvComputeServer.h:105] WAIT 0.0273723 seconds to get the model...
+I1105 01:36:28.109972  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:28.109977  2821 ConvComputeServer.h:110] NEW GRADIENT 76.3779
+I1105 01:36:28.109980  2821 ConvComputeServer.h:112] 76.3779    3745824     -1024
+~100
+I1105 01:36:28.415074  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:28.415096  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:28.415098  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:28.438592  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234769 seconds...
+I1105 01:36:28.438648  2821 ConvComputeServer.h:131]      1799.64 MB/s
+I1105 01:36:28.438654  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:28.438657  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:28.663915  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:28.663972  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:28.663975  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:29.265632  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:29.265672  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:29.265676  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:29.269765  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408336 seconds...
+I1105 01:36:29.269794  2821 ConvComputeServer.h:159]      3499.37 MB/s
+I1105 01:36:29.300006  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:29.300019  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:29.300022  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:29.300025  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:29.300029  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:29.327450  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:29.327471  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:29.327476  2821 ConvComputeServer.h:105] WAIT 0.027453 seconds to get the model...
+I1105 01:36:29.327486  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:29.327488  2821 ConvComputeServer.h:110] NEW GRADIENT 76.5579
+I1105 01:36:29.327492  2821 ConvComputeServer.h:112] 76.5579    3745824     -1024
+~100
+I1105 01:36:29.632578  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:29.632598  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:29.632601  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:29.656100  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234835 seconds...
+I1105 01:36:29.656147  2821 ConvComputeServer.h:131]      1799.14 MB/s
+I1105 01:36:29.656152  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:29.656155  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:29.959266  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:29.959323  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:29.959327  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:30.561005  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:30.561043  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:30.561046  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:30.565136  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408231 seconds...
+I1105 01:36:30.565165  2821 ConvComputeServer.h:159]      3500.27 MB/s
+I1105 01:36:30.597764  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:30.597775  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:30.597779  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:30.597782  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:30.597784  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:30.626387  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:30.626407  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:30.626411  2821 ConvComputeServer.h:105] WAIT 0.0286321 seconds to get the model...
+I1105 01:36:30.626421  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:30.626425  2821 ConvComputeServer.h:110] NEW GRADIENT 76.738
+I1105 01:36:30.626428  2821 ConvComputeServer.h:112] 76.738    3745824     -1024
+~100
+I1105 01:36:30.931504  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:30.931524  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:30.931527  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:30.955075  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.02353 seconds...
+I1105 01:36:30.955126  2821 ConvComputeServer.h:131]      1795.58 MB/s
+I1105 01:36:30.955132  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:30.955134  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:31.292160  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:31.292219  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:31.292224  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:31.893769  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:31.893784  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:31.893787  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:31.897776  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00398335 seconds...
+I1105 01:36:31.897794  2821 ConvComputeServer.h:159]      3587.23 MB/s
+I1105 01:36:31.936637  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:31.936650  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:31.936653  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:31.936656  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:31.936658  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:31.964561  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:31.964582  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:31.964586  2821 ConvComputeServer.h:105] WAIT 0.0279334 seconds to get the model...
+I1105 01:36:31.964596  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:31.964599  2821 ConvComputeServer.h:110] NEW GRADIENT 76.918
+I1105 01:36:31.964604  2821 ConvComputeServer.h:112] 76.918    3745824     -1024
+~100
+I1105 01:36:32.269680  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:32.269703  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:32.269706  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:32.293221  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023497 seconds...
+I1105 01:36:32.293269  2821 ConvComputeServer.h:131]      1798.11 MB/s
+I1105 01:36:32.293277  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:32.293279  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:32.499025  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:32.499083  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:32.499088  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:33.100641  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:33.100656  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:33.100659  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:33.104708  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00404198 seconds...
+I1105 01:36:33.104727  2821 ConvComputeServer.h:159]      3535.2 MB/s
+I1105 01:36:33.134044  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:33.134057  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:33.134060  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:33.134063  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:33.134065  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:33.162456  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:33.162479  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:33.162483  2821 ConvComputeServer.h:105] WAIT 0.028423 seconds to get the model...
+I1105 01:36:33.162492  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:33.162495  2821 ConvComputeServer.h:110] NEW GRADIENT 77.0881
+I1105 01:36:33.162500  2821 ConvComputeServer.h:112] 77.0881    3745824     -1024
+~100
+I1105 01:36:33.467597  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:33.467617  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:33.467618  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:33.491119  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234834 seconds...
+I1105 01:36:33.491164  2821 ConvComputeServer.h:131]      1799.15 MB/s
+I1105 01:36:33.491170  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:33.491173  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:33.698361  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:33.698417  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:33.698421  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:34.300017  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:34.300034  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:34.300037  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:34.304106  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406238 seconds...
+I1105 01:36:34.304126  2821 ConvComputeServer.h:159]      3517.44 MB/s
+I1105 01:36:34.333456  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:34.333467  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:34.333470  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:34.333473  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:34.333477  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:34.361243  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:34.361264  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:34.361268  2821 ConvComputeServer.h:105] WAIT 0.0277976 seconds to get the model...
+I1105 01:36:34.361279  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:34.361281  2821 ConvComputeServer.h:110] NEW GRADIENT 77.2681
+I1105 01:36:34.361285  2821 ConvComputeServer.h:112] 77.2681    3745824     -1024
+~100
+I1105 01:36:34.666354  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:34.666375  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:34.666378  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:34.689911  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235161 seconds...
+I1105 01:36:34.689955  2821 ConvComputeServer.h:131]      1796.64 MB/s
+I1105 01:36:34.689961  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:34.689965  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:34.904784  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:34.904841  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:34.904845  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:35.506394  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:35.506410  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:35.506414  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:35.510495  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407495 seconds...
+I1105 01:36:35.510514  2821 ConvComputeServer.h:159]      3506.59 MB/s
+I1105 01:36:35.539569  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:35.539582  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:35.539584  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:35.539587  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:35.539590  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:35.568209  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:35.568231  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:35.568235  2821 ConvComputeServer.h:105] WAIT 0.0286508 seconds to get the model...
+I1105 01:36:35.568246  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:35.568249  2821 ConvComputeServer.h:110] NEW GRADIENT 77.4481
+I1105 01:36:35.568253  2821 ConvComputeServer.h:112] 77.4481    3745824     -1024
+~100
+I1105 01:36:35.873307  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:35.873327  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:35.873332  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:35.896877  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235282 seconds...
+I1105 01:36:35.896924  2821 ConvComputeServer.h:131]      1795.72 MB/s
+I1105 01:36:35.896929  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:35.896931  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:36.167464  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:36.167523  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:36.167529  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:36.769079  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:36.769095  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:36.769098  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:36.773214  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00410806 seconds...
+I1105 01:36:36.773232  2821 ConvComputeServer.h:159]      3478.33 MB/s
+I1105 01:36:36.811341  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:36.811352  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:36.811355  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:36.811358  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:36.811360  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:36.839709  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:36.839731  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:36.839735  2821 ConvComputeServer.h:105] WAIT 0.0283797 seconds to get the model...
+I1105 01:36:36.839745  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:36.839748  2821 ConvComputeServer.h:110] NEW GRADIENT 77.6282
+I1105 01:36:36.839752  2821 ConvComputeServer.h:112] 77.6282    3745824     -1024
+~100
+I1105 01:36:37.144845  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:37.144865  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:37.144867  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:37.168380  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234956 seconds...
+I1105 01:36:37.168426  2821 ConvComputeServer.h:131]      1798.21 MB/s
+I1105 01:36:37.168432  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:37.168434  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:37.503131  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:37.503188  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:37.503193  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:38.104738  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:38.104753  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:38.104756  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:38.108855  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409228 seconds...
+I1105 01:36:38.108875  2821 ConvComputeServer.h:159]      3491.75 MB/s
+I1105 01:36:38.146400  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:38.146412  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:38.146416  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:38.146420  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:38.146421  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:38.174247  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:38.174270  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:38.174274  2821 ConvComputeServer.h:105] WAIT 0.0278578 seconds to get the model...
+I1105 01:36:38.174284  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:38.174288  2821 ConvComputeServer.h:110] NEW GRADIENT 77.8082
+I1105 01:36:38.174291  2821 ConvComputeServer.h:112] 77.8082    3745824     -1024
+~100
+I1105 01:36:38.479396  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:38.479418  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:38.479421  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:38.502954  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023515 seconds...
+I1105 01:36:38.503000  2821 ConvComputeServer.h:131]      1796.73 MB/s
+I1105 01:36:38.503005  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:38.503008  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:38.785068  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:38.785125  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:38.785130  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:39.386704  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:39.386720  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:39.386724  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:39.390805  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407472 seconds...
+I1105 01:36:39.390822  2821 ConvComputeServer.h:159]      3506.79 MB/s
+I1105 01:36:39.429529  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:39.429540  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:39.429544  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:39.429548  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:39.429549  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:39.457937  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:39.457959  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:39.457963  2821 ConvComputeServer.h:105] WAIT 0.028419 seconds to get the model...
+I1105 01:36:39.457974  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:39.457978  2821 ConvComputeServer.h:110] NEW GRADIENT 77.9782
+I1105 01:36:39.457981  2821 ConvComputeServer.h:112] 77.9782    3745824     -1024
+~100
+I1105 01:36:39.763062  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:39.763082  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:39.763085  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:39.786567  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023466 seconds...
+I1105 01:36:39.786623  2821 ConvComputeServer.h:131]      1800.47 MB/s
+I1105 01:36:39.786628  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:39.786631  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:39.998296  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:39.998354  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:39.998358  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:40.599957  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:40.599977  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:40.599979  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:40.604056  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407043 seconds...
+I1105 01:36:40.604076  2821 ConvComputeServer.h:159]      3510.49 MB/s
+I1105 01:36:40.639822  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:40.639833  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:40.639837  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:40.639840  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:40.639843  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:40.670351  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:40.670374  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:40.670378  2821 ConvComputeServer.h:105] WAIT 0.0305408 seconds to get the model...
+I1105 01:36:40.670389  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:40.670392  2821 ConvComputeServer.h:110] NEW GRADIENT 78.1583
+I1105 01:36:40.670397  2821 ConvComputeServer.h:112] 78.1583    3745824     -1024
+~100
+I1105 01:36:40.975474  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:40.975494  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:40.975497  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:40.999006  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023491 seconds...
+I1105 01:36:40.999050  2821 ConvComputeServer.h:131]      1798.56 MB/s
+I1105 01:36:40.999056  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:40.999059  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:41.350864  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:41.350922  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:41.350927  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:41.952474  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:41.952489  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:41.952492  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:41.956555  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00405715 seconds...
+I1105 01:36:41.956574  2821 ConvComputeServer.h:159]      3521.98 MB/s
+I1105 01:36:41.994071  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:41.994082  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:41.994086  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:41.994089  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:41.994091  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:42.022289  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:42.022315  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:42.022320  2821 ConvComputeServer.h:105] WAIT 0.0282328 seconds to get the model...
+I1105 01:36:42.022330  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:42.022333  2821 ConvComputeServer.h:110] NEW GRADIENT 78.3383
+I1105 01:36:42.022337  2821 ConvComputeServer.h:112] 78.3383    3745824     -1024
+~100
+I1105 01:36:42.327422  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:42.327443  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:42.327446  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:42.350960  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234964 seconds...
+I1105 01:36:42.351003  2821 ConvComputeServer.h:131]      1798.15 MB/s
+I1105 01:36:42.351009  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:42.351012  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:42.561115  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:42.561195  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:42.561199  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:43.162948  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:43.162964  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:43.162967  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:43.167323  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00434873 seconds...
+I1105 01:36:43.167343  2821 ConvComputeServer.h:159]      3285.83 MB/s
+I1105 01:36:43.200685  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:43.200696  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:43.200700  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:43.200703  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:43.200706  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:43.229598  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:43.229620  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:43.229624  2821 ConvComputeServer.h:105] WAIT 0.0289237 seconds to get the model...
+I1105 01:36:43.229635  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:43.229637  2821 ConvComputeServer.h:110] NEW GRADIENT 78.5184
+I1105 01:36:43.229641  2821 ConvComputeServer.h:112] 78.5184    3745824     -1024
+~100
+I1105 01:36:43.535336  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:43.535357  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:43.535361  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:43.558889  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023512 seconds...
+I1105 01:36:43.558936  2821 ConvComputeServer.h:131]      1796.95 MB/s
+I1105 01:36:43.558943  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:43.558944  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:43.772490  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:43.772549  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:43.772553  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:44.374114  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:44.374131  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:44.374135  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:44.378213  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407365 seconds...
+I1105 01:36:44.378232  2821 ConvComputeServer.h:159]      3507.72 MB/s
+I1105 01:36:44.413643  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:44.413655  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:44.413660  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:44.413662  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:44.413666  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:44.442265  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:44.442287  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:44.442291  2821 ConvComputeServer.h:105] WAIT 0.0286317 seconds to get the model...
+I1105 01:36:44.442306  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:44.442307  2821 ConvComputeServer.h:110] NEW GRADIENT 78.6984
+I1105 01:36:44.442313  2821 ConvComputeServer.h:112] 78.6984    3745824     -1024
+~100
+I1105 01:36:44.747397  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:44.747418  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:44.747421  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:44.770959  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235223 seconds...
+I1105 01:36:44.771004  2821 ConvComputeServer.h:131]      1796.17 MB/s
+I1105 01:36:44.771010  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:44.771013  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:44.998661  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:44.998718  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:44.998723  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:45.600304  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:45.600320  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:45.600323  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:45.604400  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407072 seconds...
+I1105 01:36:45.604418  2821 ConvComputeServer.h:159]      3510.23 MB/s
+I1105 01:36:45.642280  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:45.642292  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:45.642297  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:45.642299  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:45.642302  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:45.670827  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:45.670850  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:45.670853  2821 ConvComputeServer.h:105] WAIT 0.0285573 seconds to get the model...
+I1105 01:36:45.670864  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:45.670867  2821 ConvComputeServer.h:110] NEW GRADIENT 78.8784
+I1105 01:36:45.670871  2821 ConvComputeServer.h:112] 78.8784    3745824     -1024
+~100
+I1105 01:36:45.975935  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:45.975955  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:45.975958  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:45.999496  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235209 seconds...
+I1105 01:36:45.999541  2821 ConvComputeServer.h:131]      1796.28 MB/s
+I1105 01:36:45.999547  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:45.999550  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:46.224635  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:46.224694  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:46.224697  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:46.826248  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:46.826263  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:46.826267  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:46.830345  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407281 seconds...
+I1105 01:36:46.830363  2821 ConvComputeServer.h:159]      3508.43 MB/s
+I1105 01:36:46.867934  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:46.867946  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:46.867949  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:46.867952  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:46.867955  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:46.895608  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:46.895630  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:46.895634  2821 ConvComputeServer.h:105] WAIT 0.0276841 seconds to get the model...
+I1105 01:36:46.895644  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:46.895647  2821 ConvComputeServer.h:110] NEW GRADIENT 79.0585
+I1105 01:36:46.895651  2821 ConvComputeServer.h:112] 79.0585    3745824     -1024
+~100
+I1105 01:36:47.200724  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:47.200744  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:47.200747  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:47.224274  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235104 seconds...
+I1105 01:36:47.224321  2821 ConvComputeServer.h:131]      1797.08 MB/s
+I1105 01:36:47.224328  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:47.224329  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:47.442993  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:47.443050  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:47.443054  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:48.044597  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:48.044613  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:48.044616  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:48.048694  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407244 seconds...
+I1105 01:36:48.048712  2821 ConvComputeServer.h:159]      3508.75 MB/s
+I1105 01:36:48.083578  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:48.083590  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:48.083595  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:48.083597  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:48.083600  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:48.112422  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:48.112444  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:48.112449  2821 ConvComputeServer.h:105] WAIT 0.0288545 seconds to get the model...
+I1105 01:36:48.112459  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:48.112462  2821 ConvComputeServer.h:110] NEW GRADIENT 79.2385
+I1105 01:36:48.112468  2821 ConvComputeServer.h:112] 79.2385    3745824     -1024
+~100
+I1105 01:36:48.417543  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:48.417563  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:48.417567  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:48.441104  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235217 seconds...
+I1105 01:36:48.441149  2821 ConvComputeServer.h:131]      1796.22 MB/s
+I1105 01:36:48.441155  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:48.441159  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:48.667948  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:48.668006  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:48.668009  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:49.269558  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:49.269572  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:49.269577  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:49.273672  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409055 seconds...
+I1105 01:36:49.273690  2821 ConvComputeServer.h:159]      3493.22 MB/s
+I1105 01:36:49.311434  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:49.311444  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:49.311450  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:49.311451  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:49.311455  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:49.547924  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:49.547947  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:49.547951  2821 ConvComputeServer.h:105] WAIT 0.236503 seconds to get the model...
+I1105 01:36:49.547961  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:49.547965  2821 ConvComputeServer.h:110] NEW GRADIENT 79.4186
+I1105 01:36:49.547969  2821 ConvComputeServer.h:112] 79.4186    3745824     -1024
+~100
+I1105 01:36:49.853051  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:49.853070  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:49.853073  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:49.876606  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235169 seconds...
+I1105 01:36:49.876653  2821 ConvComputeServer.h:131]      1796.58 MB/s
+I1105 01:36:49.876659  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:49.876662  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:50.149830  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:50.149890  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:50.149894  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:50.751694  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:50.751715  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:50.751718  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:50.756054  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00432862 seconds...
+I1105 01:36:50.756074  2821 ConvComputeServer.h:159]      3301.09 MB/s
+I1105 01:36:50.789737  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:50.789751  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:50.789754  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:50.789757  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:50.789759  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:50.819645  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:50.819667  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:50.819672  2821 ConvComputeServer.h:105] WAIT 0.0299181 seconds to get the model...
+I1105 01:36:50.819682  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:50.819685  2821 ConvComputeServer.h:110] NEW GRADIENT 79.6286
+I1105 01:36:50.819690  2821 ConvComputeServer.h:112] 79.6286    3745824     -1024
+~100
+I1105 01:36:51.125356  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:51.125378  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:51.125380  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:51.148922  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235239 seconds...
+I1105 01:36:51.148967  2821 ConvComputeServer.h:131]      1796.04 MB/s
+I1105 01:36:51.148973  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:51.148977  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:51.354365  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:51.354423  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:51.354426  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:51.955988  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:51.956003  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:51.956007  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:51.960059  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00404635 seconds...
+I1105 01:36:51.960078  2821 ConvComputeServer.h:159]      3531.37 MB/s
+I1105 01:36:51.997586  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:51.997598  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:51.997602  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:51.997604  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:51.997607  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:52.025887  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:52.025913  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:52.025918  2821 ConvComputeServer.h:105] WAIT 0.0283158 seconds to get the model...
+I1105 01:36:52.025928  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:52.025933  2821 ConvComputeServer.h:110] NEW GRADIENT 79.8086
+I1105 01:36:52.025936  2821 ConvComputeServer.h:112] 79.8086    3745824     -1024
+~100
+I1105 01:36:52.331024  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:52.331044  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:52.331048  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:52.354557  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234926 seconds...
+I1105 01:36:52.354610  2821 ConvComputeServer.h:131]      1798.44 MB/s
+I1105 01:36:52.354619  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:52.354621  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:52.562448  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:52.562504  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:52.562508  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:53.164057  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:53.164072  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:53.164075  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:53.168150  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406789 seconds...
+I1105 01:36:53.168169  2821 ConvComputeServer.h:159]      3512.68 MB/s
+I1105 01:36:53.202666  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:53.202677  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:53.202680  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:53.202683  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:53.202687  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:53.231011  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:53.231034  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:53.231039  2821 ConvComputeServer.h:105] WAIT 0.0283575 seconds to get the model...
+I1105 01:36:53.231048  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:53.231051  2821 ConvComputeServer.h:110] NEW GRADIENT 79.9887
+I1105 01:36:53.231055  2821 ConvComputeServer.h:112] 79.9887    3745824     -1024
+~100
+I1105 01:36:53.536144  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:53.536164  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:53.536167  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:53.559696  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235135 seconds...
+I1105 01:36:53.559741  2821 ConvComputeServer.h:131]      1796.84 MB/s
+I1105 01:36:53.559747  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:53.559751  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:53.796871  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:53.796928  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:53.796932  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:54.398496  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:54.398514  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:54.398516  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:54.402618  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409473 seconds...
+I1105 01:36:54.402638  2821 ConvComputeServer.h:159]      3489.66 MB/s
+I1105 01:36:54.439558  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:54.439568  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:54.439573  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:54.439575  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:54.439579  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:54.467762  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:54.467785  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:54.467789  2821 ConvComputeServer.h:105] WAIT 0.028217 seconds to get the model...
+I1105 01:36:54.467800  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:54.467803  2821 ConvComputeServer.h:110] NEW GRADIENT 80.1687
+I1105 01:36:54.467808  2821 ConvComputeServer.h:112] 80.1687    3745824     -1024
+~100
+I1105 01:36:54.772872  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:54.772892  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:54.772896  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:54.796427  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235132 seconds...
+I1105 01:36:54.796470  2821 ConvComputeServer.h:131]      1796.86 MB/s
+I1105 01:36:54.796476  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:54.796479  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:55.067744  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:55.067801  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:55.067806  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:55.669364  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:55.669379  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:55.669383  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:55.673445  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00405687 seconds...
+I1105 01:36:55.673463  2821 ConvComputeServer.h:159]      3522.22 MB/s
+I1105 01:36:55.706223  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:55.706233  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:55.706238  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:55.706240  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:55.706243  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:55.734915  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:55.734938  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:55.734942  2821 ConvComputeServer.h:105] WAIT 0.0287047 seconds to get the model...
+I1105 01:36:55.734953  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:55.734956  2821 ConvComputeServer.h:110] NEW GRADIENT 80.3488
+I1105 01:36:55.734961  2821 ConvComputeServer.h:112] 80.3488    3745824     -1024
+~100
+I1105 01:36:56.040052  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:56.040073  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:56.040076  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:56.063621  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235275 seconds...
+I1105 01:36:56.063666  2821 ConvComputeServer.h:131]      1795.77 MB/s
+I1105 01:36:56.063673  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:56.063675  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:56.311487  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:56.311547  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:56.311550  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:56.913105  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:56.913120  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:56.913122  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:56.917204  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407482 seconds...
+I1105 01:36:56.917223  2821 ConvComputeServer.h:159]      3506.71 MB/s
+I1105 01:36:56.945334  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:56.945346  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:56.945350  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:56.945353  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:56.945355  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:56.973425  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:56.973448  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:56.973453  2821 ConvComputeServer.h:105] WAIT 0.0281017 seconds to get the model...
+I1105 01:36:56.973461  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:56.973464  2821 ConvComputeServer.h:110] NEW GRADIENT 80.5288
+I1105 01:36:56.973469  2821 ConvComputeServer.h:112] 80.5288    3745824     -1024
+~100
+I1105 01:36:57.278578  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:57.278597  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:57.278620  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:57.302148  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235117 seconds...
+I1105 01:36:57.302194  2821 ConvComputeServer.h:131]      1796.98 MB/s
+I1105 01:36:57.302199  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:57.302202  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:57.571782  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:36:57.571841  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:36:57.571846  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:58.173543  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:58.173565  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:58.173568  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:58.177647  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407346 seconds...
+I1105 01:36:58.177667  2821 ConvComputeServer.h:159]      3507.87 MB/s
+I1105 01:36:58.215209  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:58.215219  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:58.215224  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:58.215226  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:58.215229  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:58.243691  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:58.243712  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:58.243716  2821 ConvComputeServer.h:105] WAIT 0.0284934 seconds to get the model...
+I1105 01:36:58.243727  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:58.243731  2821 ConvComputeServer.h:110] NEW GRADIENT 80.7088
+I1105 01:36:58.243734  2821 ConvComputeServer.h:112] 80.7088    3745824     -1024
+~100
+I1105 01:36:58.548861  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:58.548880  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:58.548883  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:58.572536  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023634 seconds...
+I1105 01:36:58.572587  2821 ConvComputeServer.h:131]      1787.68 MB/s
+I1105 01:36:58.572592  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:58.572595  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:36:58.856717  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:36:58.856776  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:36:58.856781  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:36:59.458415  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:36:59.458456  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:36:59.458461  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:36:59.462411  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00394501 seconds...
+I1105 01:36:59.462440  2821 ConvComputeServer.h:159]      3622.1 MB/s
+I1105 01:36:59.495790  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:36:59.495801  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:36:59.495805  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:36:59.495808  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:36:59.495811  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:36:59.524266  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:36:59.524288  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:36:59.524292  2821 ConvComputeServer.h:105] WAIT 0.0284869 seconds to get the model...
+I1105 01:36:59.524302  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:36:59.524304  2821 ConvComputeServer.h:110] NEW GRADIENT 80.8889
+I1105 01:36:59.524308  2821 ConvComputeServer.h:112] 80.8889    3745824     -1024
+~100
+I1105 01:36:59.829370  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:36:59.829388  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:36:59.829391  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:36:59.852924  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235172 seconds...
+I1105 01:36:59.852970  2821 ConvComputeServer.h:131]      1796.56 MB/s
+I1105 01:36:59.852977  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:36:59.852978  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:00.049630  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:00.049688  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:00.049692  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:00.651324  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:00.651355  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:00.651360  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:00.655321  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00395518 seconds...
+I1105 01:37:00.655344  2821 ConvComputeServer.h:159]      3612.78 MB/s
+I1105 01:37:00.700594  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:00.700605  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:00.700609  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:00.700613  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:00.700614  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:00.728843  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:00.728868  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:00.728873  2821 ConvComputeServer.h:105] WAIT 0.0282634 seconds to get the model...
+I1105 01:37:00.728884  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:00.728888  2821 ConvComputeServer.h:110] NEW GRADIENT 81.0589
+I1105 01:37:00.728893  2821 ConvComputeServer.h:112] 81.0589    3745824     -1024
+~100
+I1105 01:37:01.033967  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:01.033987  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:01.033990  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:01.057653  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0236435 seconds...
+I1105 01:37:01.057704  2821 ConvComputeServer.h:131]      1786.96 MB/s
+I1105 01:37:01.057709  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:01.057713  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:01.482834  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:01.482895  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:01.482899  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:02.084604  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:02.084658  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:02.084662  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:02.088620  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00395179 seconds...
+I1105 01:37:02.088649  2821 ConvComputeServer.h:159]      3615.88 MB/s
+I1105 01:37:02.126297  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:02.126310  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:02.126314  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:02.126317  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:02.126319  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:02.154687  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:02.154708  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:02.154712  2821 ConvComputeServer.h:105] WAIT 0.0283983 seconds to get the model...
+I1105 01:37:02.154722  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:02.154726  2821 ConvComputeServer.h:110] NEW GRADIENT 81.2589
+I1105 01:37:02.154729  2821 ConvComputeServer.h:112] 81.2589    3745824     -1024
+~100
+I1105 01:37:02.459830  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:02.459851  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:02.459852  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:02.483381  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235121 seconds...
+I1105 01:37:02.483428  2821 ConvComputeServer.h:131]      1796.95 MB/s
+I1105 01:37:02.483433  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:02.483436  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:02.725270  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:02.725328  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:02.725332  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:03.326987  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:03.327028  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:03.327031  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:03.331064  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00402595 seconds...
+I1105 01:37:03.331092  2821 ConvComputeServer.h:159]      3549.27 MB/s
+I1105 01:37:03.362859  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:03.362871  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:03.362875  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:03.362879  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:03.362880  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:03.391111  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:03.391134  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:03.391137  2821 ConvComputeServer.h:105] WAIT 0.0282617 seconds to get the model...
+I1105 01:37:03.391147  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:03.391150  2821 ConvComputeServer.h:110] NEW GRADIENT 81.439
+I1105 01:37:03.391155  2821 ConvComputeServer.h:112] 81.439    3745824     -1024
+~100
+I1105 01:37:03.696228  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:03.696249  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:03.696252  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:03.719787  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235176 seconds...
+I1105 01:37:03.719833  2821 ConvComputeServer.h:131]      1796.52 MB/s
+I1105 01:37:03.719840  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:03.719842  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:04.091637  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:04.091697  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:04.091702  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:04.693285  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:04.693310  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:04.693312  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:04.697422  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00410284 seconds...
+I1105 01:37:04.697443  2821 ConvComputeServer.h:159]      3482.75 MB/s
+I1105 01:37:04.735872  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:04.735888  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:04.735891  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:04.735893  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:04.735896  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:04.764039  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:04.764060  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:04.764065  2821 ConvComputeServer.h:105] WAIT 0.0281734 seconds to get the model...
+I1105 01:37:04.764082  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:04.764086  2821 ConvComputeServer.h:110] NEW GRADIENT 81.619
+I1105 01:37:04.764091  2821 ConvComputeServer.h:112] 81.619    3745824     -1024
+~100
+I1105 01:37:05.069016  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:05.069037  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:05.069041  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:05.092563  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023505 seconds...
+I1105 01:37:05.092610  2821 ConvComputeServer.h:131]      1797.49 MB/s
+I1105 01:37:05.092615  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:05.092618  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:05.410372  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:05.410434  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:05.410439  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:06.012151  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:06.012198  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:06.012202  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:06.016232  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00402457 seconds...
+I1105 01:37:06.016261  2821 ConvComputeServer.h:159]      3550.49 MB/s
+I1105 01:37:06.046733  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:06.046746  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:06.046749  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:06.046752  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:06.046756  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:06.075742  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:06.075759  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:06.075763  2821 ConvComputeServer.h:105] WAIT 0.0290136 seconds to get the model...
+I1105 01:37:06.075773  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:06.075776  2821 ConvComputeServer.h:110] NEW GRADIENT 81.8091
+I1105 01:37:06.075781  2821 ConvComputeServer.h:112] 81.8091    3745824     -1024
+~100
+I1105 01:37:06.380749  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:06.380769  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:06.380772  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:06.404311  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235202 seconds...
+I1105 01:37:06.404357  2821 ConvComputeServer.h:131]      1796.33 MB/s
+I1105 01:37:06.404363  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:06.404366  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:06.637697  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:06.637756  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:06.637760  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:07.239330  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:07.239344  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:07.239348  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:07.243435  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408167 seconds...
+I1105 01:37:07.243453  2821 ConvComputeServer.h:159]      3500.82 MB/s
+I1105 01:37:07.276314  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:07.276325  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:07.276329  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:07.276332  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:07.276335  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:07.304821  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:07.304844  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:07.304848  2821 ConvComputeServer.h:105] WAIT 0.0285186 seconds to get the model...
+I1105 01:37:07.304858  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:07.304862  2821 ConvComputeServer.h:110] NEW GRADIENT 81.9891
+I1105 01:37:07.304867  2821 ConvComputeServer.h:112] 81.9891    3745824     -1024
+~100
+I1105 01:37:07.609941  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:07.609961  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:07.609964  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:07.633494  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235129 seconds...
+I1105 01:37:07.633538  2821 ConvComputeServer.h:131]      1796.89 MB/s
+I1105 01:37:07.633543  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:07.633546  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:07.847113  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:07.847172  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:07.847175  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:08.448725  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:08.448742  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:08.448745  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:08.452852  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00410032 seconds...
+I1105 01:37:08.452870  2821 ConvComputeServer.h:159]      3484.9 MB/s
+I1105 01:37:08.492449  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:08.492460  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:08.492465  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:08.492467  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:08.492470  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:08.520900  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:08.520922  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:08.520926  2821 ConvComputeServer.h:105] WAIT 0.0284621 seconds to get the model...
+I1105 01:37:08.520937  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:08.520941  2821 ConvComputeServer.h:110] NEW GRADIENT 82.1691
+I1105 01:37:08.520946  2821 ConvComputeServer.h:112] 82.1691    3745824     -1024
+~100
+I1105 01:37:08.826016  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:08.826036  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:08.826040  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:08.849570  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235127 seconds...
+I1105 01:37:08.849614  2821 ConvComputeServer.h:131]      1796.9 MB/s
+I1105 01:37:08.849620  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:08.849623  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:09.072332  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:09.072391  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:09.072394  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:09.673969  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:09.673985  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:09.673988  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:09.678076  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408143 seconds...
+I1105 01:37:09.678092  2821 ConvComputeServer.h:159]      3501.03 MB/s
+I1105 01:37:09.714720  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:09.714731  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:09.714735  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:09.714738  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:09.714740  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:09.742974  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:09.742996  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:09.743000  2821 ConvComputeServer.h:105] WAIT 0.0282646 seconds to get the model...
+I1105 01:37:09.743010  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:09.743012  2821 ConvComputeServer.h:110] NEW GRADIENT 82.3492
+I1105 01:37:09.743017  2821 ConvComputeServer.h:112] 82.3492    3745824     -1024
+~100
+I1105 01:37:10.048101  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:10.048121  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:10.048125  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:10.071643  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023501 seconds...
+I1105 01:37:10.071688  2821 ConvComputeServer.h:131]      1797.8 MB/s
+I1105 01:37:10.071693  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:10.071696  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:10.301919  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:10.301978  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:10.301982  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:10.903556  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:10.903576  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:10.903580  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:10.907677  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409058 seconds...
+I1105 01:37:10.907698  2821 ConvComputeServer.h:159]      3493.19 MB/s
+I1105 01:37:10.949934  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:10.949944  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:10.949949  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:10.949951  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:10.949954  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:10.978155  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:10.978178  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:10.978181  2821 ConvComputeServer.h:105] WAIT 0.0282333 seconds to get the model...
+I1105 01:37:10.978190  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:10.978193  2821 ConvComputeServer.h:110] NEW GRADIENT 82.5192
+I1105 01:37:10.978198  2821 ConvComputeServer.h:112] 82.5192    3745824     -1024
+~100
+I1105 01:37:11.283308  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:11.283329  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:11.283331  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:11.306875  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235276 seconds...
+I1105 01:37:11.306921  2821 ConvComputeServer.h:131]      1795.76 MB/s
+I1105 01:37:11.306927  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:11.306931  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:11.534384  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:11.534443  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:11.534447  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:12.136057  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:12.136101  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:12.136104  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:12.140065  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00395469 seconds...
+I1105 01:37:12.140094  2821 ConvComputeServer.h:159]      3613.23 MB/s
+I1105 01:37:12.173429  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:12.173441  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:12.173445  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:12.173447  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:12.173450  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:12.201665  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:12.201689  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:12.201692  2821 ConvComputeServer.h:105] WAIT 0.028247 seconds to get the model...
+I1105 01:37:12.201702  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:12.201705  2821 ConvComputeServer.h:110] NEW GRADIENT 82.6993
+I1105 01:37:12.201709  2821 ConvComputeServer.h:112] 82.6993    3745824     -1024
+~100
+I1105 01:37:12.506811  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:12.506831  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:12.506834  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:12.530326  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234757 seconds...
+I1105 01:37:12.530371  2821 ConvComputeServer.h:131]      1799.74 MB/s
+I1105 01:37:12.530377  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:12.530380  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:12.761993  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:12.762051  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:12.762056  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:13.363628  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:13.363644  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:13.363648  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:13.367729  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407519 seconds...
+I1105 01:37:13.367748  2821 ConvComputeServer.h:159]      3506.39 MB/s
+I1105 01:37:13.405652  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:13.405664  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:13.405668  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:13.405671  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:13.405673  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:13.433975  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:13.434000  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:13.434003  2821 ConvComputeServer.h:105] WAIT 0.0283347 seconds to get the model...
+I1105 01:37:13.434012  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:13.434015  2821 ConvComputeServer.h:110] NEW GRADIENT 82.8793
+I1105 01:37:13.434020  2821 ConvComputeServer.h:112] 82.8793    3745824     -1024
+~100
+I1105 01:37:13.739101  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:13.739121  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:13.739125  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:13.762631  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234895 seconds...
+I1105 01:37:13.762676  2821 ConvComputeServer.h:131]      1798.68 MB/s
+I1105 01:37:13.762681  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:13.762683  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:13.983296  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:13.983350  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:13.983353  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:14.584941  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:14.584959  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:14.584961  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:14.589020  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00405213 seconds...
+I1105 01:37:14.589036  2821 ConvComputeServer.h:159]      3526.34 MB/s
+I1105 01:37:14.628809  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:14.628821  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:14.628825  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:14.628829  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:14.628830  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:14.656862  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:14.656884  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:14.656888  2821 ConvComputeServer.h:105] WAIT 0.0280626 seconds to get the model...
+I1105 01:37:14.656898  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:14.656900  2821 ConvComputeServer.h:110] NEW GRADIENT 83.0593
+I1105 01:37:14.656904  2821 ConvComputeServer.h:112] 83.0593    3745824     -1024
+~100
+I1105 01:37:14.961908  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:14.961928  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:14.961931  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:14.985448  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234994 seconds...
+I1105 01:37:14.985489  2821 ConvComputeServer.h:131]      1797.92 MB/s
+I1105 01:37:14.985496  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:14.985498  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:15.228487  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:15.228543  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:15.228546  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:15.830113  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:15.830128  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:15.830132  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:15.834228  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408935 seconds...
+I1105 01:37:15.834246  2821 ConvComputeServer.h:159]      3494.25 MB/s
+I1105 01:37:15.861498  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:15.861510  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:15.861513  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:15.861515  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:15.861518  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:15.889760  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:15.889783  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:15.889788  2821 ConvComputeServer.h:105] WAIT 0.028275 seconds to get the model...
+I1105 01:37:15.889798  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:15.889801  2821 ConvComputeServer.h:110] NEW GRADIENT 83.2394
+I1105 01:37:15.889806  2821 ConvComputeServer.h:112] 83.2394    3745824     -1024
+~100
+I1105 01:37:16.194912  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:16.194932  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:16.194936  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:16.218459  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235078 seconds...
+I1105 01:37:16.218504  2821 ConvComputeServer.h:131]      1797.27 MB/s
+I1105 01:37:16.218510  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:16.218513  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:16.454150  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:16.454207  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:16.454211  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:17.055774  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:17.055790  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:17.055794  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:17.059880  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407983 seconds...
+I1105 01:37:17.059900  2821 ConvComputeServer.h:159]      3502.4 MB/s
+I1105 01:37:17.088620  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:17.088632  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:17.088636  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:17.088639  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:17.088641  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:17.116695  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:17.116719  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:17.116724  2821 ConvComputeServer.h:105] WAIT 0.028087 seconds to get the model...
+I1105 01:37:17.116732  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:17.116735  2821 ConvComputeServer.h:110] NEW GRADIENT 83.4094
+I1105 01:37:17.116739  2821 ConvComputeServer.h:112] 83.4094    3745824     -1024
+~100
+I1105 01:37:17.421840  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:17.421861  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:17.421864  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:17.445380  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234993 seconds...
+I1105 01:37:17.445426  2821 ConvComputeServer.h:131]      1797.92 MB/s
+I1105 01:37:17.445432  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:17.445436  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:17.682083  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:17.682142  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:17.682147  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:18.283717  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:18.283733  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:18.283737  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:18.287818  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407529 seconds...
+I1105 01:37:18.287837  2821 ConvComputeServer.h:159]      3506.3 MB/s
+I1105 01:37:18.318822  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:18.318835  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:18.318838  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:18.318840  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:18.318843  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:18.347509  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:18.347530  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:18.347535  2821 ConvComputeServer.h:105] WAIT 0.0286969 seconds to get the model...
+I1105 01:37:18.347545  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:18.347548  2821 ConvComputeServer.h:110] NEW GRADIENT 83.5894
+I1105 01:37:18.347553  2821 ConvComputeServer.h:112] 83.5894    3745824     -1024
+~100
+I1105 01:37:18.652621  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:18.652642  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:18.652645  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:18.676184  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235233 seconds...
+I1105 01:37:18.676231  2821 ConvComputeServer.h:131]      1796.09 MB/s
+I1105 01:37:18.676237  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:18.676239  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:18.912500  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:18.912559  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:18.912564  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:19.514109  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:19.514124  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:19.514128  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:19.518230  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409657 seconds...
+I1105 01:37:19.518249  2821 ConvComputeServer.h:159]      3488.08 MB/s
+I1105 01:37:19.557183  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:19.557193  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:19.557198  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:19.557200  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:19.557202  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:19.586854  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:19.586875  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:19.586880  2821 ConvComputeServer.h:105] WAIT 0.0296824 seconds to get the model...
+I1105 01:37:19.586889  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:19.586891  2821 ConvComputeServer.h:110] NEW GRADIENT 83.7695
+I1105 01:37:19.586896  2821 ConvComputeServer.h:112] 83.7695    3745824     -1024
+~100
+I1105 01:37:19.891965  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:19.891988  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:19.891990  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:19.915546  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235396 seconds...
+I1105 01:37:19.915591  2821 ConvComputeServer.h:131]      1794.85 MB/s
+I1105 01:37:19.915596  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:19.915599  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:20.187489  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:20.187549  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:20.187553  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:20.789108  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:20.789125  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:20.789129  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:20.793195  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00405981 seconds...
+I1105 01:37:20.793212  2821 ConvComputeServer.h:159]      3519.67 MB/s
+I1105 01:37:20.831773  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:20.831784  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:20.831789  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:20.831790  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:20.831794  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:20.860625  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:20.860646  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:20.860651  2821 ConvComputeServer.h:105] WAIT 0.0288627 seconds to get the model...
+I1105 01:37:20.860661  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:20.860664  2821 ConvComputeServer.h:110] NEW GRADIENT 83.9495
+I1105 01:37:20.860668  2821 ConvComputeServer.h:112] 83.9495    3745824     -1024
+~100
+I1105 01:37:21.165742  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:21.165762  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:21.165766  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:21.189322  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235399 seconds...
+I1105 01:37:21.189366  2821 ConvComputeServer.h:131]      1794.83 MB/s
+I1105 01:37:21.189371  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:21.189374  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:21.486318  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:21.486379  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:21.486383  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:22.087965  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:22.087985  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:22.087988  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:22.092052  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.0040586 seconds...
+I1105 01:37:22.092072  2821 ConvComputeServer.h:159]      3520.72 MB/s
+I1105 01:37:22.131108  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:22.131121  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:22.131125  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:22.131129  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:22.131130  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:22.159646  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:22.159668  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:22.159672  2821 ConvComputeServer.h:105] WAIT 0.028547 seconds to get the model...
+I1105 01:37:22.159683  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:22.159687  2821 ConvComputeServer.h:110] NEW GRADIENT 84.1296
+I1105 01:37:22.159690  2821 ConvComputeServer.h:112] 84.1296    3745824     -1024
+~100
+I1105 01:37:22.464771  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:22.464792  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:22.464794  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:22.488306  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234942 seconds...
+I1105 01:37:22.488349  2821 ConvComputeServer.h:131]      1798.32 MB/s
+I1105 01:37:22.488355  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:22.488358  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:22.717231  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:22.717291  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:22.717296  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:23.318869  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:23.318886  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:23.318889  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:23.322981  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408466 seconds...
+I1105 01:37:23.323000  2821 ConvComputeServer.h:159]      3498.26 MB/s
+I1105 01:37:23.361629  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:23.361640  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:23.361644  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:23.361647  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:23.361649  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:23.390393  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:23.390415  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:23.390419  2821 ConvComputeServer.h:105] WAIT 0.0287752 seconds to get the model...
+I1105 01:37:23.390430  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:23.390432  2821 ConvComputeServer.h:110] NEW GRADIENT 84.2996
+I1105 01:37:23.390437  2821 ConvComputeServer.h:112] 84.2996    3745824     -1024
+~100
+I1105 01:37:23.695526  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:23.695547  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:23.695549  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:23.719099  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235336 seconds...
+I1105 01:37:23.719146  2821 ConvComputeServer.h:131]      1795.3 MB/s
+I1105 01:37:23.719151  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:23.719154  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:23.921085  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:23.921144  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:23.921149  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:24.522721  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:24.522737  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:24.522740  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:24.526808  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406107 seconds...
+I1105 01:37:24.526828  2821 ConvComputeServer.h:159]      3518.57 MB/s
+I1105 01:37:24.563803  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:24.563815  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:24.563818  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:24.563822  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:24.563824  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:24.592406  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:24.592429  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:24.592433  2821 ConvComputeServer.h:105] WAIT 0.0286147 seconds to get the model...
+I1105 01:37:24.592443  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:24.592447  2821 ConvComputeServer.h:110] NEW GRADIENT 84.4796
+I1105 01:37:24.592452  2821 ConvComputeServer.h:112] 84.4796    3745824     -1024
+~100
+I1105 01:37:24.897533  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:24.897552  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:24.897555  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:24.921066  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234941 seconds...
+I1105 01:37:24.921113  2821 ConvComputeServer.h:131]      1798.32 MB/s
+I1105 01:37:24.921118  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:24.921120  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:25.165257  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:25.165318  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:25.165321  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:25.766892  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:25.766908  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:25.766911  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:25.770990  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407336 seconds...
+I1105 01:37:25.771008  2821 ConvComputeServer.h:159]      3507.97 MB/s
+I1105 01:37:25.800519  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:25.800531  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:25.800535  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:25.800539  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:25.800541  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:25.828925  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:25.828948  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:25.828953  2821 ConvComputeServer.h:105] WAIT 0.0284171 seconds to get the model...
+I1105 01:37:25.828963  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:25.828965  2821 ConvComputeServer.h:110] NEW GRADIENT 84.6597
+I1105 01:37:25.828969  2821 ConvComputeServer.h:112] 84.6597    3745824     -1024
+~100
+I1105 01:37:26.134043  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:26.134063  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:26.134066  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:26.157605  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235224 seconds...
+I1105 01:37:26.157649  2821 ConvComputeServer.h:131]      1796.16 MB/s
+I1105 01:37:26.157655  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:26.157658  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:26.383453  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:26.383512  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:26.383518  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:26.985142  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:26.985164  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:26.985168  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:26.989267  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409159 seconds...
+I1105 01:37:26.989289  2821 ConvComputeServer.h:159]      3492.34 MB/s
+I1105 01:37:27.025665  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:27.025676  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:27.025681  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:27.025682  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:27.025686  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:27.054083  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:27.054105  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:27.054111  2821 ConvComputeServer.h:105] WAIT 0.02843 seconds to get the model...
+I1105 01:37:27.054123  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:27.054126  2821 ConvComputeServer.h:110] NEW GRADIENT 84.8397
+I1105 01:37:27.054131  2821 ConvComputeServer.h:112] 84.8397    3745824     -1024
+~100
+I1105 01:37:27.359143  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:27.359164  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:27.359168  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:27.382905  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0237181 seconds...
+I1105 01:37:27.382957  2821 ConvComputeServer.h:131]      1781.34 MB/s
+I1105 01:37:27.382963  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:27.382966  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:27.610833  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:27.610890  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:27.610894  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:28.212440  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:28.212457  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:28.212460  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:28.216419  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00395237 seconds...
+I1105 01:37:28.216439  2821 ConvComputeServer.h:159]      3615.35 MB/s
+I1105 01:37:28.255712  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:28.255722  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:28.255727  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:28.255728  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:28.255731  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:28.283545  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:28.283566  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:28.283571  2821 ConvComputeServer.h:105] WAIT 0.0278446 seconds to get the model...
+I1105 01:37:28.283581  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:28.283583  2821 ConvComputeServer.h:110] NEW GRADIENT 85.0198
+I1105 01:37:28.283588  2821 ConvComputeServer.h:112] 85.0198    3745824     -1024
+~100
+I1105 01:37:28.588673  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:28.588693  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:28.588696  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:28.612215  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235037 seconds...
+I1105 01:37:28.612262  2821 ConvComputeServer.h:131]      1797.59 MB/s
+I1105 01:37:28.612267  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:28.612270  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:28.831346  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:28.831405  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:28.831409  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:29.433043  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:29.433082  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:29.433086  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:29.437177  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408578 seconds...
+I1105 01:37:29.437206  2821 ConvComputeServer.h:159]      3497.3 MB/s
+I1105 01:37:29.475714  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:29.475725  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:29.475729  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:29.475733  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:29.475734  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:29.503741  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:29.503761  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:29.503764  2821 ConvComputeServer.h:105] WAIT 0.0280352 seconds to get the model...
+I1105 01:37:29.503773  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:29.503777  2821 ConvComputeServer.h:110] NEW GRADIENT 85.1998
+I1105 01:37:29.503780  2821 ConvComputeServer.h:112] 85.1998    3745824     -1024
+~100
+I1105 01:37:29.808852  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:29.808872  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:29.808876  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:29.832378  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234866 seconds...
+I1105 01:37:29.832423  2821 ConvComputeServer.h:131]      1798.9 MB/s
+I1105 01:37:29.832428  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:29.832432  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:30.197592  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:30.197652  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:30.197656  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:30.799304  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:30.799334  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:30.799337  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:30.803330  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00398743 seconds...
+I1105 01:37:30.803354  2821 ConvComputeServer.h:159]      3583.56 MB/s
+I1105 01:37:30.841411  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:30.841423  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:30.841426  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:30.841429  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:30.841433  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:30.869727  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:30.869748  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:30.869752  2821 ConvComputeServer.h:105] WAIT 0.0283255 seconds to get the model...
+I1105 01:37:30.869762  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:30.869765  2821 ConvComputeServer.h:110] NEW GRADIENT 85.3798
+I1105 01:37:30.869770  2821 ConvComputeServer.h:112] 85.3798    3745824     -1024
+~100
+I1105 01:37:31.174854  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:31.174875  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:31.174877  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:31.198367  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234728 seconds...
+I1105 01:37:31.198412  2821 ConvComputeServer.h:131]      1799.95 MB/s
+I1105 01:37:31.198418  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:31.198421  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:31.446921  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:31.446979  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:31.446985  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:32.048532  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:32.048549  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:32.048553  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:32.052630  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.0040716 seconds...
+I1105 01:37:32.052649  2821 ConvComputeServer.h:159]      3509.48 MB/s
+I1105 01:37:32.079779  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:32.079792  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:32.079795  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:32.079798  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:32.079800  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:32.108300  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:32.108324  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:32.108327  2821 ConvComputeServer.h:105] WAIT 0.0285319 seconds to get the model...
+I1105 01:37:32.108338  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:32.108341  2821 ConvComputeServer.h:110] NEW GRADIENT 85.5599
+I1105 01:37:32.108346  2821 ConvComputeServer.h:112] 85.5599    3745824     -1024
+~100
+I1105 01:37:32.413426  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:32.413446  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:32.413450  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:32.436974  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235072 seconds...
+I1105 01:37:32.437018  2821 ConvComputeServer.h:131]      1797.32 MB/s
+I1105 01:37:32.437024  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:32.437027  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:32.667470  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:32.667528  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:32.667533  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:33.269084  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:33.269100  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:33.269104  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:33.273192  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408177 seconds...
+I1105 01:37:33.273211  2821 ConvComputeServer.h:159]      3500.74 MB/s
+I1105 01:37:33.301885  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:33.301897  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:33.301900  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:33.301903  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:33.301906  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:33.330492  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:33.330513  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:33.330518  2821 ConvComputeServer.h:105] WAIT 0.0286168 seconds to get the model...
+I1105 01:37:33.330528  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:33.330531  2821 ConvComputeServer.h:110] NEW GRADIENT 85.7399
+I1105 01:37:33.330535  2821 ConvComputeServer.h:112] 85.7399    3745824     -1024
+~100
+I1105 01:37:33.635608  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:33.635629  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:33.635632  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:33.659163  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235126 seconds...
+I1105 01:37:33.659207  2821 ConvComputeServer.h:131]      1796.91 MB/s
+I1105 01:37:33.659214  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:33.659216  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:33.886373  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:33.886431  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:33.886435  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:34.487987  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:34.488003  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:34.488006  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:34.491983  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00397062 seconds...
+I1105 01:37:34.492002  2821 ConvComputeServer.h:159]      3598.73 MB/s
+I1105 01:37:34.520838  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:34.520849  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:34.520853  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:34.520856  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:34.520859  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:34.548961  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:34.548982  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:34.548987  2821 ConvComputeServer.h:105] WAIT 0.0281336 seconds to get the model...
+I1105 01:37:34.548997  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:34.549000  2821 ConvComputeServer.h:110] NEW GRADIENT 85.9199
+I1105 01:37:34.549005  2821 ConvComputeServer.h:112] 85.9199    3745824     -1024
+~100
+I1105 01:37:34.854066  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:34.854087  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:34.854089  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:34.877606  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234995 seconds...
+I1105 01:37:34.877650  2821 ConvComputeServer.h:131]      1797.91 MB/s
+I1105 01:37:34.877656  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:34.877660  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:35.091783  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:35.091840  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:35.091843  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:35.693554  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:35.693596  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:35.693600  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:35.697690  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408417 seconds...
+I1105 01:37:35.697718  2821 ConvComputeServer.h:159]      3498.67 MB/s
+I1105 01:37:35.725849  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:35.725862  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:35.725865  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:35.725868  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:35.725870  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:35.754580  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:35.754616  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:35.754619  2821 ConvComputeServer.h:105] WAIT 0.0287542 seconds to get the model...
+I1105 01:37:35.754628  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:35.754631  2821 ConvComputeServer.h:110] NEW GRADIENT 86.1
+I1105 01:37:35.754636  2821 ConvComputeServer.h:112] 86.1    3745824     -1024
+~100
+I1105 01:37:36.059723  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:36.059744  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:36.059747  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:36.083276  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235099 seconds...
+I1105 01:37:36.083323  2821 ConvComputeServer.h:131]      1797.11 MB/s
+I1105 01:37:36.083329  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:36.083333  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:36.370676  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:36.370736  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:36.370740  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:36.972288  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:36.972303  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:36.972307  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:36.976372  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00405978 seconds...
+I1105 01:37:36.976392  2821 ConvComputeServer.h:159]      3519.7 MB/s
+I1105 01:37:37.002830  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:37.002842  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:37.002846  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:37.002849  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:37.002851  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:37.031302  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:37.031324  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:37.031328  2821 ConvComputeServer.h:105] WAIT 0.0284825 seconds to get the model...
+I1105 01:37:37.031338  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:37.031342  2821 ConvComputeServer.h:110] NEW GRADIENT 86.28
+I1105 01:37:37.031345  2821 ConvComputeServer.h:112] 86.28    3745824     -1024
+~100
+I1105 01:37:37.336443  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:37.336464  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:37.336467  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:37.359971  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234863 seconds...
+I1105 01:37:37.360015  2821 ConvComputeServer.h:131]      1798.92 MB/s
+I1105 01:37:37.360021  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:37.360024  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:37.579360  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:37.579418  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:37.579422  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:38.180971  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:38.180987  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:38.180991  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:38.184988  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00399064 seconds...
+I1105 01:37:38.185008  2821 ConvComputeServer.h:159]      3580.68 MB/s
+I1105 01:37:38.211665  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:38.211676  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:38.211680  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:38.211683  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:38.211686  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:38.241250  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:38.241271  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:38.241276  2821 ConvComputeServer.h:105] WAIT 0.0295943 seconds to get the model...
+I1105 01:37:38.241286  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:38.241288  2821 ConvComputeServer.h:110] NEW GRADIENT 86.4601
+I1105 01:37:38.241293  2821 ConvComputeServer.h:112] 86.4601    3745824     -1024
+~100
+I1105 01:37:38.546352  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:38.546372  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:38.546375  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:38.569908  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235159 seconds...
+I1105 01:37:38.569952  2821 ConvComputeServer.h:131]      1796.66 MB/s
+I1105 01:37:38.569958  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:38.569962  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:38.791223  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:38.791280  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:38.791283  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:39.392841  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:39.392859  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:39.392863  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:39.396960  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00409236 seconds...
+I1105 01:37:39.396980  2821 ConvComputeServer.h:159]      3491.68 MB/s
+I1105 01:37:39.425473  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:39.425485  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:39.425489  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:39.425493  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:39.425494  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:39.453970  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:39.453992  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:39.453996  2821 ConvComputeServer.h:105] WAIT 0.0285069 seconds to get the model...
+I1105 01:37:39.454006  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:39.454010  2821 ConvComputeServer.h:110] NEW GRADIENT 86.6401
+I1105 01:37:39.454013  2821 ConvComputeServer.h:112] 86.6401    3745824     -1024
+~100
+I1105 01:37:39.759109  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:39.759130  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:39.759131  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:39.782625  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234752 seconds...
+I1105 01:37:39.782671  2821 ConvComputeServer.h:131]      1799.77 MB/s
+I1105 01:37:39.782677  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:39.782680  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:40.104456  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:40.104516  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:40.104521  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:40.706076  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:40.706095  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:40.706099  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:40.710192  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408481 seconds...
+I1105 01:37:40.710211  2821 ConvComputeServer.h:159]      3498.13 MB/s
+I1105 01:37:40.738481  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:40.738492  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:40.738495  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:40.738498  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:40.738502  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:40.767343  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:40.767366  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:40.767371  2821 ConvComputeServer.h:105] WAIT 0.0288753 seconds to get the model...
+I1105 01:37:40.767382  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:40.767385  2821 ConvComputeServer.h:110] NEW GRADIENT 86.8201
+I1105 01:37:40.767390  2821 ConvComputeServer.h:112] 86.8201    3745824     -1024
+~100
+I1105 01:37:41.072479  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:41.072499  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:41.072502  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:41.096014  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234927 seconds...
+I1105 01:37:41.096057  2821 ConvComputeServer.h:131]      1798.43 MB/s
+I1105 01:37:41.096062  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:41.096065  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:41.342892  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:41.342950  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:41.342955  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:41.944509  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:41.944525  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:41.944528  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:41.948585  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00405005 seconds...
+I1105 01:37:41.948602  2821 ConvComputeServer.h:159]      3528.15 MB/s
+I1105 01:37:41.979557  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:41.979569  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:41.979573  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:41.979576  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:41.979578  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:42.007876  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:42.007902  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:42.007908  2821 ConvComputeServer.h:105] WAIT 0.0283347 seconds to get the model...
+I1105 01:37:42.007920  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:42.007923  2821 ConvComputeServer.h:110] NEW GRADIENT 87.0002
+I1105 01:37:42.007928  2821 ConvComputeServer.h:112] 87.0002    3745824     -1024
+~100
+I1105 01:37:42.313027  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:42.313048  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:42.313051  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:42.336583  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235146 seconds...
+I1105 01:37:42.336629  2821 ConvComputeServer.h:131]      1796.75 MB/s
+I1105 01:37:42.336635  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:42.336638  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:42.528892  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:42.528952  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:42.528956  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:43.130507  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:43.130522  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:43.130527  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:43.134593  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406064 seconds...
+I1105 01:37:43.134624  2821 ConvComputeServer.h:159]      3518.95 MB/s
+I1105 01:37:43.163382  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:43.163393  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:43.163398  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:43.163400  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:43.163403  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:43.191973  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:43.191998  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:43.192003  2821 ConvComputeServer.h:105] WAIT 0.0286044 seconds to get the model...
+I1105 01:37:43.192013  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:43.192015  2821 ConvComputeServer.h:110] NEW GRADIENT 87.1702
+I1105 01:37:43.192020  2821 ConvComputeServer.h:112] 87.1702    3745824     -1024
+~100
+I1105 01:37:43.497103  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:43.497124  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:43.497126  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:43.520659  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023515 seconds...
+I1105 01:37:43.520705  2821 ConvComputeServer.h:131]      1796.72 MB/s
+I1105 01:37:43.520711  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:43.520714  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:43.762153  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:43.762212  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:43.762217  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:44.363791  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:44.363809  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:44.363813  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:44.367903  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00408296 seconds...
+I1105 01:37:44.367923  2821 ConvComputeServer.h:159]      3499.71 MB/s
+I1105 01:37:44.398383  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:44.398396  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:44.398399  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:44.398401  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:44.398404  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:44.427497  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:44.427520  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:44.427525  2821 ConvComputeServer.h:105] WAIT 0.0291261 seconds to get the model...
+I1105 01:37:44.427537  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:44.427541  2821 ConvComputeServer.h:110] NEW GRADIENT 87.3503
+I1105 01:37:44.427546  2821 ConvComputeServer.h:112] 87.3503    3745824     -1024
+~100
+I1105 01:37:44.732620  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:44.732640  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:44.732643  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:44.756156  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234957 seconds...
+I1105 01:37:44.756203  2821 ConvComputeServer.h:131]      1798.2 MB/s
+I1105 01:37:44.756209  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:44.756212  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:44.998342  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:44.998400  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:44.998405  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:45.600008  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:45.600025  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:45.600028  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:45.604109  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407305 seconds...
+I1105 01:37:45.604128  2821 ConvComputeServer.h:159]      3508.23 MB/s
+I1105 01:37:45.632961  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:45.632972  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:45.632975  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:45.632978  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:45.632980  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:45.661795  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:45.661820  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:45.661825  2821 ConvComputeServer.h:105] WAIT 0.0288497 seconds to get the model...
+I1105 01:37:45.661836  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:45.661839  2821 ConvComputeServer.h:110] NEW GRADIENT 87.5303
+I1105 01:37:45.661844  2821 ConvComputeServer.h:112] 87.5303    3745824     -1024
+~100
+I1105 01:37:45.966951  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:45.966971  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:45.966974  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:45.990496  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023505 seconds...
+I1105 01:37:45.990541  2821 ConvComputeServer.h:131]      1797.49 MB/s
+I1105 01:37:45.990546  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:45.990550  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:46.224019  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:46.224078  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:46.224082  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:46.825630  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:46.825645  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:46.825649  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:46.829726  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407051 seconds...
+I1105 01:37:46.829746  2821 ConvComputeServer.h:159]      3510.41 MB/s
+I1105 01:37:46.858325  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:46.858335  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:46.858340  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:46.858342  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:46.858345  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:46.887150  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:46.887172  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:46.887177  2821 ConvComputeServer.h:105] WAIT 0.0288373 seconds to get the model...
+I1105 01:37:46.887187  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:46.887190  2821 ConvComputeServer.h:110] NEW GRADIENT 87.7103
+I1105 01:37:46.887195  2821 ConvComputeServer.h:112] 87.7103    3745824     -1024
+~100
+I1105 01:37:47.192279  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:47.192299  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:47.192302  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:47.215832  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023513 seconds...
+I1105 01:37:47.215878  2821 ConvComputeServer.h:131]      1796.88 MB/s
+I1105 01:37:47.215883  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:47.215886  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:47.739394  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:47.739451  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:47.739456  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:48.341171  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:48.341217  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:48.341220  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:48.345207  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00398107 seconds...
+I1105 01:37:48.345237  2821 ConvComputeServer.h:159]      3589.29 MB/s
+I1105 01:37:48.373091  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:48.373105  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:48.373108  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:48.373111  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:48.373114  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:48.401911  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:48.401932  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:48.401937  2821 ConvComputeServer.h:105] WAIT 0.0288274 seconds to get the model...
+I1105 01:37:48.401949  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:48.401952  2821 ConvComputeServer.h:110] NEW GRADIENT 87.9204
+I1105 01:37:48.401957  2821 ConvComputeServer.h:112] 87.9204    3745824     -1024
+~100
+I1105 01:37:48.706964  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:48.706985  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:48.706989  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:48.730625  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0236168 seconds...
+I1105 01:37:48.730677  2821 ConvComputeServer.h:131]      1788.98 MB/s
+I1105 01:37:48.730684  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:48.730686  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:49.067476  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:49.067533  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:49.067538  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:49.669090  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:49.669107  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:49.669111  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:49.673130  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.004012 seconds...
+I1105 01:37:49.673149  2821 ConvComputeServer.h:159]      3561.61 MB/s
+I1105 01:37:49.703469  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:49.703479  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:49.703482  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:49.703485  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:49.703488  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:49.734539  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:49.734562  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:49.734566  2821 ConvComputeServer.h:105] WAIT 0.0310836 seconds to get the model...
+I1105 01:37:49.734577  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:49.734580  2821 ConvComputeServer.h:110] NEW GRADIENT 88.1104
+I1105 01:37:49.734585  2821 ConvComputeServer.h:112] 88.1104    3745824     -1024
+~100
+I1105 01:37:50.039661  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:50.039681  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:50.039685  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:50.063206  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023504 seconds...
+I1105 01:37:50.063251  2821 ConvComputeServer.h:131]      1797.56 MB/s
+I1105 01:37:50.063256  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:50.063259  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:50.371001  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:50.371059  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:50.371063  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:50.972618  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:50.972635  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:50.972638  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:50.976691  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00404595 seconds...
+I1105 01:37:50.976708  2821 ConvComputeServer.h:159]      3531.73 MB/s
+I1105 01:37:51.005991  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:51.006002  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:51.006006  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:51.006009  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:51.006012  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:51.034562  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:51.034587  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:51.034591  2821 ConvComputeServer.h:105] WAIT 0.0285848 seconds to get the model...
+I1105 01:37:51.034615  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:51.034618  2821 ConvComputeServer.h:110] NEW GRADIENT 88.3005
+I1105 01:37:51.034623  2821 ConvComputeServer.h:112] 88.3005    3745824     -1024
+~100
+I1105 01:37:51.339715  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:51.339735  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:51.339738  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:51.363279  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235239 seconds...
+I1105 01:37:51.363323  2821 ConvComputeServer.h:131]      1796.05 MB/s
+I1105 01:37:51.363329  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:51.363332  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:51.650640  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:51.650696  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:51.650701  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:52.252251  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:52.252269  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:52.252274  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:52.256330  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00404943 seconds...
+I1105 01:37:52.256350  2821 ConvComputeServer.h:159]      3528.69 MB/s
+I1105 01:37:52.285652  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:52.285665  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:52.285668  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:52.285671  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:52.285675  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:52.314106  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:52.314131  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:52.314136  2821 ConvComputeServer.h:105] WAIT 0.0284661 seconds to get the model...
+I1105 01:37:52.314146  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:52.314148  2821 ConvComputeServer.h:110] NEW GRADIENT 88.4805
+I1105 01:37:52.314152  2821 ConvComputeServer.h:112] 88.4805    3745824     -1024
+~100
+I1105 01:37:52.619249  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:52.619268  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:52.619271  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:52.642798  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235102 seconds...
+I1105 01:37:52.642841  2821 ConvComputeServer.h:131]      1797.09 MB/s
+I1105 01:37:52.642846  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:52.642849  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:52.891603  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:52.891659  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:52.891662  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:53.493213  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:53.493230  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:53.493233  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:53.497303  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406398 seconds...
+I1105 01:37:53.497320  2821 ConvComputeServer.h:159]      3516.05 MB/s
+I1105 01:37:53.525262  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:53.525277  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:53.525281  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:53.525285  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:53.525287  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:53.553844  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:53.553869  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:53.553872  2821 ConvComputeServer.h:105] WAIT 0.0285906 seconds to get the model...
+I1105 01:37:53.553882  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:53.553885  2821 ConvComputeServer.h:110] NEW GRADIENT 88.6605
+I1105 01:37:53.553889  2821 ConvComputeServer.h:112] 88.6605    3745824     -1024
+~100
+I1105 01:37:53.858969  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:53.858989  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:53.858993  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:53.882530  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235183 seconds...
+I1105 01:37:53.882575  2821 ConvComputeServer.h:131]      1796.48 MB/s
+I1105 01:37:53.882582  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:53.882586  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:54.133071  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:54.133129  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:54.133133  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:54.734706  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:54.734722  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:54.734725  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:54.738797  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406522 seconds...
+I1105 01:37:54.738816  2821 ConvComputeServer.h:159]      3514.98 MB/s
+I1105 01:37:54.768643  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:54.768654  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:54.768658  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:54.768661  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:54.768664  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:54.797890  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:54.797916  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:54.797921  2821 ConvComputeServer.h:105] WAIT 0.0292621 seconds to get the model...
+I1105 01:37:54.797931  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:54.797935  2821 ConvComputeServer.h:110] NEW GRADIENT 88.8406
+I1105 01:37:54.797940  2821 ConvComputeServer.h:112] 88.8406    3745824     -1024
+~100
+I1105 01:37:55.103057  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:55.103078  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:55.103081  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:55.126631  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235323 seconds...
+I1105 01:37:55.126675  2821 ConvComputeServer.h:131]      1795.41 MB/s
+I1105 01:37:55.126682  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:55.126684  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:55.359061  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:55.359119  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:55.359124  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:55.960680  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:55.960695  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:55.960698  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:55.964727  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00402291 seconds...
+I1105 01:37:55.964745  2821 ConvComputeServer.h:159]      3551.95 MB/s
+I1105 01:37:55.992588  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:55.992599  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:55.992604  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:55.992606  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:55.992609  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:56.021914  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:56.021939  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:56.021942  2821 ConvComputeServer.h:105] WAIT 0.029339 seconds to get the model...
+I1105 01:37:56.021953  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:56.021956  2821 ConvComputeServer.h:110] NEW GRADIENT 89.0206
+I1105 01:37:56.021961  2821 ConvComputeServer.h:112] 89.0206    3745824     -1024
+~100
+I1105 01:37:56.327072  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:56.327093  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:56.327096  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:56.350637  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235227 seconds...
+I1105 01:37:56.350684  2821 ConvComputeServer.h:131]      1796.13 MB/s
+I1105 01:37:56.350690  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:56.350693  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:56.586099  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:37:56.586158  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:37:56.586163  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:57.187728  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:57.187744  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:57.187747  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:57.191826  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407132 seconds...
+I1105 01:37:57.191845  2821 ConvComputeServer.h:159]      3509.72 MB/s
+I1105 01:37:57.220139  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:57.220149  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:57.220154  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:57.220156  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:57.220160  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:57.249475  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:57.249498  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:57.249502  2821 ConvComputeServer.h:105] WAIT 0.0293487 seconds to get the model...
+I1105 01:37:57.249513  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:57.249516  2821 ConvComputeServer.h:110] NEW GRADIENT 89.2006
+I1105 01:37:57.249521  2821 ConvComputeServer.h:112] 89.2006    3745824     -1024
+~100
+I1105 01:37:57.554597  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:57.554636  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:57.554638  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:57.578147  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0234921 seconds...
+I1105 01:37:57.578191  2821 ConvComputeServer.h:131]      1798.48 MB/s
+I1105 01:37:57.578197  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:57.578200  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:57.795922  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:57.795979  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:57.795982  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:58.397536  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:58.397552  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:58.397557  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:58.401625  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00406397 seconds...
+I1105 01:37:58.401643  2821 ConvComputeServer.h:159]      3516.06 MB/s
+I1105 01:37:58.429843  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:58.429855  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:58.429859  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:58.429862  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:58.429865  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:58.458673  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:58.458696  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:58.458701  2821 ConvComputeServer.h:105] WAIT 0.0288419 seconds to get the model...
+I1105 01:37:58.458712  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:58.458715  2821 ConvComputeServer.h:110] NEW GRADIENT 89.3807
+I1105 01:37:58.458719  2821 ConvComputeServer.h:112] 89.3807    3745824     -1024
+~100
+I1105 01:37:58.763800  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:58.763820  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:58.763823  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:37:58.787379  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235375 seconds...
+I1105 01:37:58.787425  2821 ConvComputeServer.h:131]      1795.01 MB/s
+I1105 01:37:58.787431  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:37:58.787434  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:37:59.022110  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:37:59.022172  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:37:59.022177  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:37:59.623894  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:37:59.623935  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:37:59.623940  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:37:59.627900  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00395434 seconds...
+I1105 01:37:59.627930  2821 ConvComputeServer.h:159]      3613.55 MB/s
+I1105 01:37:59.658248  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:37:59.658260  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:37:59.658264  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:37:59.658267  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:37:59.658270  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:37:59.687492  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:37:59.687515  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:37:59.687520  2821 ConvComputeServer.h:105] WAIT 0.0292555 seconds to get the model...
+I1105 01:37:59.687530  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:37:59.687533  2821 ConvComputeServer.h:110] NEW GRADIENT 89.5607
+I1105 01:37:59.687537  2821 ConvComputeServer.h:112] 89.5607    3745824     -1024
+~100
+I1105 01:37:59.992674  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:37:59.992696  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:37:59.992698  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:38:00.016435  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0237173 seconds...
+I1105 01:38:00.016489  2821 ConvComputeServer.h:131]      1781.4 MB/s
+I1105 01:38:00.016494  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:38:00.016497  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:38:00.253408  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+I1105 01:38:00.253468  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+-2
+I1105 01:38:00.253473  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:38:00.855048  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:38:00.855069  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:38:00.855073  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:38:00.859067  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00398876 seconds...
+I1105 01:38:00.859087  2821 ConvComputeServer.h:159]      3582.36 MB/s
+I1105 01:38:00.893908  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:38:00.893919  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:38:00.893923  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:38:00.893926  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:38:00.893929  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:38:00.921983  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:38:00.922008  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:38:00.922011  2821 ConvComputeServer.h:105] WAIT 0.028088 seconds to get the model...
+I1105 01:38:00.922022  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:38:00.922024  2821 ConvComputeServer.h:110] NEW GRADIENT 89.7408
+I1105 01:38:00.922029  2821 ConvComputeServer.h:112] 89.7408    3745824     -1024
+~100
+I1105 01:38:01.227145  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:38:01.227165  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:38:01.227169  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:38:01.250826  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023638 seconds...
+I1105 01:38:01.250880  2821 ConvComputeServer.h:131]      1787.37 MB/s
+I1105 01:38:01.250886  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:38:01.250890  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:38:01.473045  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:38:01.473104  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:38:01.473109  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:38:02.074687  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:38:02.074704  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:38:02.074708  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:38:02.078665  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00394933 seconds...
+I1105 01:38:02.078686  2821 ConvComputeServer.h:159]      3618.13 MB/s
+I1105 01:38:02.108561  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:38:02.108574  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:38:02.108578  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:38:02.108582  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:38:02.108583  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:38:02.137241  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:38:02.137266  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:38:02.137270  2821 ConvComputeServer.h:105] WAIT 0.0286919 seconds to get the model...
+I1105 01:38:02.137282  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:38:02.137285  2821 ConvComputeServer.h:110] NEW GRADIENT 89.9208
+I1105 01:38:02.137290  2821 ConvComputeServer.h:112] 89.9208    3745824     -1024
+~100
+I1105 01:38:02.442335  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:38:02.442356  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:38:02.442359  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:38:02.465893  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.023516 seconds...
+I1105 01:38:02.465939  2821 ConvComputeServer.h:131]      1796.65 MB/s
+I1105 01:38:02.465945  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:38:02.465947  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:38:02.696351  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:38:02.696409  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:38:02.696414  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:38:03.297978  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:38:03.297994  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:38:03.297998  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:38:03.302011  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00400727 seconds...
+I1105 01:38:03.302028  2821 ConvComputeServer.h:159]      3565.82 MB/s
+I1105 01:38:03.330194  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:38:03.330206  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:38:03.330210  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:38:03.330214  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:38:03.330215  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:38:03.359388  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:38:03.359412  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:38:03.359416  2821 ConvComputeServer.h:105] WAIT 0.0292059 seconds to get the model...
+I1105 01:38:03.359427  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:38:03.359431  2821 ConvComputeServer.h:110] NEW GRADIENT 90.1008
+I1105 01:38:03.359436  2821 ConvComputeServer.h:112] 90.1008    3745824     -1024
+~100
+I1105 01:38:03.664541  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:38:03.664561  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:38:03.664563  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:38:03.688129  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235487 seconds...
+I1105 01:38:03.688174  2821 ConvComputeServer.h:131]      1794.15 MB/s
+I1105 01:38:03.688179  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:38:03.688182  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:38:03.902861  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:38:03.902920  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:38:03.902923  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:38:04.504472  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:38:04.504488  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:38:04.504492  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:38:04.508574  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407379 seconds...
+I1105 01:38:04.508592  2821 ConvComputeServer.h:159]      3507.59 MB/s
+I1105 01:38:04.537189  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:38:04.537202  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:38:04.537206  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:38:04.537209  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:38:04.537211  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:38:04.566184  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:38:04.566207  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:38:04.566211  2821 ConvComputeServer.h:105] WAIT 0.0290049 seconds to get the model...
+I1105 01:38:04.566223  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:38:04.566226  2821 ConvComputeServer.h:110] NEW GRADIENT 90.2809
+I1105 01:38:04.566231  2821 ConvComputeServer.h:112] 90.2809    3745824     -1024
+~100
+I1105 01:38:04.871316  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:38:04.871336  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:38:04.871340  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:38:04.894871  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235141 seconds...
+I1105 01:38:04.894917  2821 ConvComputeServer.h:131]      1796.8 MB/s
+I1105 01:38:04.894922  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:38:04.894925  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:38:05.115795  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:38:05.115851  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:38:05.115855  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
+I1105 01:38:05.717430  2821 ConvComputeServer.h:148] ~~~~ EXIT STATE 4
+I1105 01:38:05.717447  2821 ConvComputeServer.h:151] ~~~~ ENTER STATE 5
+I1105 01:38:05.717449  2821 ConvComputeServer.h:153] Update Gradient...
+I1105 01:38:05.721526  2821 ConvComputeServer.h:158] SEND to CONV 14.2892 MB data in 0.00407124 seconds...
+I1105 01:38:05.721544  2821 ConvComputeServer.h:159]      3509.79 MB/s
+I1105 01:38:05.751251  2821 ConvComputeServer.h:164] ~~~~ EXIT STATE 5
+I1105 01:38:05.751263  2821 ConvComputeServer.h:166] ~~~~ ENTER STATE IDLE
+I1105 01:38:05.751267  2821 ConvComputeServer.h:92] ~~~~ EXIT STATE IDLE
+I1105 01:38:05.751271  2821 ConvComputeServer.h:93] ~~~~ ENTER STATE 1
+I1105 01:38:05.751272  2821 ConvComputeServer.h:94] Ask Current Model...
+I1105 01:38:05.780100  2821 ConvComputeServer.h:101] ~~~~ EXIT STATE 1
+I1105 01:38:05.780124  2821 ConvComputeServer.h:103] ~~~~ ENTER STATE 2
+I1105 01:38:05.780128  2821 ConvComputeServer.h:105] WAIT 0.0288613 seconds to get the model...
+I1105 01:38:05.780140  2821 ConvComputeServer.h:108] Do Real Work...
+I1105 01:38:05.780143  2821 ConvComputeServer.h:110] NEW GRADIENT 90.4609
+I1105 01:38:05.780148  2821 ConvComputeServer.h:112] 90.4609    3745824     -1024
+~100
+I1105 01:38:06.085228  2821 ConvComputeServer.h:121] ~~~~ EXIT STATE 2
+I1105 01:38:06.085249  2821 ConvComputeServer.h:124] ~~~~ ENTER STATE 3
+I1105 01:38:06.085253  2821 ConvComputeServer.h:126]    Ask grad of output by sending data
+I1105 01:38:06.108850  2821 ConvComputeServer.h:130] SEND to FC  42.25 MB data in 0.0235792 seconds...
+I1105 01:38:06.108898  2821 ConvComputeServer.h:131]      1791.83 MB/s
+I1105 01:38:06.108904  2821 ConvComputeServer.h:132] ~~~~ EXIT STATE 3
+I1105 01:38:06.108907  2821 ConvComputeServer.h:134] ~~~~ ENTER STATE IDLE
+I1105 01:38:06.332707  2821 ConvComputeServer.h:136]    Rcv'ed grad of output
+-2
+I1105 01:38:06.332763  2821 ConvComputeServer.h:140] ~~~~ EXIT STATE IDLE
+I1105 01:38:06.332767  2821 ConvComputeServer.h:142] ~~~~ ENTER STATE 4
