@@ -56,6 +56,9 @@ public:
     // -------------------------------------------------------------------------
     // SHADJIS TODO -- These will be created and passed in by scheduler (main.cpp or python)
     // Hard-code files for now. See comment in ConvModelServer.h.
+    // Note: like the conv model server, this server does not need to read any labels or data from
+    // the corpus (lmdb). The only information currently used from lmdb is the size of the 
+    // first fc layer (stored in each datum).
     std::string solver_file = "protos/solver.fc_model_server.prototxt";
     std::string data_binary = "protos/dummy.bin";   // Empty file (no file needed, but prevents automatic binary creation)
     std::string output_model_file = "fc_model.bin";
@@ -64,13 +67,9 @@ public:
     
     SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
     LogicalCubeFloat * const labels = softmax->p_data_labels;
-    // Also make a temporary labels array for when we wrap around the training set
-    float *labels_buffer = new float [corpus->mini_batch_size];
-    const int display_iter = solver_param.display();
     
-    // Keep track of the image number in the dataset we are on
-    size_t current_image_location_in_dataset = 0;
-    size_t current_epoch = 0;    
+    // For printing information
+    const int display_iter = solver_param.display();
     float loss = 0.;
     float accuracy = 0.;
     
@@ -84,7 +83,9 @@ public:
     // Allocate buffer for incoming messages
     // This will be the output from ConvComputeServer
     // Allocate a factor of 2 extra for this although should not be needed
-    int incoming_data_buf_size = sizeof(OmvMessage) + 2*sizeof(float)*nfloats;
+    // Also, for the incoming data, recall that we need the conv compute server
+    // to pass labels.
+    int incoming_data_buf_size = sizeof(OmvMessage) + 2*sizeof(float)*(nfloats + corpus->mini_batch_size);
     LOG(INFO) << "Allocating " << (1.0*incoming_data_buf_size/1024/1024) << " MB for incoming messages (input data)" << std::endl;
     char * incoming_data_buf = new char[incoming_data_buf_size];
     
@@ -113,7 +114,7 @@ public:
       // Create the message from this incoming buffer
       OmvMessage * incoming_msg_data = reinterpret_cast<OmvMessage*>(incoming_data_buf);
       assert(incoming_msg_data->msg_type == ASK_GRADIENT_OF_SENT_DATA);
-      assert(incoming_msg_data->size() == outgoing_data_grad_buf_size);
+      assert(incoming_msg_data->size() == int(sizeof(OmvMessage) + 1*sizeof(float)*(nfloats + corpus->mini_batch_size)));
 
       // Now answer the request for data gradients
       // This involves running FW and BW and returning the gradients
@@ -143,53 +144,19 @@ public:
       // update device memory (e.g. direct copy from one server to another) we
       // need to adjust the update_p_input_layer_data_CPU_ONLY call to pass in a
       // device memory pointer.
-      bridges[0]->update_p_input_layer_data_CPU_ONLY(incoming_msg_data->content);
-      assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == incoming_msg_data->content);
+      // Note: we pass incoming_msg_data->content + corpus->mini_batch_size since
+      // the convention we use now is to pass the labels first, then the data.
+      bridges[0]->update_p_input_layer_data_CPU_ONLY(incoming_msg_data->content + corpus->mini_batch_size);
+      assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == incoming_msg_data->content + corpus->mini_batch_size);
       // Debug
       // cout << incoming_msg_data->content[0] << endl;    // Print the first element of the data
   
       // -----------------------------------------------------------------------
-      // Read in the next mini-batch labels from file
+      // Read in the next mini-batch labels from the sent message
       // -----------------------------------------------------------------------
       
       // Initialize labels for this mini batch
-      labels->set_p_data(corpus->labels->physical_get_RCDslice(current_image_location_in_dataset));
-      
-      // Move past the mini-batchlabels we just got the pointer to
-      current_image_location_in_dataset += corpus->mini_batch_size;
-      
-      // Check if the dataset just finished exactly and we need to restart from the beginning
-      if (current_image_location_in_dataset == corpus->n_images) {
-        current_image_location_in_dataset = 0;
-        ++current_epoch;
-      }
-      // The more common case is that we went over the end of the dataset and now need to 
-      // start over from the beginning this iteration to read the remaining data
-      else if (current_image_location_in_dataset > corpus->n_images) {
-      
-        current_image_location_in_dataset -= corpus->n_images;
-        ++current_epoch;
-        
-        // Copy over the labels to a contiguous memory location. This requires two
-        // copies, one from the end and one from the beginning.
-        // See comment in DeepNet.h for more information.
-
-        // Calculate how many we need to read from the end
-        size_t num_images_from_end = corpus->mini_batch_size - current_image_location_in_dataset;
-        assert(num_images_from_end > 0);
-        // Calculate how many we need to read from the beginning
-        size_t num_images_from_beginning = current_image_location_in_dataset;
-        assert(num_images_from_beginning + num_images_from_end == corpus->mini_batch_size);
-        // Copy to buffer
-        memcpy(labels_buffer,
-          corpus->labels->physical_get_RCDslice(corpus->n_images - num_images_from_end),
-          sizeof(float) * num_images_from_end);
-        memcpy(labels_buffer + num_images_from_end,
-          corpus->labels->physical_get_RCDslice(0),
-          sizeof(float) * num_images_from_beginning);
-        // Now point labels to this array
-        labels->set_p_data(labels_buffer);
-      }
+      labels->set_p_data(incoming_msg_data->content);
       
       // -----------------------------------------------------------------------
       // Run forward and backward pass
@@ -215,7 +182,7 @@ public:
         float learning_rate = Util::get_learning_rate(solver_param.lr_policy(), solver_param.base_lr(), solver_param.gamma(),
           batch+1, solver_param.stepsize(), solver_param.power(), solver_param.max_iter());
         
-        std::cout << "Training Status Report (Epoch " << current_epoch << " / Mini-batch iter " << batch << "), LR = " << learning_rate << std::endl;
+        std::cout << "Training Status Report (Mini-batch iter " << batch << "), LR = " << learning_rate << std::endl;
         std::cout << "  \033[1;32m";
         std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
         std::cout << "\033[0m" << std::endl;
@@ -256,7 +223,6 @@ public:
 
     // Destroy network
     DeepNet::clean_up(bridges, corpus);
-    delete labels_buffer;
 
   }
 };

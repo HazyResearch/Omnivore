@@ -102,7 +102,8 @@ public:
     char * outgoing_model_grad_buf = new char[outgoing_model_grad_buf_size];
     
     // Outgoing data
-    int outgoing_data_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*nfloats_output_data;
+    // Recall that we need to pass labels as well.
+    int outgoing_data_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*(nfloats_output_data + corpus->mini_batch_size);
     LOG(INFO) << "Allocating " << (1.0*outgoing_data_buf_size/1024/1024) << " MB for outgoing data" << std::endl;
     char * outgoing_data_buf = new char[outgoing_data_buf_size];
 
@@ -125,7 +126,7 @@ public:
     // Outgoing message which sends the data and asks for gradients
     OmvMessage * outgoing_msg_send_data_and_ask_grad = reinterpret_cast<OmvMessage*>(outgoing_data_buf);
     outgoing_msg_send_data_and_ask_grad->msg_type = ASK_GRADIENT_OF_SENT_DATA;
-    outgoing_msg_send_data_and_ask_grad->nelem = nfloats_output_data;
+    outgoing_msg_send_data_and_ask_grad->nelem = nfloats_output_data + corpus->mini_batch_size;
     assert(outgoing_msg_send_data_and_ask_grad->size() == outgoing_data_buf_size);
     
     // -------------------------------------------
@@ -159,23 +160,63 @@ public:
     while(1){
     
       // -----------------------------------------------------------------------
-      // Read in the next mini-batch from file
+      // Read in the next mini-batch from file and update labels from lmdb
       // -----------------------------------------------------------------------
+      
+      // Read in the next mini-batch from file
       size_t rs = fread(corpus->images->get_p_data(), sizeof(DataType_SFFloat), corpus->images->n_elements, pFile);
+      
       // If we read less than we expected, read the rest from the beginning
       size_t num_floats_left_to_read = corpus->images->n_elements - rs;
       if (num_floats_left_to_read > 0) {
+      
         // Close the file and re-open it
         fclose(pFile);
         pFile = fopen (corpus->filename.c_str(), "rb");
         if (!pFile)
           throw std::runtime_error("Error opening the corpus file: " + corpus->filename);
+          
         // Read the remaining data from the file, adjusting the pointer to where we
         // read until previously as well as the amount to read
         size_t rs2 = fread((float *) (corpus->images->get_p_data()) + rs, sizeof(DataType_SFFloat), num_floats_left_to_read, pFile);
         assert(rs2 == num_floats_left_to_read);
+        
+        // Also, we need to copy over the labels to the outgoing message buffer.
+        // The labels are all allocated in corpus->labels. Normally we just copy
+        // from the corpus labels cube data, but since the labels we want are partly
+        // at the end of that array and partly at the beginning, we have to do 2 copies
+        
+        // Check if we actually read nothing (i.e. we were right at the end before)
+        // In this case, we only need one copy
+        if (rs == 0) {
+          assert(current_image_location_in_dataset == 0);
+          memcpy(outgoing_msg_send_data_and_ask_grad->content, corpus->labels->physical_get_RCDslice(0), sizeof(float) * corpus->mini_batch_size);
+        }
+        // Otherwise, we have to copy twice
+        else {
+          size_t num_images_from_end = corpus->n_images - current_image_location_in_dataset;
+          assert(num_images_from_end > 0);
+          assert(num_images_from_end < corpus->mini_batch_size);
+          size_t num_images_from_beginning = corpus->mini_batch_size - num_images_from_end;
+          memcpy(outgoing_msg_send_data_and_ask_grad->content,
+            corpus->labels->physical_get_RCDslice(current_image_location_in_dataset),
+            sizeof(float) * num_images_from_end);
+          memcpy(outgoing_msg_send_data_and_ask_grad->content + num_images_from_end,
+            corpus->labels->physical_get_RCDslice(0),
+            sizeof(float) * num_images_from_beginning);
+        }
+        
         // ++current_epoch;
       }
+      // Otherwise we will read all of the labels from the corpus
+      else {
+        // Get labels for this mini batch
+        memcpy(outgoing_msg_send_data_and_ask_grad->content, 
+          corpus->labels->physical_get_RCDslice(current_image_location_in_dataset),
+          sizeof(float) * corpus->mini_batch_size);
+      }
+      
+      // Move forwards in the dataset
       current_image_location_in_dataset += corpus->mini_batch_size;
       if (current_image_location_in_dataset >= corpus->n_images) {
         current_image_location_in_dataset -= corpus->n_images;
@@ -223,7 +264,8 @@ public:
       assert(!bridges.back()->get_share_pointer_with_next_bridge());
       // Do a memcpy to outgoing_msg_send_data_and_ask_grad->content
       // This can eventually be a device memcpy (see comment above)
-      memcpy(outgoing_msg_send_data_and_ask_grad->content, 
+      // Edit: We are offsetting by mini-batch size since we pass labels too
+      memcpy(outgoing_msg_send_data_and_ask_grad->content + corpus->mini_batch_size, 
         bridges.back()->p_output_layer->p_data_cube->get_p_data(),
         sizeof(float)*nfloats_output_data);
       // Debug
@@ -240,7 +282,7 @@ public:
       zmq_recv (requester_fc, incoming_data_grad_buf, incoming_data_grad_buf_size, 0);
       OmvMessage * incoming_msg_data_grads = reinterpret_cast<OmvMessage*>(incoming_data_grad_buf);
       assert(incoming_msg_data_grads->msg_type == ANSWER_GRADIENT_OF_SENT_DATA);
-      assert(incoming_msg_data_grads->size() == outgoing_data_buf_size);
+      assert(incoming_msg_data_grads->size() == int(sizeof(OmvMessage) + 1*sizeof(float)*nfloats_output_data));
       LOG(INFO) << "Received data gradients" << std::endl;
 
       // -----------------------------------------------------------------------
