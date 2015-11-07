@@ -8,14 +8,13 @@
 #include <glog/logging.h>
 
 #include "server/Server.h"
-#include "message/Message.h"
+#include "message/OmvMessage.h"
+#include "../CaffeConTroll/src/DeepNet.h"
 
 #include <zmq.h>
 
 using namespace std;
 using namespace libconfig;
-
-#define STEPSIZE 0.01
 
 class FCComputeModelServer : public Server{
 public:
@@ -23,23 +22,16 @@ public:
   string name;
   string bind;
 
-  int nfloats;
-  char * buf;
+  int nfloats;      // For input data and gradients (unlike ConvModelServer,
+                    // where nfloats is model and model gradient size)
 
-  int nfloats_input_data;
-  int nfloats_input_grad;
+  // Unused now, can just get rid of dependency on libconfig++
+  // using Server::input;
+  // using Server::output;
+  // using Server::models;
 
-  using Server::input;
-  using Server::output;
-  using Server::models;
-
-  FCComputeModelServer(string _name, string _bind, int _nfloats){
-    name = _name;
-    bind = _bind;
-    nfloats = _nfloats;
-    LOG(INFO) << "Allocating " << (1.0*nfloats*sizeof(float)/1024/1024) << " MB" << std::endl;
-    buf = new char[sizeof(Message) + sizeof(float) * nfloats];
-  }
+  FCComputeModelServer(string _name, string _bind) :
+    name(_name), bind(_bind), nfloats(0) {}
 
   /**
    * A ConvModelServer does two things
@@ -47,57 +39,227 @@ public:
    *   - listen to response that returns the gradient.
    **/
   void start(){
+  
     LOG(INFO) << "Starting FCComputeModelServer[" << name << "]..." << std::endl;
 
-    nfloats_input_data = input.N*input.N*input.I*input.B;
-    nfloats_input_grad = nfloats_input_data;
-
+    // -------------------------------------------------------------------------
+    // Bind 
+    // -------------------------------------------------------------------------
     void *context = zmq_ctx_new ();
     void *responder = zmq_socket (context, ZMQ_REP);
     int rc = zmq_bind (responder, bind.c_str());
     assert (rc == 0);
-
     LOG(INFO) << "Binded to " << bind << std::endl;
 
-    // for now, the buffer is 2x larger than the size of
-    // the model. Don't see why this needs to be larger
-    int bufsize = nfloats * sizeof(float) * 2;
-    char * buffer = new char[nfloats * sizeof(float) * 2];
+    // -------------------------------------------------------------------------
+    // Read parameter files and construct network
+    // -------------------------------------------------------------------------
+    // SHADJIS TODO -- These will be created and passed in by scheduler (main.cpp or python)
+    // Hard-code files for now. See comment in ConvModelServer.h.
+    std::string solver_file = "protos/solver.fc_model_server.prototxt";
+    std::string data_binary = "protos/dummy.bin";   // Empty file (no file needed, but prevents automatic binary creation)
+    std::string output_model_file = "fc_model.bin";
+    BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary, solver_param, net_param, bridges, true);
+    
+    SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
+    LogicalCubeFloat * const labels = softmax->p_data_labels;
+    // Also make a temporary labels array for when we wrap around the training set
+    float *labels_buffer = new float [corpus->mini_batch_size];
+    const int display_iter = solver_param.display();
+    
+    // Keep track of the image number in the dataset we are on
+    size_t current_image_location_in_dataset = 0;
+    size_t current_epoch = 0;    
+    float loss = 0.;
+    float accuracy = 0.;
+    
+    // -------------------------------------------------------------------------
+    // Allocate buffers and create messages
+    // -------------------------------------------------------------------------
+    
+    // Size of input data and input data gradients
+    nfloats = bridges.front()->get_input_data_size();
 
-    Message * gradient_msg = reinterpret_cast<Message*>(buf);
-    gradient_msg->msg_type = ANSWER_GRADIENT;
-    gradient_msg->nelem = nfloats_input_data;
+    // Allocate buffer for incoming messages
+    // This will be the output from ConvComputeServer
+    // Allocate a factor of 2 extra for this although should not be needed
+    int incoming_data_buf_size = sizeof(OmvMessage) + 2*sizeof(float)*nfloats;
+    LOG(INFO) << "Allocating " << (1.0*incoming_data_buf_size/1024/1024) << " MB for incoming messages (input data)" << std::endl;
+    char * incoming_data_buf = new char[incoming_data_buf_size];
+    
+    // Allocate buffer for gradients (outgoing message)
+    // We respond with these gradients, so we know the size exactly
+    int outgoing_data_grad_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*nfloats;
+    LOG(INFO) << "Allocating " << (1.0*outgoing_data_grad_buf_size/1024/1024) << " MB for outgoing data gradients" << std::endl;
+    char * outgoing_data_grad_buf = new char[outgoing_data_grad_buf_size];
 
+    // Create the response message for returning the data gradients
+    OmvMessage * outgoing_msg_data_grad = reinterpret_cast<OmvMessage*>(outgoing_data_grad_buf);
+    outgoing_msg_data_grad->msg_type = ANSWER_GRADIENT_OF_SENT_DATA;
+    outgoing_msg_data_grad->nelem = nfloats;
+    assert(outgoing_msg_data_grad->size() == outgoing_data_grad_buf_size);
+
+    // -------------------------------------------------------------------------
+    // Main Loop
+    // -------------------------------------------------------------------------
+    int batch = 0;
     while (1) {
 
-      zmq_recv(responder, buffer, bufsize, 0);
-      Message * msg = reinterpret_cast<Message*>(buffer);
+      // -----------------------------------------------------------------------
+      // Wait for a message containing new data. Read it into incoming_data_buf.
+      // -----------------------------------------------------------------------
+      zmq_recv(responder, incoming_data_buf, incoming_data_buf_size, 0);
+      // Create the message from this incoming buffer
+      OmvMessage * incoming_msg_data = reinterpret_cast<OmvMessage*>(incoming_data_buf);
+      assert(incoming_msg_data->msg_type == ASK_GRADIENT_OF_SENT_DATA);
+      assert(incoming_msg_data->size() == outgoing_data_grad_buf_size);
 
-      if(msg->msg_type == ASK_GRADIENT){
-        LOG(INFO) << "Responding ASK_GRADIENT Request" << endl;
-        
-        cout << msg->content[0] << endl;    // Print the first element of the data
-
-        sleep(1);                           // TODO: Do something and fill in gradient with -2
-        for(int i=0;i<gradient_msg->nelem;i++){
-          gradient_msg->content[i] = -2;
-        }
-
-        zmq_send (responder, gradient_msg, gradient_msg->size(), 0);
-      }else{
-        LOG(WARNING) << "Ignore unsupported message type " << msg->msg_type << endl;
+      // Now answer the request for data gradients
+      // This involves running FW and BW and returning the gradients
+      // LOG(INFO) << "Responding to ASK_GRADIENT_OF_SENT_DATA Request" << endl;
+  
+      // -----------------------------------------------------------------------
+      // Update input layer to point to the incoming batch of data
+      // -----------------------------------------------------------------------
+      // This is same as switching from training to validation set, and just 
+      // requires updating bridge 0 input data to point to incoming_msg_data->content.
+      // Note: The implementation for this is to have the scheduler create a 
+      // train proto file that makes a data layer of the correct size to match
+      // the fc layer input.
+      // Note that we are also ensuring the first layer's data is on the CPU,
+      // which is awlays true when the first layer is the data layer.
+      // If however in the future we want direct copy from GPU on conv compute
+      // server to GPU on fc compute model server, we need to change this.
+      //
+      // SHADJIS TODO: I want to do this assertion: 
+      //   assert(!bridges[0]->get_share_pointer_with_prev_bridge());
+      // since the first bridge has no previous bridge, i.e. it should not share
+      // any pointer with the previous bridge. However, for the first layer this
+      // is set to true for networks not using GPUs because the current check sees 
+      // that neither this layer nor the previous (non-existent) use any GPUs. So I
+      // will omit this assertion, since it is always true that the first layer
+      // (data input) is on the host, but if in the future we want to directly
+      // update device memory (e.g. direct copy from one server to another) we
+      // need to adjust the update_p_input_layer_data_CPU_ONLY call to pass in a
+      // device memory pointer.
+      bridges[0]->update_p_input_layer_data_CPU_ONLY(incoming_msg_data->content);
+      assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == incoming_msg_data->content);
+      // Debug
+      // cout << incoming_msg_data->content[0] << endl;    // Print the first element of the data
+  
+      // -----------------------------------------------------------------------
+      // Read in the next mini-batch labels from file
+      // -----------------------------------------------------------------------
+      
+      // Initialize labels for this mini batch
+      labels->set_p_data(corpus->labels->physical_get_RCDslice(current_image_location_in_dataset));
+      
+      // Move past the mini-batchlabels we just got the pointer to
+      current_image_location_in_dataset += corpus->mini_batch_size;
+      
+      // Check if the dataset just finished exactly and we need to restart from the beginning
+      if (current_image_location_in_dataset == corpus->n_images) {
+        current_image_location_in_dataset = 0;
+        ++current_epoch;
       }
+      // The more common case is that we went over the end of the dataset and now need to 
+      // start over from the beginning this iteration to read the remaining data
+      else if (current_image_location_in_dataset > corpus->n_images) {
+      
+        current_image_location_in_dataset -= corpus->n_images;
+        ++current_epoch;
+        
+        // Copy over the labels to a contiguous memory location. This requires two
+        // copies, one from the end and one from the beginning.
+        // See comment in DeepNet.h for more information.
+
+        // Calculate how many we need to read from the end
+        size_t num_images_from_end = corpus->mini_batch_size - current_image_location_in_dataset;
+        assert(num_images_from_end > 0);
+        // Calculate how many we need to read from the beginning
+        size_t num_images_from_beginning = current_image_location_in_dataset;
+        assert(num_images_from_beginning + num_images_from_end == corpus->mini_batch_size);
+        // Copy to buffer
+        memcpy(labels_buffer,
+          corpus->labels->physical_get_RCDslice(corpus->n_images - num_images_from_end),
+          sizeof(float) * num_images_from_end);
+        memcpy(labels_buffer + num_images_from_end,
+          corpus->labels->physical_get_RCDslice(0),
+          sizeof(float) * num_images_from_beginning);
+        // Now point labels to this array
+        labels->set_p_data(labels_buffer);
+      }
+      
+      // -----------------------------------------------------------------------
+      // Run forward and backward pass
+      // -----------------------------------------------------------------------
+
+      softmax->reset_loss();
+      
+      // Forward pass
+      for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
+        (*bridge)->forward();
+      }
+
+      loss += (softmax->get_loss() / float(corpus->mini_batch_size));
+      accuracy += float(DeepNet::find_accuracy(labels, (*--bridges.end())->p_output_layer->p_data_cube)) / float(corpus->mini_batch_size);
+
+      // Backward pass
+      for (auto bridge = bridges.rbegin(); bridge != bridges.rend(); ++bridge) {
+        (*bridge)->backward();
+      }
+
+      // Check if we should print batch status
+      if ( (batch+1) % display_iter == 0 ) {
+        float learning_rate = Util::get_learning_rate(solver_param.lr_policy(), solver_param.base_lr(), solver_param.gamma(),
+          batch+1, solver_param.stepsize(), solver_param.power(), solver_param.max_iter());
+        
+        std::cout << "Training Status Report (Epoch " << current_epoch << " / Mini-batch iter " << batch << "), LR = " << learning_rate << std::endl;
+        std::cout << "  \033[1;32m";
+        std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
+        std::cout << "\033[0m" << std::endl;
+        loss = 0.;
+        accuracy = 0.;
+      }
+            
+      // -----------------------------------------------------------------------
+      // Fill outgoing_msg_data_grad->content with the data gradients
+      // -----------------------------------------------------------------------
+      // SHADJIS TODO: See comment above, this code needs to change if doing a
+      // direct copy across servers to GPU memory to use device memory pointers.
+      //assert(!bridges[0]->get_share_pointer_with_prev_bridge());
+      memcpy(outgoing_msg_data_grad->content, 
+        bridges[0]->p_input_layer->p_gradient_cube->get_p_data(),
+        sizeof(float)*nfloats);
+      
+      // -----------------------------------------------------------------------
+      // Send the data gradients back
+      // -----------------------------------------------------------------------
+      // LOG(INFO) << "Sending ANSWER_GRADIENT_OF_SENT_DATA Response" << endl;
+      zmq_send (responder, outgoing_msg_data_grad, outgoing_msg_data_grad->size(), 0);
+      
+      ++batch;
     }
+
+    // -------------------------------------------------------------------------
+    // Save model and destroy network
+    // -------------------------------------------------------------------------
+    
+    // Save model to file unless snapshot_after_train was set to false
+    if (solver_param.snapshot_after_train()) {
+      DeepNet::write_model_to_file(bridges, output_model_file);
+      std::cout << "\nTrained model written to " + output_model_file +  ".\n";
+    } else {
+      std::cout << "\nNot writing trained model to file (snapshot_after_train = false)\n";
+    }
+
+    // Destroy network
+    DeepNet::clean_up(bridges, corpus);
+    delete labels_buffer;
 
   }
 };
 
 #endif
-
-
-
-
-
-
-
 

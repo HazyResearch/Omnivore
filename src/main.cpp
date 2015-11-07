@@ -14,6 +14,12 @@
 #include "server/ConvComputeServer.h"
 #include "server/FCComputeModelServer.h"
 
+// SHADJIS TODO: This function used to read in .cfg files and create
+// the server objects. Now, they read in their own proto files, so
+// all this needs to do is pass the name of the proto.
+// This will eventually be replaced with the scheduler: it takes in
+// a solver/train proto like caffe, and splits it into partial protos
+// based on sizes/etc.
 
 using namespace std;
 using namespace libconfig;
@@ -44,7 +50,7 @@ Server * initConvModelServer(Config & cfg, char * filename){
   }
   LOG(INFO) << "NELEMS = " << NNUMBERS << " FLOATS" << std::endl;
 
-  Server * s = new ConvModelServer(NAME, BIND, NNUMBERS);
+  Server * s = new ConvModelServer(NAME, BIND); // SHADJIS TODO: Pass solver proto here
 
   return s;
 }
@@ -80,7 +86,7 @@ Server * initConvComputeServer(Config & cfg, char * filename){
   }
   LOG(INFO) << "NELEMS = " << NNUMBERS << " FLOATS" << std::endl;
 
-  Server * s = new ConvComputeServer(NAME, CONVBIND, FCBIND, NNUMBERS);
+  Server * s = new ConvComputeServer(NAME, CONVBIND, FCBIND);   // SHADJIS TODO: Pass solver proto here
   
   string name;
   int N, I, B;
@@ -130,7 +136,7 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
   }
   LOG(INFO) << "NELEMS = " << NNUMBERS << " FLOATS" << std::endl;
 
-  Server * s = new FCComputeModelServer(NAME, BIND, NNUMBERS);
+  Server * s = new FCComputeModelServer(NAME, BIND);    // SHADJIS TODO: Pass solver proto here
 
   string name;
   int N, I, B;
