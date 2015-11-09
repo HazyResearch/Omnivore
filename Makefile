@@ -1,5 +1,5 @@
 # Since CcT is being used as a backend, need to configure it
-include ../CaffeConTroll/.config
+include ./CaffeConTroll/.config
 
 # SHADJIS TODO: The Makefile below has a lot in common with the CaffeConTroll Makefile
 # Can just include that here instead, or refactor common parts into Makefile.common
@@ -15,7 +15,7 @@ LD_BASE=$(foreach l, $(LIBS), -l$l)
 
 # Header directories
 INCLUDE_DIRS=$(BOOST_INCLUDE) $(GLOG_INCLUDE) \
-	     $(LMDB_INCLUDE) $(BLAS_INCLUDE) ./src ../CaffeConTroll/src/parser/
+	     $(LMDB_INCLUDE) $(BLAS_INCLUDE) ./src ./CaffeConTroll/src/parser/
 INCLUDE_STR=$(foreach d, $(INCLUDE_DIRS), -I$d)
 
 # Library directories
@@ -43,19 +43,19 @@ PRODUCT_FLAGS = -Ofast -D_FASTPOW
 
 # Protobuf variables
 PROTOBUF_LIB = -lprotobuf
-PROTO_SRC_DIR=../CaffeConTroll/src/parser/
+PROTO_SRC_DIR=./CaffeConTroll/src/parser/
 PROTO_CC=protoc --cpp_out=.
 PROTO_SRC=cnn.proto
 PROTO_COMPILED_SRC=$(PROTO_SRC_DIR)cnn.pb.cc
 
 # Source file for main program
 TARGET = dcct
-SRC = ../CaffeConTroll/src/DeepNetConfig.cpp ../CaffeConTroll/src/util.cpp ../CaffeConTroll/src/timer.cpp ../CaffeConTroll/src/sched/DeviceDriver_CPU.cpp src/main.cpp
+SRC = ./CaffeConTroll/src/DeepNetConfig.cpp ./CaffeConTroll/src/util.cpp ./CaffeConTroll/src/timer.cpp ./CaffeConTroll/src/sched/DeviceDriver_CPU.cpp src/main.cpp
 OBJ_FILES = $(patsubst %.cpp,%.o,$(SRC))
 
 # CUDA Includes
 ifdef NVCC
-MAIN_CUDA_SOURCES = ../CaffeConTroll/src/sched/DeviceDriver_GPU.cu
+MAIN_CUDA_SOURCES = ./CaffeConTroll/src/sched/DeviceDriver_GPU.cu
 MAIN_CUDA_OBJ_FILES = $(patsubst %.cu,%.o,$(MAIN_CUDA_SOURCES))
 CFLAGS += -D_INCLUDE_GPUDRIVER  -I $(CUDA_INCLUDE) -L $(CUDA_LIB)
 endif
