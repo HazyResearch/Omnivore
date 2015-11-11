@@ -13,24 +13,22 @@
 
 #include <zmq.h>
 
-using namespace std;
-using namespace libconfig;
 
 class ConvModelServer : public Server{
 public:
 
-  string name;
-  string bind;
+  // SHADJIS TODO: These 3 should be taken from the parent class with using
+  std::string name;
+  std::string solver_file;
+  std::string data_binary;
+  
+  std::string bind;
 
   int nfloats;  // For both model and gradient buffers
 
-  // Unused now, can just get rid of dependency on libconfig++
-  // using Server::input;
-  // using Server::output;
-  // using Server::models;
-
-  ConvModelServer(string _name, string _bind) : 
-    name(_name), bind(_bind), nfloats(0) {}
+  ConvModelServer(string _name, std::string _bind, std::string _solver_file, std::string _data_binary) : 
+    name(_name), solver_file(_solver_file), data_binary(_data_binary),
+    bind(_bind), nfloats(0) {}
 
   /**
    * A ConvModelServer does two things
@@ -58,13 +56,11 @@ public:
 
     // SHADJIS TODO: Here we construct the entire network but we don't need to because
     // this server only needs the models and learning rates / regularization per layer.
-    // However the data is small so this does not matter.
-    // SHADJIS TODO -- These will be created and passed in by scheduler (main.cpp or python)
-    std::string solver_file = "protos/solver.conv_model_server.prototxt";
-    std::string data_binary = "protos/dummy.bin";   // Empty file (no file needed, but prevents automatic binary creation)
+    // However the data is small so this does not matter. The LMDB is also unused except
+    // for the size of the input layer which is stored in each datum.
     std::string output_model_file = "conv_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary, solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
     // -------------------------------------------------------------------------
@@ -118,12 +114,12 @@ public:
         assert(incoming_msg->size() == sizeof(OmvMessage));
         
         // Reply Current Model
-        LOG(INFO) << "Responding to ASK_MODEL Request" << endl;
+        LOG(INFO) << "Responding to ASK_MODEL Request" << std::endl;
         // Load the model
-        LOG(INFO) << "    Loading the model" << endl;
+        LOG(INFO) << "    Loading the model" << std::endl;
         DeepNet::get_all_models(bridges, outgoing_msg_send_master_model->content);
         // Send this model object back
-        LOG(INFO) << "Sending ANSWER_MODEL Response" << endl;
+        LOG(INFO) << "Sending ANSWER_MODEL Response" << std::endl;
         zmq_send (responder, outgoing_msg_send_master_model, outgoing_msg_send_master_model->size(), 0);
         
       // Receive gradients and update model
@@ -131,17 +127,17 @@ public:
       
         assert(incoming_msg->size() == outgoing_model_buf_size);
         
-        LOG(INFO) << "Responding to ASK_UPDATE_GRADIENT Request" << endl;
+        LOG(INFO) << "Responding to ASK_UPDATE_GRADIENT Request" << std::endl;
         // Update gradients and send acknowledgement
-        LOG(INFO) << "    Updating Gradient" << endl;
+        LOG(INFO) << "    Updating Gradient" << std::endl;
         // Call CcT to update the model given this model gradient.
         DeepNet::update_all_models_with_gradients(bridges, incoming_msg->content);
         // Send back an acknowledgement that the gradient has been updated
-        LOG(INFO) << "Sending ANSWER_UPDATE_GRADIENT Response" << endl;
+        LOG(INFO) << "Sending ANSWER_UPDATE_GRADIENT Response" << std::endl;
         zmq_send (responder, &outgoing_msg_reply_update_gradient, outgoing_msg_reply_update_gradient.size(), 0);
         
       }else{
-        LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << endl;
+        LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << std::endl;
       }
     }
 

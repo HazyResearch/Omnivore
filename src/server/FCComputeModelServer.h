@@ -13,25 +13,23 @@
 
 #include <zmq.h>
 
-using namespace std;
-using namespace libconfig;
 
 class FCComputeModelServer : public Server{
 public:
 
-  string name;
-  string bind;
+  // SHADJIS TODO: These 3 should be taken from the parent class with using
+  std::string name;
+  std::string solver_file;
+  std::string data_binary;
+  
+  std::string bind;
 
   int nfloats;      // For input data and gradients (unlike ConvModelServer,
                     // where nfloats is model and model gradient size)
 
-  // Unused now, can just get rid of dependency on libconfig++
-  // using Server::input;
-  // using Server::output;
-  // using Server::models;
-
-  FCComputeModelServer(string _name, string _bind) :
-    name(_name), bind(_bind), nfloats(0) {}
+  FCComputeModelServer(string _name, std::string _bind, std::string _solver_file, std::string _data_binary) : 
+    name(_name), solver_file(_solver_file), data_binary(_data_binary),
+    bind(_bind), nfloats(0) {}
 
   /**
    * A ConvModelServer does two things
@@ -54,16 +52,12 @@ public:
     // -------------------------------------------------------------------------
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
-    // SHADJIS TODO -- These will be created and passed in by scheduler (main.cpp or python)
-    // Hard-code files for now. See comment in ConvModelServer.h.
     // Note: like the conv model server, this server does not need to read any labels or data from
     // the corpus (lmdb). The only information currently used from lmdb is the size of the 
     // first fc layer (stored in each datum).
-    std::string solver_file = "protos/solver.fc_model_server.prototxt";
-    std::string data_binary = "protos/dummy.bin";   // Empty file (no file needed, but prevents automatic binary creation)
     std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary, solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     
     SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
     LogicalCubeFloat * const labels = softmax->p_data_labels;

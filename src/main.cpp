@@ -14,162 +14,86 @@
 #include "server/ConvComputeServer.h"
 #include "server/FCComputeModelServer.h"
 
-// SHADJIS TODO: This function used to read in .cfg files and create
-// the server objects. Now, they read in their own proto files, so
-// all this needs to do is pass the name of the proto.
-// This will eventually be replaced with the scheduler: it takes in
-// a solver/train proto like caffe, and splits it into partial protos
-// based on sizes/etc.
+// SHADJIS TODO: We use libconfig++ to parse very simple files, 
+// can just parse manually
 
 using namespace std;
 using namespace libconfig;
 
+
+// Initialize conv model server from config file
 Server * initConvModelServer(Config & cfg, char * filename){
   LOG(INFO) << "Initializing ConvModelServer from " << filename << endl;
-  const Setting& root = cfg.getRoot();
 
-  string NAME = cfg.lookup("name");
-  string BIND = cfg.lookup("bind");
-  int NMODEL = root["models"].getLength();
-  LOG(INFO) << "NAME   = " << NAME   << std::endl;
-  LOG(INFO) << "BIND   = " << BIND   << std::endl;
-  LOG(INFO) << "NMODEL = " << NMODEL << std::endl;
+  string NAME      = cfg.lookup("name");
+  string BIND      = cfg.lookup("bind");
+  string SOLVER    = cfg.lookup("solver");
+  string TRAIN_BIN = cfg.lookup("train_bin");
 
-  int NNUMBERS = 0;
+  LOG(INFO) << "NAME      = " << NAME      << std::endl;
+  LOG(INFO) << "BIND      = " << BIND      << std::endl;
+  LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
+  LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
 
-  for(int i=0;i<NMODEL;i++){
-    const Setting & model = root["models"][i];
-    string name;
-    int N, I, B;
-    model.lookupValue("name", name);
-    model.lookupValue("N", N);
-    model.lookupValue("I", I);
-    model.lookupValue("B", B);
-    LOG(INFO) << name << " " << N << " " << I << " " << B << endl;
-    NNUMBERS += N * N * I * B;
-  }
-  LOG(INFO) << "NELEMS = " << NNUMBERS << " FLOATS" << std::endl;
-
-  Server * s = new ConvModelServer(NAME, BIND); // SHADJIS TODO: Pass solver proto here
-
-  return s;
-}
-
-Server * initConvComputeServer(Config & cfg, char * filename){
-  LOG(INFO) << "Initializing ConvComputeServer from " << filename << endl;
-  const Setting& root = cfg.getRoot();
-
-  string NAME = cfg.lookup("name");
-  string CONVBIND = cfg.lookup("conv_bind");
-  string FCBIND = cfg.lookup("fc_bind");
-  int NMODEL = root["models"].getLength();
-  LOG(INFO) << "NAME    = " << NAME   << std::endl;
-  LOG(INFO) << "CONVBIND= " << CONVBIND << std::endl;
-  LOG(INFO) << "FCBIND  = " << FCBIND   << std::endl;
-  LOG(INFO) << "NMODEL  = " << NMODEL << std::endl;
-
-  int NNUMBERS = 0;
-
-  vector<Cube> models;
-
-  for(int i=0;i<NMODEL;i++){
-    const Setting & model = root["models"][i];
-    string name;
-    int N, I, B;
-    model.lookupValue("name", name);
-    model.lookupValue("N", N);
-    model.lookupValue("I", I);
-    model.lookupValue("B", B);
-    LOG(INFO) << name << " " << N << " " << I << " " << B << endl;
-    NNUMBERS += N * N * I * B;
-    models.push_back(Cube(name, N, I, B));
-  }
-  LOG(INFO) << "NELEMS = " << NNUMBERS << " FLOATS" << std::endl;
-
-  Server * s = new ConvComputeServer(NAME, CONVBIND, FCBIND);   // SHADJIS TODO: Pass solver proto here
-  
-  string name;
-  int N, I, B;
-  root["input"].lookupValue("name", name);
-  root["input"].lookupValue("N", N);
-  root["input"].lookupValue("I", I);
-  root["input"].lookupValue("B", B);
-  s->input = Cube(name, N, I, B);
-
-  root["output"].lookupValue("name", name);
-  root["output"].lookupValue("N", N);
-  root["output"].lookupValue("I", I);
-  root["output"].lookupValue("B", B);
-  s->output = Cube(name, N, I, B);
-
-  s->models = models;
+  Server * s = new ConvModelServer(NAME, BIND, SOLVER, TRAIN_BIN);
   return s;
 }
 
 
+// Initialize fc model/compute server from config file
 Server * initFCComputeModelServer(Config & cfg, char * filename){
   LOG(INFO) << "Initializing initFCComputeModelServer from " << filename << endl;
-  const Setting& root = cfg.getRoot();
 
-  string NAME = cfg.lookup("name");
-  string BIND = cfg.lookup("bind");
-  int NMODEL = root["models"].getLength();
-  LOG(INFO) << "NAME   = " << NAME   << std::endl;
-  LOG(INFO) << "BIND   = " << BIND   << std::endl;
-  LOG(INFO) << "NMODEL = " << NMODEL << std::endl;
+  string NAME      = cfg.lookup("name");
+  string BIND      = cfg.lookup("bind");
+  string SOLVER    = cfg.lookup("solver");
+  string TRAIN_BIN = cfg.lookup("train_bin");
 
-  int NNUMBERS = 0;
+  LOG(INFO) << "NAME      = " << NAME      << std::endl;
+  LOG(INFO) << "BIND      = " << BIND      << std::endl;
+  LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
+  LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
 
-  vector<Cube> models;
-
-  for(int i=0;i<NMODEL;i++){
-    const Setting & model = root["models"][i];
-    string name;
-    int N, I, B;
-    model.lookupValue("name", name);
-    model.lookupValue("N", N);
-    model.lookupValue("I", I);
-    model.lookupValue("B", B);
-    LOG(INFO) << name << " " << N << " " << I << " " << B << endl;
-    NNUMBERS += N * N * I * B;
-    models.push_back(Cube(name, N, I, B));
-  }
-  LOG(INFO) << "NELEMS = " << NNUMBERS << " FLOATS" << std::endl;
-
-  Server * s = new FCComputeModelServer(NAME, BIND);    // SHADJIS TODO: Pass solver proto here
-
-  string name;
-  int N, I, B;
-  root["input"].lookupValue("name", name);
-  root["input"].lookupValue("N", N);
-  root["input"].lookupValue("I", I);
-  root["input"].lookupValue("B", B);
-  s->input = Cube(name, N, I, B);
-
-  root["output"].lookupValue("name", name);
-  root["output"].lookupValue("N", N);
-  root["output"].lookupValue("I", I);
-  root["output"].lookupValue("B", B);
-  s->output = Cube(name, N, I, B);
-
-  s->models = models;
-
+  Server * s = new FCComputeModelServer(NAME, BIND, SOLVER, TRAIN_BIN);
   return s;
 }
 
 
+// Initialize conv compute server from config file
+Server * initConvComputeServer(Config & cfg, char * filename){
+  LOG(INFO) << "Initializing ConvComputeServer from " << filename << endl;
+
+  string NAME      = cfg.lookup("name");
+  string CONV_BIND = cfg.lookup("conv_bind");
+  string FC_BIND   = cfg.lookup("fc_bind");
+  string SOLVER    = cfg.lookup("solver");
+  string TRAIN_BIN = cfg.lookup("train_bin");
+
+  LOG(INFO) << "NAME      = " << NAME      << std::endl;
+  LOG(INFO) << "CONV_BIND = " << CONV_BIND << std::endl;
+  LOG(INFO) << "FC_BIND   = " << FC_BIND   << std::endl;
+  LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
+  LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
+
+  Server * s = new ConvComputeServer(NAME, CONV_BIND, FC_BIND, SOLVER, TRAIN_BIN);
+  return s;
+}
+
+
+// Read in path to config file and start server
 int main(int argc, char **argv)
 {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1;
-
   Config cfg;
-
-  if(argc < 2){
-    LOG(FATAL) << "I need to know where to find config file as the first argument."
+  
+  // Expect config file as first and only argument
+  if(argc != 2){
+    LOG(FATAL) << "Error: Expecting path to config file as the first and only argument."
                << endl;
   }
-
+  
+  // Parse server type from config file
   try{
     cfg.readFile(argv[1]);
   }catch(const FileIOException &fioex){
@@ -179,10 +103,9 @@ int main(int argc, char **argv)
               << " - " << pex.getError() << endl;
     assert(false);
   }
-
-  // Get the Type
   string type = cfg.lookup("type");
   
+  // Start server of this type
   if(type == "ConvModelServer"){
     Server * s = initConvModelServer(cfg, argv[1]);
     s->start();

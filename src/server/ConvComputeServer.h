@@ -13,15 +13,17 @@
 
 #include <zmq.h>
 
-using namespace std;
-using namespace libconfig;
 
 class ConvComputeServer : public Server{
 public:
 
-  string name;
-  string conv_bind;
-  string fc_bind;
+  // SHADJIS TODO: These 3 should be taken from the parent class with using
+  std::string name;
+  std::string solver_file;
+  std::string data_binary;
+  
+  std::string conv_bind;
+  std::string fc_bind;
 
   // There are 4 buffers needed:
   // - The model and model gradients (these two are the same size)
@@ -29,14 +31,10 @@ public:
   int nfloats_model;
   int nfloats_output_data;
 
-  // Unused now, can just get rid of dependency on libconfig++
-  // using Server::input;
-  // using Server::output;
-  // using Server::models;
-
-  ConvComputeServer(string _name, string _conv_bind, string _fc_bind) : 
-    name(_name), conv_bind(_conv_bind), fc_bind(_fc_bind), nfloats_model(0),
-    nfloats_output_data(0) {}
+  ConvComputeServer(string _name, std::string _conv_bind, std::string _fc_bind, std::string _solver_file, std::string _data_binary) : 
+    name(_name), solver_file(_solver_file), data_binary(_data_binary), 
+    conv_bind(_conv_bind), fc_bind(_fc_bind),
+    nfloats_model(0), nfloats_output_data(0) {}
 
   void start(){
   
@@ -62,15 +60,12 @@ public:
     // -------------------------------------------------------------------------
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
-    // SHADJIS TODO -- These will be created and passed in by scheduler (main.cpp or python)
-    std::string solver_file = "protos/solver.conv_compute_server.prototxt";
-    std::string data_binary = "/lfs/raiders1/0/shadjis/cct_tests/8_train_NEW.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     // Modify all bridges to not update model gradients in backward pass (saves time)
     for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
       (*bridge)->set_update_model_gradients(false);
     }
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary, solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     // Open the file for the first time during training
     FILE * pFile = fopen (corpus->filename.c_str(), "rb");
     if (!pFile)
@@ -241,7 +236,7 @@ public:
       // Update the network with the model received in this buffer
       DeepNet::set_all_models(bridges, incoming_msg_new_model->content);
       // Debug: Print the first element of the model
-      // cout << incoming_msg_new_model->content[0] << endl;
+      // cout << incoming_msg_new_model->content[0] << std::endl;
       
       // -----------------------------------------------------------------------
       // Run FW Pass
