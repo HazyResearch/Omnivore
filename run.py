@@ -41,6 +41,7 @@ extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bi
 # ------------------------------------------------------------------------------
 
 # Set to true after lmdb has been generated once (saves time)
+# Warning: When changing the number of machines, need to reset this to True
 skip_lmdb_generation = False
 
 # Run with GPUs. If neither is True, uses CPU only.
@@ -443,6 +444,7 @@ if not skip_lmdb_generation:
 
     def open_new_write_lmdb_helper(new_lmdb_name, num_imgs, map_size):
         os.system('rm -rf ' + new_lmdb_name)
+        os.system('rm -rf ' + new_lmdb_name + '.bin')
         write_env = lmdb.open(new_lmdb_name, readonly=False, lock=False, map_size=map_size)
         write_txn = write_env.begin(write=True)
         print '  Writing ' + str(num_imgs) + ' images to ' + new_lmdb_name
@@ -590,7 +592,7 @@ for cmd_param in cmd_params:
 f = open('kill_servers.sh', 'w')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
-    f.write('ssh ' + user + '@' + machine + ' \'fuser -k 5555/tcp; fuser -k 5556/tcp\' &' + "\n")
+    f.write('ssh ' + user + '@' + machine + ' \'pkill dcct; fuser -k 5555/tcp; fuser -k 5556/tcp;\' &' + "\n")
 f.close()
 
 print '''
