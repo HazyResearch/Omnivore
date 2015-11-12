@@ -43,6 +43,10 @@ extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bi
 # Set to true after lmdb has been generated once (saves time)
 skip_lmdb_generation = False
 
+# Run with GPUs. If neither is True, uses CPU only.
+use_4_gpu = False   # Takes precedence if both this and use_1_gpu are True
+use_1_gpu = False
+
 
 # ==============================================================================
 # Description
@@ -236,20 +240,23 @@ fc_section = False
 
 # Read layer by layer
 lines_for_current_layer = []
+lines_for_current_layer_no_gpu = []
 f = open(train_proto)
 for line in f:
     # Check if this is the start of a new layer
     # SHADJIS TODO: I think proto can skip a line bfore the curly brace but I'll ignore that for now
     if re.search(r'layer\s*\{', line, flags=re.IGNORECASE):
         layer_str = ''.join(lines_for_current_layer)
+        layer_str_no_gpu = ''.join(lines_for_current_layer_no_gpu)
         lines_for_current_layer = [line]
+        lines_for_current_layer_no_gpu = [line]
         # This is a new layer. What we do with the old layer depends on 
         # which section we are in
         
         # Case 1, this is a data layer
         if data_section:
             # We want to append this layer to all the networks
-            conv_model_server_proto_str += layer_str
+            conv_model_server_proto_str += layer_str_no_gpu # No GPU for now on the conv model server
             # For each conv compute network, we need to replace the LMDB
             for i in range(num_conv_compute_servers):
                 conv_compute_server_proto_strs[i] += layer_str.replace(conv_movel_server_train_lmdb_name, conv_compute_server_train_lmdb_names[i])
@@ -260,7 +267,7 @@ for line in f:
             fc_server_proto_str += layer_str.replace(conv_movel_server_train_lmdb_name, fc_server_train_lmdb_name)
         # Case 2, this is a layer in the conv part
         elif conv_section:
-            conv_model_server_proto_str += layer_str
+            conv_model_server_proto_str += layer_str_no_gpu
             for i in range(num_conv_compute_servers):
                 conv_compute_server_proto_strs[i] += layer_str
         # Case 3, this is a layer in the FC part
@@ -270,6 +277,7 @@ for line in f:
     # Otherwise this is part of a layer
     else:
         lines_for_current_layer.append(line)
+        lines_for_current_layer_no_gpu.append(line)
         
         # We can also determine if we moved to a new section of the network
         match = re.search(r'type\s*:\s*"\s*(\S+)\s*"', line, flags=re.IGNORECASE)
@@ -287,10 +295,43 @@ for line in f:
                 data_section = False
                 conv_section = False
                 fc_section = True
+                
+            # Update proto with GPU information
+            #
+            # Only do this once per layer, i.e. we want to do it after this 'type:' line:
+            #
+            #   type: "ReLU"            <----
+            #
+            # But not after this 'type:' line
+            #
+            #    weight_filler {
+            #      type: "gaussian"     <----
+            #      std: 0.01
+            #    }
+            if type.upper() in ['INNERPRODUCT', 'RELU', 'DROPOUT', 'POOLING', 'CONVOLUTION', 'LRN']:
+            
+                # Conv can use up to 4 GPUs
+                if conv_section:
+                    if use_4_gpu:
+                        lines_for_current_layer.append('''  gpu_0_batch_proportion: 0.25
+  gpu_1_batch_proportion: 0.25
+  gpu_2_batch_proportion: 0.25
+  gpu_3_batch_proportion: 0.25
+''')
+                    elif use_1_gpu:
+                        lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+''')
+                # FC can use up to 1 GPU
+                elif fc_section and type.upper() != 'SOFTMAXWITHLOSS':
+                    if use_4_gpu or use_1_gpu:
+                        lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+''')
 f.close()
         
 # Call code above for the last layer too now
 layer_str = ''.join(lines_for_current_layer)
+layer_str_no_gpu = ''.join(lines_for_current_layer_no_gpu)
+assert layer_str == layer_str_no_gpu # Last layer (softmax) should not use GPU
 assert fc_section
 fc_server_proto_str += layer_str
 
