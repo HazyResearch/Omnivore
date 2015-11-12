@@ -2,26 +2,38 @@
 
 ### Compilation
 
-Install
-  - zeromq
-  - glog
-  - libconfig++
+Download the repository as well as the CaffeConTroll submodule
 
-Then just
-    `make`
+  - `git clone https://github.com/HazyResearch/dcct.git`
+  - `cd dcct`
+  - `git submodule update --init`
+
+Install the following dependencies
+
+  - zeromq
+     - The zeromq website seems to be out of date. If so, you can try [this helpful blog post](https://tuananh.org/2015/06/16/how-to-install-zeromq-on-ubuntu/)
+  - Protobuf 3.0.0, e.g. using the command `pip install protobuf==3.0.0a3`
+  - LMDB, e.g. using the command `pip install lmdb`
+  - glog (this dependency may be removed soon)
+  - [libconfig++](http://www.hyperrealm.com/libconfig/) (this dependency may be removed soon)
+  
+Compile dcct
+
+    `make -j`
+    `cd tools/size_util/; make -j; cd -`
     
 This will produce a binary `dcct`.
 
 ### Usage
 
-There are currently three types of servers
-  - ConvModelServer: the master server that provides models for CONV layers.
-  - ConvComputeServer: the slave server that gets model from `ConvModelServer` and returns the gradient.
-  - FCComputeModelServer: the master+slave sver that gets data of CONV result from `ConvComputeServer` and returns the gradient.
+Create a file containing each machine in your cluster, one per line
+  - See an example [here](example/machine_list.txt)
 
-Each server is specified with a configuration file. To start these servers
-  - `./dcct configs/ConvModelServer.cfg`
-  - `./dcct configs/ConvComputeServer.cfg`
-  - `./dcct configs/FCComputeModelServer.cfg`
+Create a solver and train prototxt file (same input as Caffe/CaffeConTroll) and run:
 
-You can keep adding `ConvComputeServer.cfg` with the same command. 
+  - `python run.py  path/to/solver.prototxt  path/to/machine_list.txt`
+
+Observing the output:
+
+  - A number of configuration files will be created in a new directory called something like `server_input_files-2015-11-12-05-25-26`
+  - The output of the network that is training will be written to the file `fc_server.cfg.out` inside this directory
