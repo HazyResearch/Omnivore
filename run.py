@@ -44,7 +44,7 @@ extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bi
 skip_lmdb_generation = False
 
 # Run with GPUs. If neither is True, uses CPU only.
-use_4_gpu = False   # Takes precedence if both this and use_1_gpu are True
+use_4_gpu = True   # Takes precedence if both this and use_1_gpu are True
 use_1_gpu = False
 
 
@@ -564,7 +564,7 @@ conv_bind = "tcp://''' + conv_model_server_machine + ''':5555";
 fc_bind = "tcp://''' + fc_server_machine + ''':5556";
 type = "ConvComputeServer";
 solver = "''' + conv_compute_server_solver_files[i] + '''"
-train_bin = "''' + input_file_dir + '/conv_compute_train_data.' + str(i) + '.bin' + '''"
+train_bin = "''' + conv_compute_server_train_lmdb_names[i] + '''.bin"
 ''')
     f.close()
     cmd_params.append((conv_compute_server_machines[i], conv_compute_server_cfgs[i]))
@@ -574,6 +574,10 @@ train_bin = "''' + input_file_dir + '/conv_compute_train_data.' + str(i) + '.bin
 # Run ssh commands
 # ==============================================================================
 
+print '''
+Beginning to run commands for each server
+'''
+
 # Run the commmands
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
@@ -582,3 +586,17 @@ for cmd_param in cmd_params:
     print cmd
     os.system(cmd)
 
+# Also generate a script that can be used to kill all these servers
+f = open('kill_servers.sh', 'w')
+for cmd_param in cmd_params:
+    machine  = cmd_param[0]
+    f.write('ssh ' + user + '@' + machine + ' \'fuser -k 5555/tcp; fuser -k 5556/tcp\' &' + "\n")
+f.close()
+
+print '''
+Servers are now running on each machine over ssh.
+See the input configuration file for each server to see which machine it is running on.
+To stop all servers, run:
+
+$ bash kill_servers.sh
+'''
