@@ -20,12 +20,25 @@ import datetime
 # ==============================================================================
 # Parameters
 # ==============================================================================
-skip_lmdb_generation = True     # SHADJIS TODO
 
+# ------------------------------------------------------------------------------
 # SSH parameters
-user = 'root'                   # User name to log in to each machine with
+# ------------------------------------------------------------------------------
+
+# User name to log in to each machine with
+user = 'root'
+
 # Extra commands to run following ssh (e.g. cd into right dir)
-extra_cmd = ''
+# Note also that ssh does not source .bashrc so may need to run load commands as well.
+extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-7.0/lib64;'
+
+
+# ------------------------------------------------------------------------------
+# Script parameters
+# ------------------------------------------------------------------------------
+
+# Set to true after lmdb has been generated once (saves time)
+skip_lmdb_generation = True
 
 
 # ==============================================================================
@@ -355,101 +368,105 @@ for i in range(num_conv_compute_servers):
 # First, make the lmdb for each conv compute server
 # ------------------------------------------------------------------------------
 
-# SHADJIS TODO: Skip this if there is only 1 partition, and re-use existing lmdb
+if not skip_lmdb_generation:
 
-# Open the full lmdb that we will read from
-read_lmdb_name = conv_movel_server_train_lmdb_name
-map_size = 1024*1024*1024*1024
+    # SHADJIS TODO: Skip this if there is only 1 partition, and re-use existing lmdb
 
-# First count the number of images
-read_env = lmdb.open(read_lmdb_name, readonly=True)
-num_images = 0
-with read_env.begin() as read_txn:
-    with read_txn.cursor() as read_cursor:
-        for key, value in read_cursor:
-            num_images += 1
-read_env.close()
-print 'LMDB ' + read_lmdb_name + ' contains ' + str(num_images)
+    # Open the full lmdb that we will read from
+    read_lmdb_name = conv_movel_server_train_lmdb_name
+    map_size = 1024*1024*1024*1024
 
-# Now split by the number of conv compute servers
-num_images_per_conv_compute_server = [num_images/num_conv_compute_servers]*num_conv_compute_servers
+    # First count the number of images
+    read_env = lmdb.open(read_lmdb_name, readonly=True)
+    num_images = 0
+    with read_env.begin() as read_txn:
+        with read_txn.cursor() as read_cursor:
+            for key, value in read_cursor:
+                num_images += 1
+    read_env.close()
+    print 'LMDB ' + read_lmdb_name + ' contains ' + str(num_images)
 
-# We also have to add the remainders
-num_leftover = num_images%num_conv_compute_servers
-for i in range(num_leftover):
-    num_images_per_conv_compute_server[i] += 1
-assert sum(num_images_per_conv_compute_server) == num_images
+    # Now split by the number of conv compute servers
+    num_images_per_conv_compute_server = [num_images/num_conv_compute_servers]*num_conv_compute_servers
 
-# Now create the lmdb for each conv compute server
+    # We also have to add the remainders
+    num_leftover = num_images%num_conv_compute_servers
+    for i in range(num_leftover):
+        num_images_per_conv_compute_server[i] += 1
+    assert sum(num_images_per_conv_compute_server) == num_images
 
-def open_new_write_lmdb_helper(new_lmdb_name, num_imgs, map_size):
-    os.system('rm -rf ' + new_lmdb_name)
-    write_env = lmdb.open(new_lmdb_name, readonly=False, lock=False, map_size=map_size)
-    write_txn = write_env.begin(write=True)
-    print '  Writing ' + str(num_imgs) + ' images to ' + new_lmdb_name
-    return write_env, write_txn
+    # Now create the lmdb for each conv compute server
 
-read_env = lmdb.open(read_lmdb_name, readonly=True)
-with read_env.begin() as read_txn:
-    with read_txn.cursor() as read_cursor:
-    
-        # Read over each datum again, this time writing to a new lmdb
-        current_server = 0
-        img_idx = 0
-        # Open the LMDB for the first server
-        write_env, write_txn = open_new_write_lmdb_helper(conv_compute_server_train_lmdb_names[current_server], num_images_per_conv_compute_server[current_server], map_size)
+    def open_new_write_lmdb_helper(new_lmdb_name, num_imgs, map_size):
+        os.system('rm -rf ' + new_lmdb_name)
+        write_env = lmdb.open(new_lmdb_name, readonly=False, lock=False, map_size=map_size)
+        write_txn = write_env.begin(write=True)
+        print '  Writing ' + str(num_imgs) + ' images to ' + new_lmdb_name
+        return write_env, write_txn
+
+    read_env = lmdb.open(read_lmdb_name, readonly=True)
+    with read_env.begin() as read_txn:
+        with read_txn.cursor() as read_cursor:
         
-        # Read over each image in original lmdb
-        for key, value in read_cursor:
-        
-            # Check if we should move to the next server
-            if img_idx >= num_images_per_conv_compute_server[current_server]:
-                # We just finished the current server
-                # First close the currenet lmdb
-                write_txn.commit()
-                write_env.close()
-                # Increment server count and reset img_idx
-                current_server += 1
-                img_idx = 0
-                # Open new lmdb
-                write_env, write_txn = open_new_write_lmdb_helper(conv_compute_server_train_lmdb_names[current_server], num_images_per_conv_compute_server[current_server], map_size)
+            # Read over each datum again, this time writing to a new lmdb
+            current_server = 0
+            img_idx = 0
+            # Open the LMDB for the first server
+            write_env, write_txn = open_new_write_lmdb_helper(conv_compute_server_train_lmdb_names[current_server], num_images_per_conv_compute_server[current_server], map_size)
             
-            # Write the new datum to the new lmdb
-            write_txn.put(key, value)
-            img_idx += 1
+            # Read over each image in original lmdb
+            for key, value in read_cursor:
+            
+                # Check if we should move to the next server
+                if img_idx >= num_images_per_conv_compute_server[current_server]:
+                    # We just finished the current server
+                    # First close the currenet lmdb
+                    write_txn.commit()
+                    write_env.close()
+                    # Increment server count and reset img_idx
+                    current_server += 1
+                    img_idx = 0
+                    # Open new lmdb
+                    write_env, write_txn = open_new_write_lmdb_helper(conv_compute_server_train_lmdb_names[current_server], num_images_per_conv_compute_server[current_server], map_size)
+                
+                # Write the new datum to the new lmdb
+                write_txn.put(key, value)
+                img_idx += 1
 
-        # assert we have 1 server lmdb left to write
-        assert current_server == num_conv_compute_servers-1
-        assert img_idx == num_images_per_conv_compute_server[current_server]
-        write_txn.commit()
-        write_env.close()
-        
-read_env.close()
+            # assert we have 1 server lmdb left to write
+            assert current_server == num_conv_compute_servers-1
+            assert img_idx == num_images_per_conv_compute_server[current_server]
+            write_txn.commit()
+            write_env.close()
+            
+    read_env.close()
 
 
 # ------------------------------------------------------------------------------
 # Next, make the lmdb for the FC server
 # ------------------------------------------------------------------------------
 
-# This requires calling a utility which loads the network and prints the size
-# of the output of the final conv layer.
-util_output_str = subprocess.check_output(['./tools/size_util/size_util', conv_model_server_solver_file, dummy_file])
-num_fc_inputs = int(util_output_str.strip().split("\n")[-1].strip())
+if not skip_lmdb_generation:
 
-# Now create a new LMDB with 1 datum that contains the right size
-write_env, write_txn = open_new_write_lmdb_helper(fc_server_train_lmdb_name, 1, map_size)
+    # This requires calling a utility which loads the network and prints the size
+    # of the output of the final conv layer.
+    util_output_str = subprocess.check_output(['./tools/size_util/size_util', conv_model_server_solver_file, dummy_file])
+    num_fc_inputs = int(util_output_str.strip().split("\n")[-1].strip())
 
-# Create the datum
-datum = datum_pb2.Datum()
-datum.height = 1
-datum.width  = 1
-datum.channels = num_fc_inputs
+    # Now create a new LMDB with 1 datum that contains the right size
+    write_env, write_txn = open_new_write_lmdb_helper(fc_server_train_lmdb_name, 1, map_size)
 
-# Write back the new datum
-write_txn.put('dummy', datum.SerializeToString())
+    # Create the datum
+    datum = datum_pb2.Datum()
+    datum.height = 1
+    datum.width  = 1
+    datum.channels = num_fc_inputs
 
-write_txn.commit()
-write_env.close()
+    # Write back the new datum
+    write_txn.put('dummy', datum.SerializeToString())
+
+    write_txn.commit()
+    write_env.close()
 
 
 # ==============================================================================
