@@ -28,8 +28,11 @@ import datetime
 # User name to log in to each machine with
 user = 'root'
 
-# Extra commands to run following ssh (e.g. cd into right dir)
-# Note also that ssh does not source .bashrc so may need to run load commands as well.
+# Extra commands to run following ssh
+# This should include:
+#  - cd into correct directory
+#  - path commands in .bashrc (ssh does not source .bashrc so its load libary 
+#    commands may need to be included here, see the example below)
 extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-7.0/lib64;'
 
 
@@ -38,7 +41,7 @@ extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bi
 # ------------------------------------------------------------------------------
 
 # Set to true after lmdb has been generated once (saves time)
-skip_lmdb_generation = True
+skip_lmdb_generation = False
 
 
 # ==============================================================================
