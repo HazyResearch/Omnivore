@@ -157,6 +157,7 @@ public:
       // -----------------------------------------------------------------------
       // Read in the next mini-batch from file and update labels from lmdb
       // -----------------------------------------------------------------------
+      LOG(INFO) << "~~~~ ENTER STATE Read corpus" << std::endl;
       
       // Read in the next mini-batch from file
       size_t rs = fread(corpus->images->get_p_data(), sizeof(DataType_SFFloat), corpus->images->n_elements, pFile);
@@ -219,17 +220,23 @@ public:
       // This assertion isn't needed, it just checks my understanding of how we pass data
       assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == corpus->images->physical_get_RCDslice(0));
     
+      LOG(INFO) << "~~~~ EXIT STATE Read corpus" << std::endl;
       // -----------------------------------------------------------------------
       // Send request to conv model server asking for new model
       // -----------------------------------------------------------------------
       LOG(INFO) << "Sending ASK_MODEL Request..." << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_send (requester, &outgoing_msg_ask_model, outgoing_msg_ask_model.size(), 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
 
       // -----------------------------------------------------------------------
       // Receive model
       // -----------------------------------------------------------------------
       LOG(INFO) << "Waiting on ANSWER_MODEL Response..." << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_recv (requester, incoming_model_buf, incoming_model_buf_size, 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE Update Model" << std::endl;
       OmvMessage * incoming_msg_new_model = reinterpret_cast<OmvMessage*>(incoming_model_buf);
       assert(incoming_msg_new_model->msg_type == ANSWER_MODEL);
       assert(incoming_msg_new_model->size() == outgoing_model_grad_buf_size);
@@ -237,15 +244,19 @@ public:
       DeepNet::set_all_models(bridges, incoming_msg_new_model->content);
       // Debug: Print the first element of the model
       // cout << incoming_msg_new_model->content[0] << std::endl;
+      LOG(INFO) << "~~~~ EXIT STATE Update Model" << std::endl;
       
       // -----------------------------------------------------------------------
       // Run FW Pass
       // -----------------------------------------------------------------------
+      LOG(INFO) << "~~~~ ENTER STATE Conv FW" << std::endl;
       LOG(INFO) << "Running FW Pass..." << std::endl;
       for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
         (*bridge)->forward();
       }
+      LOG(INFO) << "~~~~ EXIT STATE Conv FW" << std::endl;
       
+      LOG(INFO) << "~~~~ ENTER STATE Copy FW" << std::endl;
       // Copy output of last model to outgoing_msg_send_data_and_ask_grad->content
       //
       // Assert that it is on the CPU. For now it should be because we only set
@@ -265,50 +276,67 @@ public:
         sizeof(float)*nfloats_output_data);
       // Debug
       // cout << "~" << outgoing_msg_send_data_and_ask_grad->content[0] << std::endl;
+      LOG(INFO) << "~~~~ EXIT STATE Copy FW" << std::endl;
 
       // -----------------------------------------------------------------------
       // Send output of FW Pass to FC Server and simultaneously ask for gradients
       // -----------------------------------------------------------------------
       LOG(INFO) << "Sending output data with Request ASK_GRADIENT_OF_SENT_DATA and waiting for data gradients..." << std::endl;
       // Send data output
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_send (requester_fc, outgoing_msg_send_data_and_ask_grad, outgoing_msg_send_data_and_ask_grad->size(), 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
       // Wait for data gradients
       LOG(INFO) << "Waiting for ANSWER_GRADIENT_OF_SENT_DATA Response..." << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_recv (requester_fc, incoming_data_grad_buf, incoming_data_grad_buf_size, 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE Read msg" << std::endl;
       OmvMessage * incoming_msg_data_grads = reinterpret_cast<OmvMessage*>(incoming_data_grad_buf);
       assert(incoming_msg_data_grads->msg_type == ANSWER_GRADIENT_OF_SENT_DATA);
       assert(incoming_msg_data_grads->size() == int(sizeof(OmvMessage) + 1*sizeof(float)*nfloats_output_data));
+      LOG(INFO) << "~~~~ EXIT STATE Read msg" << std::endl;
       LOG(INFO) << "Received data gradients" << std::endl;
 
       // -----------------------------------------------------------------------
       // Update last layer input data gradients with incoming_msg_data_grads->content
       // -----------------------------------------------------------------------
+      LOG(INFO) << "~~~~ ENTER STATE Update gradients" << std::endl;
       assert(!bridges.back()->get_share_pointer_with_next_bridge());
       bridges.back()->update_p_output_layer_gradient_CPU_ONLY(incoming_msg_data_grads->content);
       assert(bridges.back()->p_output_layer->p_gradient_cube->get_p_data() == incoming_msg_data_grads->content);
+      LOG(INFO) << "~~~~ EXIT STATE Update gradients" << std::endl;
       // Debug
       // std::cout << incoming_msg_data_grads->content[0] << std::endl;
 
       // -----------------------------------------------------------------------
       // Run backward loop
       // -----------------------------------------------------------------------
+      LOG(INFO) << "~~~~ ENTER STATE Conv BW" << std::endl;
       for (auto bridge = bridges.rbegin(); bridge != bridges.rend(); ++bridge) {
         (*bridge)->backward();
       }
+      LOG(INFO) << "~~~~ EXIT STATE Conv BW" << std::endl;
       // Now that model gradients have all been calculated, fill in outgoing_msg_send_model_grad->content
+      LOG(INFO) << "~~~~ ENTER STATE Copy BW" << std::endl;
       DeepNet::get_all_gradients(bridges, outgoing_msg_send_model_grad->content);
+      LOG(INFO) << "~~~~ EXIT STATE Copy BW" << std::endl;
 
       // -----------------------------------------------------------------------
       // Return the gradient to the conv model server
       // -----------------------------------------------------------------------
       LOG(INFO) << "Sending ASK_UPDATE_GRADIENT Request..." << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_send (requester, outgoing_msg_send_model_grad, outgoing_msg_send_model_grad->size(), 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
 
       // -----------------------------------------------------------------------
       // Wait until update is done
       // -----------------------------------------------------------------------
       LOG(INFO) << "Waiting for ANSWER_UPDATE_GRADIENT Request..." << std::endl;
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_recv (requester, &incoming_msg_model_grad_updated, incoming_msg_model_grad_updated.size(), 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
       assert(incoming_msg_model_grad_updated.msg_type == ANSWER_UPDATE_GRADIENT);
       assert(incoming_msg_model_grad_updated.size() == sizeof(OmvMessage));
     }

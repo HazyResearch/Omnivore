@@ -98,17 +98,22 @@ public:
     // -------------------------------------------------------------------------
     // Main Loop
     // -------------------------------------------------------------------------
+    Timer timer;
     int batch = 0;
     while (1) {
 
       // -----------------------------------------------------------------------
       // Wait for a message containing new data. Read it into incoming_data_buf.
       // -----------------------------------------------------------------------
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_recv(responder, incoming_data_buf, incoming_data_buf_size, 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
       // Create the message from this incoming buffer
+      LOG(INFO) << "~~~~ ENTER STATE Read msg" << std::endl;
       OmvMessage * incoming_msg_data = reinterpret_cast<OmvMessage*>(incoming_data_buf);
       assert(incoming_msg_data->msg_type == ASK_GRADIENT_OF_SENT_DATA);
       assert(incoming_msg_data->size() == int(sizeof(OmvMessage) + 1*sizeof(float)*(nfloats + corpus->mini_batch_size)));
+      LOG(INFO) << "~~~~ EXIT STATE Read msg" << std::endl;
 
       // Now answer the request for data gradients
       // This involves running FW and BW and returning the gradients
@@ -117,6 +122,7 @@ public:
       // -----------------------------------------------------------------------
       // Update input layer to point to the incoming batch of data
       // -----------------------------------------------------------------------
+      LOG(INFO) << "~~~~ ENTER STATE Update input layer" << std::endl;
       // This is same as switching from training to validation set, and just 
       // requires updating bridge 0 input data to point to incoming_msg_data->content.
       // Note: The implementation for this is to have the scheduler create a 
@@ -144,6 +150,7 @@ public:
       assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == incoming_msg_data->content + corpus->mini_batch_size);
       // Debug
       // cout << incoming_msg_data->content[0] << endl;    // Print the first element of the data
+      LOG(INFO) << "~~~~ EXIT STATE Update input layer" << std::endl;
   
       // -----------------------------------------------------------------------
       // Read in the next mini-batch labels from the sent message
@@ -156,17 +163,22 @@ public:
       // Run forward and backward pass
       // -----------------------------------------------------------------------
 
+      LOG(INFO) << "~~~~ ENTER STATE FC FW" << std::endl;
       softmax->reset_loss();
       
       // Forward pass
       for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
         (*bridge)->forward();
       }
+      LOG(INFO) << "~~~~ EXIT STATE FC FW" << std::endl;
 
+      LOG(INFO) << "~~~~ ENTER STATE ACC" << std::endl;
       loss += (softmax->get_loss() / float(corpus->mini_batch_size));
       accuracy += float(DeepNet::find_accuracy(labels, (*--bridges.end())->p_output_layer->p_data_cube)) / float(corpus->mini_batch_size);
+      LOG(INFO) << "~~~~ EXIT STATE ACC" << std::endl;
 
       // Backward pass
+      LOG(INFO) << "~~~~ ENTER STATE FC BW" << std::endl;
       for (auto bridge = bridges.rbegin(); bridge != bridges.rend(); ++bridge) {
         (*bridge)->backward();
       }
@@ -178,11 +190,13 @@ public:
         
         std::cout << "Training Status Report (Mini-batch iter " << batch << "), LR = " << learning_rate << std::endl;
         std::cout << "  \033[1;32m";
-        std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
+        //std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
+        std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << timer.elapsed() << "\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
         std::cout << "\033[0m" << std::endl;
         loss = 0.;
         accuracy = 0.;
       }
+      LOG(INFO) << "~~~~ EXIT STATE FC BW" << std::endl;
             
       // -----------------------------------------------------------------------
       // Fill outgoing_msg_data_grad->content with the data gradients
@@ -190,15 +204,19 @@ public:
       // SHADJIS TODO: See comment above, this code needs to change if doing a
       // direct copy across servers to GPU memory to use device memory pointers.
       //assert(!bridges[0]->get_share_pointer_with_prev_bridge());
+      LOG(INFO) << "~~~~ ENTER STATE FC Get Grad" << std::endl;
       memcpy(outgoing_msg_data_grad->content, 
         bridges[0]->p_input_layer->p_gradient_cube->get_p_data(),
         sizeof(float)*nfloats);
+      LOG(INFO) << "~~~~ EXIT STATE FC Get Grad" << std::endl;
       
       // -----------------------------------------------------------------------
       // Send the data gradients back
       // -----------------------------------------------------------------------
       // LOG(INFO) << "Sending ANSWER_GRADIENT_OF_SENT_DATA Response" << endl;
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_send (responder, outgoing_msg_data_grad, outgoing_msg_data_grad->size(), 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
       
       ++batch;
     }

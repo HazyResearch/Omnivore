@@ -13,7 +13,6 @@
 
 #include <zmq.h>
 
-
 class ConvModelServer : public Server{
 public:
 
@@ -104,7 +103,9 @@ public:
       // Wait for a message. Read it into incoming_buf.
       // This will either be an empty request for a model, or a large
       // request sending back gradients
+      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
       zmq_recv(responder, incoming_buf, incoming_buf_size, 0);
+      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
       // Create the message from this incoming buffer
       OmvMessage * incoming_msg = reinterpret_cast<OmvMessage*>(incoming_buf);
       
@@ -117,10 +118,14 @@ public:
         LOG(INFO) << "Responding to ASK_MODEL Request" << std::endl;
         // Load the model
         LOG(INFO) << "    Loading the model" << std::endl;
+        LOG(INFO) << "~~~~ ENTER STATE Copy Model" << std::endl;
         DeepNet::get_all_models(bridges, outgoing_msg_send_master_model->content);
         // Send this model object back
+        LOG(INFO) << "~~~~ EXIT STATE Copy Model" << std::endl;
         LOG(INFO) << "Sending ANSWER_MODEL Response" << std::endl;
+        LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
         zmq_send (responder, outgoing_msg_send_master_model, outgoing_msg_send_master_model->size(), 0);
+        LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
         
       // Receive gradients and update model
       }else if(incoming_msg->msg_type == ASK_UPDATE_GRADIENT){
@@ -131,10 +136,14 @@ public:
         // Update gradients and send acknowledgement
         LOG(INFO) << "    Updating Gradient" << std::endl;
         // Call CcT to update the model given this model gradient.
+        LOG(INFO) << "~~~~ ENTER STATE Update Model" << std::endl;
         DeepNet::update_all_models_with_gradients(bridges, incoming_msg->content);
+        LOG(INFO) << "~~~~ EXIT STATE Update Model" << std::endl;
         // Send back an acknowledgement that the gradient has been updated
         LOG(INFO) << "Sending ANSWER_UPDATE_GRADIENT Response" << std::endl;
+        LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
         zmq_send (responder, &outgoing_msg_reply_update_gradient, outgoing_msg_reply_update_gradient.size(), 0);
+        LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
         
       }else{
         LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << std::endl;

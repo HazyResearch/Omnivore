@@ -15,7 +15,7 @@ LD_BASE=$(foreach l, $(LIBS), -l$l)
 
 # Header directories
 INCLUDE_DIRS=$(BOOST_INCLUDE) $(GLOG_INCLUDE) \
-	     $(LMDB_INCLUDE) $(BLAS_INCLUDE) ./src ./CaffeConTroll/src/parser/
+	     $(LMDB_INCLUDE) $(BLAS_INCLUDE) ./src ./CaffeConTroll/src/parser/  /usr/include/
 INCLUDE_STR=$(foreach d, $(INCLUDE_DIRS), -I$d)
 
 # Library directories
