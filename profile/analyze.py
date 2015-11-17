@@ -1,3 +1,15 @@
+# ------------------------------------------------------------------------------
+# Parameters
+# ------------------------------------------------------------------------------
+
+NUM_COMPUTE = 1
+dir = str(NUM_COMPUTE) + '_profile'
+out_name = dir  # No ext needed, automatically will be .png
+
+
+# ------------------------------------------------------------------------------
+# Imports
+# ------------------------------------------------------------------------------
 
 import sys, os
 import datetime
@@ -6,93 +18,161 @@ import re
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-fig1 = plt.figure()
-ax1 = fig1.add_subplot(111)
 
-ax1.set_ylim([6498109,7898109])
-ax1.set_xlim([0,0.6+0.3*18])
-ax1.yaxis.grid(True)
-ax1.yaxis.set_ticks([i*10.0 for i in range(649810,789810)])
+# ------------------------------------------------------------------------------
+# Helper Functions
+# ------------------------------------------------------------------------------
 
 def fsec(s):
   hours, minutes, seconds = [float(val) for val in s.split(':')]
   return int((hours*3600+minutes*60+seconds)*1000)
 
+
+# ------------------------------------------------------------------------------
+# Read all files to get size of graph
+# ------------------------------------------------------------------------------
+
+min_times = []
+max_times = [0]*(2+NUM_COMPUTE)
+server = 0
+
+# Read each log file to get the min time in each
+
+# Parse conv model server
+first = True
+for l in open('../' + dir + '/conv_model_server.cfg.out'):
+  l = l.rstrip()
+  if first and ('~~~~ ENTER STATE' in l):
+    min_times.append( fsec(l.split(' ')[1]) )
+    first = False
+  elif ('~~~~ EXIT STATE' in l):
+    max_times[server] = fsec(l.split(' ')[1])
+server += 1
+# print '.'
+
+# Parse fc server
+first = True
+for l in open('../' + dir + '/fc_server.cfg.out'):
+  l = l.rstrip()
+  if first and ('~~~~ ENTER STATE' in l):
+    min_times.append( fsec(l.split(' ')[1]) )
+    first = False
+  elif ('~~~~ EXIT STATE' in l):
+    max_times[server] = fsec(l.split(' ')[1])
+server += 1
+# print '.'
+
+# Parse conv compute servers
+for worker in range(NUM_COMPUTE):
+  first = True
+  for l in open('../' + dir + '/conv_compute_server.%d.cfg.out' % worker):
+    l = l.rstrip()
+    if first and ('~~~~ ENTER STATE' in l):
+      min_times.append( fsec(l.split(' ')[1]) )
+      first = False
+    elif ('~~~~ EXIT STATE' in l):
+      max_times[server] = fsec(l.split(' ')[1])
+  server += 1
+  # print '.'
+
+assert len(min_times) == 2+NUM_COMPUTE
+assert len(max_times) == 2+NUM_COMPUTE
+MIN_TIME = min(min_times)
+MAX_TIME = min(max_times)
+END_TIME = MAX_TIME#MIN_TIME + 1000
+# print MIN_TIME
+# print MAX_TIME
+# print END_TIME
+  
+
+# ------------------------------------------------------------------------------
+# Set up graphics
+# ------------------------------------------------------------------------------
+
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111)
+
+ax1.set_ylim([MIN_TIME,END_TIME])
+ax1.set_xlim([0,0.6+0.3*NUM_COMPUTE])
+ax1.yaxis.grid(True)
+# ax1.yaxis.set_ticks([i*10.0 for i in range(649810,789810)])
+
 colors = {
-  1: "red",
-  2: "blue",
-  3: "pink",
-  4: "yellow",
-  5: "black"
+  # FC
+  'Read msg': "red",
+  'Update input layer': "blue",
+  'FC Get Grad': "blue",
+  'FC FW': "pink",
+  'FC BW': "pink",
+  'ACC': "yellow",
+  
+  # Conv Model
+  'Read corpus': "red",
+  'Update Model': "blue",
+  'Update gradients': "blue",
+  'Copy FW': "yellow",
+  'Copy BW': "yellow",
+  'Conv FW': "pink",
+  'Conv BW': "pink",
+  'Read msg': "black",
+
+  # Conv Compute
+  'Copy Model': "red",
 }
 
+
+# ------------------------------------------------------------------------------
+# Generate Plots
+# ------------------------------------------------------------------------------
+
+# Parse conv model server
 lasttime = None
-for l in open('log_titan/convmodel.log'):
+for l in open('../' + dir + '/conv_model_server.cfg.out'):
   l = l.rstrip()
-  ss = l.split(' ')
-  if len(ss) < 2: continue
-  try: t = fsec(ss[1]) 
-  except: continue
-
-  if t > 7898109: break
-
-  if 'ENTER' in l and 'IDLE' not in l:
+  if ('~~~~ ENTER STATE' in l) and ('IDLE' not in l):
+    t = fsec(l.split(' ')[1])
+    if t >= END_TIME: break
     lasttime = t
-  if 'EXIT' in l and 'IDLE' not in l:
-    if lasttime != None:
-      m = re.search('EXIT STATE (.*?)$', l)
-      print lasttime, t, m.group(1)
-      ax1.add_patch(patches.Rectangle((0.1, lasttime), 0.2, t-lasttime, color=colors[int(m.group(1))]))
+  elif ('~~~~ EXIT STATE' in l) and ('IDLE' not in l) and (lasttime != None):
+    t = fsec(l.split(' ')[1])
+    if t >= END_TIME: break
+    m = re.search('EXIT STATE (.*?)$', l)
+    # print t-lasttime, m.group(1)
+    ax1.add_patch(patches.Rectangle((0.1, lasttime), 0.2, t-lasttime, color=colors[m.group(1)]))
 
+# Parse fc server
 lasttime = None
-for l in open('log_titan/fcmodel.log'):
+for l in open('../' + dir + '/fc_server.cfg.out'):
   l = l.rstrip()
-  ss = l.split(' ')
-  if len(ss) < 2: continue
-  try: t = fsec(ss[1]) 
-  except: continue
-
-  if t > 7898109: break
-
-  if 'ENTER' in l and 'IDLE' not in l:
+  if ('~~~~ ENTER STATE' in l) and ('IDLE' not in l):
+    t = fsec(l.split(' ')[1])
+    if t >= END_TIME: break
     lasttime = t
-  if 'EXIT' in l and 'IDLE' not in l:
-    if lasttime != None:
-      m = re.search('EXIT STATE (.*?)$', l)
-      print lasttime, t, m.group(1)
-      ax1.add_patch(patches.Rectangle((0.3, lasttime), 0.2, t-lasttime, color=colors[int(m.group(1))]))
+  elif ('~~~~ EXIT STATE' in l) and ('IDLE' not in l) and (lasttime != None):
+    t = fsec(l.split(' ')[1])
+    if t >= END_TIME: break
+    m = re.search('EXIT STATE (.*?)$', l)
+    print t-lasttime, m.group(1)
+    ax1.add_patch(patches.Rectangle((0.3, lasttime), 0.2, t-lasttime, color=colors[m.group(1)]))
 
-
-for worker in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]:
+# Parse conv compute servers
+for worker in range(NUM_COMPUTE):
   lasttime = None
-  for l in open('log_titan/worker%d.log' % worker):
+  for l in open('../' + dir + '/conv_compute_server.%d.cfg.out' % worker):
     l = l.rstrip()
-    ss = l.split(' ')
-    if len(ss) < 2: continue
-    try: t = fsec(ss[1]) 
-    except: continue
-
-    if t > 7898109: break
-
-    if 'ENTER' in l and 'IDLE' not in l:
+    if ('~~~~ ENTER STATE' in l) and ('IDLE' not in l):
+      t = fsec(l.split(' ')[1])
+      if t >= END_TIME: break
       lasttime = t
-    if 'EXIT' in l and 'IDLE' not in l:
-      if lasttime != None:
-        m = re.search('EXIT STATE (.*?)$', l)
-        if m:
-          print lasttime, t, m.group(1)
-          ax1.add_patch(patches.Rectangle((0.3 + 0.3*worker, lasttime), 0.2, t-lasttime, color=colors[int(m.group(1))]))
+    elif ('~~~~ EXIT STATE' in l) and ('IDLE' not in l) and (lasttime != None):
+      t = fsec(l.split(' ')[1])
+      if t >= END_TIME: break
+      m = re.search('EXIT STATE (.*?)$', l)
+      # print t-lasttime, m.group(1)
+      ax1.add_patch(patches.Rectangle((0.3 + 0.3*(worker+1), lasttime), 0.2, t-lasttime, color=colors[m.group(1)]))
 
-
-print "PRINTING FIGURES"
+# Print figure
+print "Generating " + out_name + '.png'
 fig1.set_size_inches(5, 1000)
-fig1.savefig('rect5.png', dpi=90, bbox_inches='tight')
-
-
-
-
-
-
-
-
+fig1.savefig(out_name + '.png', dpi=30, bbox_inches='tight')
 
