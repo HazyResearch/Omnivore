@@ -128,7 +128,8 @@ public:
     /********
      * TODO CE: THIS IS WHERE THE SCHEDULER COMES IN
      ********/
-    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_model_buf_size, outgoing_model_buf_size, 2);
+    int N_CONVSERVER_PER_GROUP=2;
+    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_model_buf_size, outgoing_model_buf_size, N_CONVSERVER_PER_GROUP);
 
     auto start_broker = [&](Broker_N_1<decltype(UDF)> * _broker){
       _broker->start(UDF);

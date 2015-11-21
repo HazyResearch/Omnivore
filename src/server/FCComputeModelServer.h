@@ -91,7 +91,11 @@ public:
     // -------------------------------------------------------------------------
     int batch = 0;
     Timer timer;
+    std::mutex hogwild_lock;
     auto UDF = [&](OmvMessage ** msgs, int nmsg, OmvMessage * & msg){
+
+      hogwild_lock.lock();
+
       OmvMessage * incoming_msg_data = reinterpret_cast<OmvMessage *>(incoming_data_buf);
 
       const int nlabel_per_msg = corpus->mini_batch_size/nmsg;
@@ -217,12 +221,15 @@ public:
       msg = outgoing_msg_data_grad;
     
       ++ batch;
+
+      hogwild_lock.unlock();
     };
 
     /********
      * TODO CE: THIS IS WHERE THE SCHEDULER COMES IN
      ********/
-    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_data_grad_buf_size, outgoing_data_grad_buf_size, 2);
+    int N_CONVSERVER_PER_GROUP=2;
+    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_data_grad_buf_size, outgoing_data_grad_buf_size, N_CONVSERVER_PER_GROUP);
     
     auto start_broker = [&](Broker_N_1<decltype(UDF)> * _broker){
       _broker->start(UDF);
