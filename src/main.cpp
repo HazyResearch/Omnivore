@@ -69,13 +69,19 @@ Server * initConvComputeServer(Config & cfg, char * filename){
   string SOLVER    = cfg.lookup("solver");
   string TRAIN_BIN = cfg.lookup("train_bin");
 
+  int    GROUPSIZE = cfg.lookup("group_size");
+  int RANK_IN_GROUP= cfg.lookup("rank_in_group");
+
   LOG(INFO) << "NAME      = " << NAME      << std::endl;
   LOG(INFO) << "CONV_BIND = " << CONV_BIND << std::endl;
   LOG(INFO) << "FC_BIND   = " << FC_BIND   << std::endl;
   LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
   LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
 
-  Server * s = new ConvComputeServer(NAME, CONV_BIND, FC_BIND, SOLVER, TRAIN_BIN);
+  LOG(INFO) << "GROUPSIZE = " << GROUPSIZE << std::endl;
+  LOG(INFO) << "RANK      = " << RANK_IN_GROUP << std::endl;
+
+  Server * s = new ConvComputeServer(NAME, CONV_BIND, FC_BIND, SOLVER, TRAIN_BIN, GROUPSIZE, RANK_IN_GROUP);
   return s;
 }
 

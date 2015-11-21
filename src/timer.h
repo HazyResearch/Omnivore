@@ -1,3 +1,7 @@
+
+#ifndef _TIMER_H
+#define _TIMER_H
+
 #ifdef __MACH__
 #include <mach/clock.h>
 #include <mach/mach.h>

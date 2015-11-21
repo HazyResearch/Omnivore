@@ -12,6 +12,16 @@
 #include "../CaffeConTroll/src/DeepNet.h"
 
 #include <zmq.h>
+#include <mutex>
+
+#include "broker/Broker_N_1.h"
+
+
+void UDF (OmvMessage ** msgs, int nmsg, OmvMessage * msg, void * scratch){
+  msg->nelem = 1;
+  msg->content[0] = 1024;
+  msg->content[1] = 2048;
+}
 
 class ConvModelServer : public Server{
 public:
@@ -37,15 +47,6 @@ public:
   void start(){
   
     LOG(INFO) << "Starting ConvModelServer[" << name << "]..." << std::endl;
-
-    // -------------------------------------------------------------------------
-    // Bind 
-    // -------------------------------------------------------------------------
-    void *context = zmq_ctx_new ();
-    void *responder = zmq_socket (context, ZMQ_REP);
-    int rc = zmq_bind (responder, bind.c_str());
-    assert (rc == 0);
-    LOG(INFO) << "Binded to " << bind << std::endl;
 
     // -------------------------------------------------------------------------
     // Read parameter files and construct network
@@ -95,65 +96,51 @@ public:
     outgoing_msg_reply_update_gradient.nelem = 0;
     assert(outgoing_msg_reply_update_gradient.size() == sizeof(OmvMessage));
 
+    std::mutex hogwild_lock;
+
     // -------------------------------------------------------------------------
-    // Main Loop
+    // Create worker 
     // -------------------------------------------------------------------------
-    while (1) {
-    
-      // Wait for a message. Read it into incoming_buf.
-      // This will either be an empty request for a model, or a large
-      // request sending back gradients
-      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
-      zmq_recv(responder, incoming_buf, incoming_buf_size, 0);
-      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
-      // Create the message from this incoming buffer
-      OmvMessage * incoming_msg = reinterpret_cast<OmvMessage*>(incoming_buf);
-      
+    auto UDF = [&](OmvMessage ** msgs, int nmsg, OmvMessage * & msg){
+      OmvMessage * incoming_msg = msgs[0];
       // Answer request for the conv model
+      hogwild_lock.lock();
       if(incoming_msg->msg_type == ASK_MODEL){
-      
-        assert(incoming_msg->size() == sizeof(OmvMessage));
-        
-        // Reply Current Model
-        LOG(INFO) << "Responding to ASK_MODEL Request" << std::endl;
-        // Load the model
-        LOG(INFO) << "    Loading the model" << std::endl;
-        LOG(INFO) << "~~~~ ENTER STATE Copy Model" << std::endl;
-        DeepNet::get_all_models(bridges, outgoing_msg_send_master_model->content);
-        // Send this model object back
-        LOG(INFO) << "~~~~ EXIT STATE Copy Model" << std::endl;
-        LOG(INFO) << "Sending ANSWER_MODEL Response" << std::endl;
-        LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
-        zmq_send (responder, outgoing_msg_send_master_model, outgoing_msg_send_master_model->size(), 0);
-        LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
-        
+        LOG(INFO) << "Responding to ASK_MODEL Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
+        DeepNet::get_ith_models(bridges, outgoing_msg_send_master_model->content, incoming_msg->bridgeid);
+        msg = outgoing_msg_send_master_model;
+        //std::cout << msg->msg_type << "   " << ANSWER_MODEL << std::endl;
       // Receive gradients and update model
       }else if(incoming_msg->msg_type == ASK_UPDATE_GRADIENT){
-      
-        assert(incoming_msg->size() == outgoing_model_buf_size);
-        
-        LOG(INFO) << "Responding to ASK_UPDATE_GRADIENT Request" << std::endl;
-        // Update gradients and send acknowledgement
-        LOG(INFO) << "    Updating Gradient" << std::endl;
-        // Call CcT to update the model given this model gradient.
-        LOG(INFO) << "~~~~ ENTER STATE Update Model" << std::endl;
-        DeepNet::update_all_models_with_gradients(bridges, incoming_msg->content);
-        LOG(INFO) << "~~~~ EXIT STATE Update Model" << std::endl;
-        // Send back an acknowledgement that the gradient has been updated
-        LOG(INFO) << "Sending ANSWER_UPDATE_GRADIENT Response" << std::endl;
-        LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
-        zmq_send (responder, &outgoing_msg_reply_update_gradient, outgoing_msg_reply_update_gradient.size(), 0);
-        LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
-        
+        LOG(INFO) << "Responding to ASK_UPDATE_GRADIENT Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
+        // CE TODO: Gradient should be divided by # workers in the group.
+        for(int i=0;i<nmsg;i++){
+          //DeepNet::update_all_models_with_gradients(bridges, msgs[i]->content);
+          DeepNet::update_ith_models_with_gradients(bridges, msgs[i]->content, incoming_msg->bridgeid);
+        }
+        msg = &outgoing_msg_reply_update_gradient;
       }else{
         LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << std::endl;
       }
-    }
+      hogwild_lock.unlock();
+    };
+
+    /********
+     * TODO CE: THIS IS WHERE THE SCHEDULER COMES IN
+     ********/
+    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_model_buf_size, outgoing_model_buf_size, 2);
+
+    auto start_broker = [&](Broker_N_1<decltype(UDF)> * _broker){
+      _broker->start(UDF);
+    };
+    std::thread thread1(start_broker, &broker);
+    thread1.join();
+
+
 
     // -------------------------------------------------------------------------
     // Save model and destroy network
     // -------------------------------------------------------------------------
-
     // Save model to file unless snapshot_after_train was set to false
     if (solver_param.snapshot_after_train()) {
       DeepNet::write_model_to_file(bridges, output_model_file);

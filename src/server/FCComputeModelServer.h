@@ -41,15 +41,6 @@ public:
     LOG(INFO) << "Starting FCComputeModelServer[" << name << "]..." << std::endl;
 
     // -------------------------------------------------------------------------
-    // Bind 
-    // -------------------------------------------------------------------------
-    void *context = zmq_ctx_new ();
-    void *responder = zmq_socket (context, ZMQ_REP);
-    int rc = zmq_bind (responder, bind.c_str());
-    assert (rc == 0);
-    LOG(INFO) << "Binded to " << bind << std::endl;
-
-    // -------------------------------------------------------------------------
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
     // Note: like the conv model server, this server does not need to read any labels or data from
@@ -96,29 +87,42 @@ public:
     assert(outgoing_msg_data_grad->size() == outgoing_data_grad_buf_size);
 
     // -------------------------------------------------------------------------
-    // Main Loop
+    // Create worker 
     // -------------------------------------------------------------------------
-    Timer timer;
     int batch = 0;
-    while (1) {
+    Timer timer;
+    auto UDF = [&](OmvMessage ** msgs, int nmsg, OmvMessage * & msg){
+      OmvMessage * incoming_msg_data = reinterpret_cast<OmvMessage *>(incoming_data_buf);
 
-      // -----------------------------------------------------------------------
-      // Wait for a message containing new data. Read it into incoming_data_buf.
-      // -----------------------------------------------------------------------
-      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
-      zmq_recv(responder, incoming_data_buf, incoming_data_buf_size, 0);
-      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
-      // Create the message from this incoming buffer
-      LOG(INFO) << "~~~~ ENTER STATE Read msg" << std::endl;
-      OmvMessage * incoming_msg_data = reinterpret_cast<OmvMessage*>(incoming_data_buf);
+      const int nlabel_per_msg = corpus->mini_batch_size/nmsg;
+      //std::cout << "----" << nlabel_per_msg << std::endl;
+      //std::cout << "----" << nmsg << std::endl;
+      const int ndata_per_msg  = msgs[0]->nelem - nlabel_per_msg;
+      //std::cout << "----" << ndata_per_msg << std::endl;
+      //std::cout << "~~~~" << incoming_msg_data << std::endl;
+
+      // Init incoming_msg_data from different inputs.
+      incoming_msg_data->msg_type = msgs[0]->msg_type;
+
+      //std::cout << "******" << std::endl;
+
+      incoming_msg_data->nelem = (ndata_per_msg+nlabel_per_msg)*nmsg;
+
+      //std::cout << "******" << std::endl;
+
+      for(int i=0;i<nmsg;i++){
+        //std::cout << "~~~~" << i << " / " << nmsg << std::endl;
+        memcpy(&incoming_msg_data->content[i*nlabel_per_msg], msgs[i]->content, sizeof(float)*nlabel_per_msg);
+        //std::cout << "####" << std::endl;
+        memcpy(&incoming_msg_data->content[corpus->mini_batch_size + i*ndata_per_msg], 
+                msgs[i]->content + nlabel_per_msg, 
+                sizeof(float)*ndata_per_msg);
+        std::cout << "%%%%%%" << std::endl;
+      }
+
       assert(incoming_msg_data->msg_type == ASK_GRADIENT_OF_SENT_DATA);
       assert(incoming_msg_data->size() == int(sizeof(OmvMessage) + 1*sizeof(float)*(nfloats + corpus->mini_batch_size)));
-      LOG(INFO) << "~~~~ EXIT STATE Read msg" << std::endl;
 
-      // Now answer the request for data gradients
-      // This involves running FW and BW and returning the gradients
-      // LOG(INFO) << "Responding to ASK_GRADIENT_OF_SENT_DATA Request" << endl;
-  
       // -----------------------------------------------------------------------
       // Update input layer to point to the incoming batch of data
       // -----------------------------------------------------------------------
@@ -197,7 +201,7 @@ public:
         accuracy = 0.;
       }
       LOG(INFO) << "~~~~ EXIT STATE FC BW" << std::endl;
-            
+   
       // -----------------------------------------------------------------------
       // Fill outgoing_msg_data_grad->content with the data gradients
       // -----------------------------------------------------------------------
@@ -209,17 +213,22 @@ public:
         bridges[0]->p_input_layer->p_gradient_cube->get_p_data(),
         sizeof(float)*nfloats);
       LOG(INFO) << "~~~~ EXIT STATE FC Get Grad" << std::endl;
-      
-      // -----------------------------------------------------------------------
-      // Send the data gradients back
-      // -----------------------------------------------------------------------
-      // LOG(INFO) << "Sending ANSWER_GRADIENT_OF_SENT_DATA Response" << endl;
-      LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
-      zmq_send (responder, outgoing_msg_data_grad, outgoing_msg_data_grad->size(), 0);
-      LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
-      
-      ++batch;
-    }
+    
+      msg = outgoing_msg_data_grad;
+    
+      ++ batch;
+    };
+
+    /********
+     * TODO CE: THIS IS WHERE THE SCHEDULER COMES IN
+     ********/
+    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_data_grad_buf_size, outgoing_data_grad_buf_size, 2);
+    
+    auto start_broker = [&](Broker_N_1<decltype(UDF)> * _broker){
+      _broker->start(UDF);
+    };
+    std::thread thread1(start_broker, &broker);
+    thread1.join();
 
     // -------------------------------------------------------------------------
     // Save model and destroy network
