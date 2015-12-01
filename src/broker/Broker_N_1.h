@@ -78,33 +78,33 @@ public:
     void * zmq_aggregator = my_create_zmq(bind_aggregator, ZMQ_REP);
     void * zmq_broadcastor= my_create_zmq(bind_broadcastor, ZMQ_PUB);
 
-    std::cout << "STRAT" << std::endl;
+    // std::cout << "START" << std::endl;
 
     while(1){
       // Receive n_message_type1 msgs from the aggregation port
-      LOG(INFO) << "~~~~~" << "START RECEIVE" << std::endl;
+      VLOG(2) << "~~~~~" << "START RECEIVE" << std::endl;
       for(int n_got_type1=0;n_got_type1<n_message_type1;n_got_type1++){
-        LOG(INFO) << "        " << "START RECEIVE " << n_got_type1 << std::endl;
+        VLOG(2) << "        " << "START RECEIVE " << n_got_type1 << std::endl;
         zmq_recv(zmq_aggregator, &messagebuf_stacked_type1[n_got_type1*size_message_type1], 
                   size_message_type1, 0);
         OmvMessage * msg = reinterpret_cast<OmvMessage*>(
           &messagebuf_stacked_type1[n_got_type1*size_message_type1]);
         messages_type1[msg->rank_in_group] = msg;
-        LOG(INFO) << "        " << "RECEIVED RANK " << msg->rank_in_group << std::endl;
+        VLOG(2) << "        " << "RECEIVED RANK " << msg->rank_in_group << std::endl;
         zmq_send(zmq_aggregator, messagebuf_type2, 1, 0); // send dummy reply back
-        LOG(INFO) << "        " << "ACK RANK " << msg->rank_in_group << std::endl;
+        VLOG(2) << "        " << "ACK RANK " << msg->rank_in_group << std::endl;
       }
-      LOG(INFO) << "~~~~~" << "FINISH RECEIVE" << std::endl;
+      VLOG(2) << "~~~~~" << "FINISH RECEIVE" << std::endl;
 
       // Call UDFs to generate msg type 2
       UDF(messages_type1, n_message_type1, message_type2);
 
-      LOG(INFO) << "~~~~~" << "START BROADCAST" << std::endl;
+      VLOG(2) << "~~~~~" << "START BROADCAST" << std::endl;
       // Broadcast msg type 2,
       zmq_send (zmq_broadcastor, message_type2, message_type2->size(), 0); 
-      //LOG(INFO) << "SKIP" << std::endl;
+      //VLOG(2) << "SKIP" << std::endl;
 
-      LOG(INFO) << "~~~~~" << "FINISH BROADCAST" << std::endl;
+      VLOG(2) << "~~~~~" << "FINISH BROADCAST" << std::endl;
     }
     
   }
@@ -112,7 +112,7 @@ public:
 private:
 
   void* my_create_zmq(std::string bind, int socket_type){
-    LOG(INFO) << "Creating SOCKET TYPE " << socket_type << " ON " << bind << std::endl;
+    VLOG(2) << "Creating SOCKET TYPE " << socket_type << " ON " << bind << std::endl;
     void *context = zmq_ctx_new ();
     void *responder = zmq_socket (context, socket_type);
     int rc = zmq_bind (responder, bind.c_str());
@@ -123,26 +123,4 @@ private:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

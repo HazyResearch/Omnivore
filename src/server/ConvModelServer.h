@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <vector>
 #include <glog/logging.h>
 
 #include "server/Server.h"
@@ -17,12 +18,6 @@
 #include "broker/Broker_N_1.h"
 
 
-void UDF (OmvMessage ** msgs, int nmsg, OmvMessage * msg, void * scratch){
-  msg->nelem = 1;
-  msg->content[0] = 1024;
-  msg->content[1] = 2048;
-}
-
 class ConvModelServer : public Server{
 public:
 
@@ -31,22 +26,28 @@ public:
   std::string solver_file;
   std::string data_binary;
   
-  std::string bind;
+  std::mutex hogwild_lock;
+  std::vector <std::string> broadcast_ports;
+  std::vector <std::string> listen_ports;
 
   int nfloats;  // For both model and gradient buffers
+  int group_size;
 
-  ConvModelServer(string _name, std::string _bind, std::string _solver_file, std::string _data_binary) : 
+  ConvModelServer(string _name, std::string _solver_file, std::string _data_binary,
+    int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports) : 
     name(_name), solver_file(_solver_file), data_binary(_data_binary),
-    bind(_bind), nfloats(0) {}
+    broadcast_ports(_broadcast_ports), listen_ports(_listen_ports),
+    nfloats(0), group_size(_groupsize) {}
 
   /**
    * A ConvModelServer does two things
    *   - listen to request that asks model.
    *   - listen to response that returns the gradient.
    **/
+
   void start(){
   
-    LOG(INFO) << "Starting ConvModelServer[" << name << "]..." << std::endl;
+    VLOG(2) << "Starting ConvModelServer[" << name << "]..." << std::endl;
 
     // -------------------------------------------------------------------------
     // Read parameter files and construct network
@@ -63,98 +64,118 @@ public:
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
-    // -------------------------------------------------------------------------
-    // Allocate buffers and create messages
-    // -------------------------------------------------------------------------
+    // Get the number of conv compute server groups
+    assert(broadcast_ports.size() == listen_ports.size());
+    const size_t num_groups = broadcast_ports.size();
     
-    // Size of model and model gradients
-    nfloats = DeepNet::get_parameter_size(bridges);
-    
-    // Allocate buffer for incoming messages
-    // This will either be an empty request for a model, or a large
-    // request sending back gradients
-    // Allocate a factor of 2 extra for this although should not be needed
-    int incoming_buf_size = sizeof(OmvMessage) + 2*sizeof(float)*nfloats;
-    LOG(INFO) << "Allocating " << (1.0*incoming_buf_size/1024/1024) << " MB for incoming messages (model gradients)" << std::endl;
-    char * incoming_buf = new char[incoming_buf_size];
+    // Start a thread for each group
+    const int snapshot = solver_param.snapshot() * 2 * num_groups * 5;   // SHADJIS TODO: Mult by #conv layers (since async fw and bw), not 5 hardcoded
+    int batch = 0;
+    std::vector<std::thread> threads;
+    for (size_t thread_idx=0; thread_idx < num_groups; ++thread_idx) {
+      threads.push_back(thread([&, thread_idx]() {
+      
+        // -------------------------------------------------------------------------
+        // Allocate buffers and create messages
+        // -------------------------------------------------------------------------
+        
+        // Size of model and model gradients
+        nfloats = DeepNet::get_parameter_size(bridges);
+        
+        // Buffer for incoming messages is not needed because it is within each broker
 
-    // Allocate buffer for model (outgoing message)
-    // We respond with the model, so we know its size exactly
-    int outgoing_model_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*nfloats;
-    LOG(INFO) << "Allocating " << (1.0*outgoing_model_buf_size/1024/1024) << " MB for outgoing model" << std::endl;
-    char * outgoing_model_buf = new char[outgoing_model_buf_size];
+        // Allocate buffer for model (outgoing message)
+        // We respond with the model, so we know its size exactly
+        int outgoing_model_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*nfloats;
+        VLOG(2) << "Thread " << thread_idx << " allocating " << (1.0*outgoing_model_buf_size/1024/1024) << " MB for outgoing model" << std::endl;
+        char * outgoing_model_buf = new char[outgoing_model_buf_size];
 
-    // Create the response message for returning the model
-    OmvMessage * outgoing_msg_send_master_model = reinterpret_cast<OmvMessage*>(outgoing_model_buf);
-    outgoing_msg_send_master_model->msg_type = ANSWER_MODEL;
-    outgoing_msg_send_master_model->nelem = nfloats;
-    assert(outgoing_msg_send_master_model->size() == outgoing_model_buf_size);
-    
-    // Create the response message for acknowledging the gradient is updated
-    OmvMessage outgoing_msg_reply_update_gradient;
-    outgoing_msg_reply_update_gradient.msg_type = ANSWER_UPDATE_GRADIENT;
-    outgoing_msg_reply_update_gradient.nelem = 0;
-    assert(outgoing_msg_reply_update_gradient.size() == sizeof(OmvMessage));
+        // Create the response message for returning the model
+        OmvMessage * outgoing_msg_send_master_model = reinterpret_cast<OmvMessage*>(outgoing_model_buf);
+        outgoing_msg_send_master_model->msg_type = ANSWER_MODEL;
+        outgoing_msg_send_master_model->nelem = nfloats;
+        assert(outgoing_msg_send_master_model->size() == outgoing_model_buf_size);
+        
+        // Create the response message for acknowledging the gradient is updated
+        OmvMessage outgoing_msg_reply_update_gradient;
+        outgoing_msg_reply_update_gradient.msg_type = ANSWER_UPDATE_GRADIENT;
+        outgoing_msg_reply_update_gradient.nelem = 0;
+        assert(outgoing_msg_reply_update_gradient.size() == sizeof(OmvMessage));
 
-    std::mutex hogwild_lock;
+        // -------------------------------------------------------------------------
+        // Create worker 
+        // -------------------------------------------------------------------------
+        auto UDF = [&](OmvMessage ** msgs, int nmsg, OmvMessage * & msg){
+          OmvMessage * incoming_msg = msgs[0];
+          // Answer request for the conv model
+          hogwild_lock.lock();
+          if(incoming_msg->msg_type == ASK_MODEL){
+            VLOG(2) << "Responding to ASK_MODEL Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
+            size_t model_nelem = DeepNet::get_ith_models(bridges, outgoing_msg_send_master_model->content, incoming_msg->bridgeid);
+            msg = outgoing_msg_send_master_model;
+            msg->nelem = model_nelem;
+            //std::cout << msg->msg_type << "   " << ANSWER_MODEL << std::endl;
+          // Receive gradients and update model
+          }else if(incoming_msg->msg_type == ASK_UPDATE_GRADIENT){
+            VLOG(2) << "Responding to ASK_UPDATE_GRADIENT Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
+            // CE TODO: Gradient should be divided by # workers in the group.
+            for(int i=0;i<nmsg;i++){
+              //DeepNet::update_all_models_with_gradients(bridges, msgs[i]->content);
+              DeepNet::update_ith_models_with_gradients(bridges, msgs[i]->content, incoming_msg->bridgeid);
+            }
+            msg = &outgoing_msg_reply_update_gradient;
+          }else{
+            LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << std::endl;
+          }          
+          
+          // Check if we should write a snapshot
+          if (snapshot > 0 && (batch+1) % snapshot == 0) {
+            time_t rawtime;
+            struct tm * timeinfo;
+            char buffer[80];
+            time (&rawtime);
+            timeinfo = localtime(&rawtime);
+            strftime(buffer,80,"%d-%m-%Y-%I-%M-%S",timeinfo);
+            std::string str(buffer);
+            std::string snapshot_name;
+            snapshot_name = solver_file + "_MODEL." + str;
+            DeepNet::write_model_to_file(bridges, snapshot_name);
+            std::cout << "======= Writing snapshot " << snapshot_name << " =======" << std::endl;
+          }
+          
+          ++ batch;
+          hogwild_lock.unlock();
+        };  // END UDF
 
-    // -------------------------------------------------------------------------
-    // Create worker 
-    // -------------------------------------------------------------------------
-    auto UDF = [&](OmvMessage ** msgs, int nmsg, OmvMessage * & msg){
-      OmvMessage * incoming_msg = msgs[0];
-      // Answer request for the conv model
-      hogwild_lock.lock();
-      if(incoming_msg->msg_type == ASK_MODEL){
-        LOG(INFO) << "Responding to ASK_MODEL Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
-        DeepNet::get_ith_models(bridges, outgoing_msg_send_master_model->content, incoming_msg->bridgeid);
-        msg = outgoing_msg_send_master_model;
-        //std::cout << msg->msg_type << "   " << ANSWER_MODEL << std::endl;
-      // Receive gradients and update model
-      }else if(incoming_msg->msg_type == ASK_UPDATE_GRADIENT){
-        LOG(INFO) << "Responding to ASK_UPDATE_GRADIENT Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
-        // CE TODO: Gradient should be divided by # workers in the group.
-        for(int i=0;i<nmsg;i++){
-          //DeepNet::update_all_models_with_gradients(bridges, msgs[i]->content);
-          DeepNet::update_ith_models_with_gradients(bridges, msgs[i]->content, incoming_msg->bridgeid);
-        }
-        msg = &outgoing_msg_reply_update_gradient;
-      }else{
-        LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << std::endl;
-      }
-      hogwild_lock.unlock();
-    };
+        // Start this broker with the input ports
+        Broker_N_1<decltype(UDF)> broker(listen_ports[thread_idx], broadcast_ports[thread_idx], outgoing_model_buf_size, outgoing_model_buf_size, group_size);
+        broker.start(UDF);
+      
+      }));  // END THREAD LAMBDA
+    }   // END LOOP OVER THREADS
 
-    /********
-     * TODO CE: THIS IS WHERE THE SCHEDULER COMES IN
-     ********/
-    int N_CONVSERVER_PER_GROUP=2;
-    Broker_N_1<decltype(UDF)> broker("tcp://*:7555", "tcp://*:7556", outgoing_model_buf_size, outgoing_model_buf_size, N_CONVSERVER_PER_GROUP);
-
-    auto start_broker = [&](Broker_N_1<decltype(UDF)> * _broker){
-      _broker->start(UDF);
-    };
-    std::thread thread1(start_broker, &broker);
-    thread1.join();
-
-
-
+    // Join
+    for (size_t i=0; i < num_groups; ++i) {
+      threads[i].join();
+    }
+  
     // -------------------------------------------------------------------------
     // Save model and destroy network
     // -------------------------------------------------------------------------
+    
     // Save model to file unless snapshot_after_train was set to false
     if (solver_param.snapshot_after_train()) {
       DeepNet::write_model_to_file(bridges, output_model_file);
-      std::cout << "\nTrained model written to " + output_model_file +  ".\n";
+      std::cout << std::endl << "Trained model written to " << output_model_file << "." << std::endl;
     } else {
-      std::cout << "\nNot writing trained model to file (snapshot_after_train = false)\n";
+      std::cout << std::endl << "Not writing trained model to file (snapshot_after_train = false)" << std::endl;
     }
 
     // Clean up network
     DeepNet::clean_up(bridges, corpus);
+  } // END START FUNCTION
 
-  }
-};
+};  // END CLASS
 
 #endif
 

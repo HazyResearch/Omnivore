@@ -4,7 +4,7 @@
 # 
 # usage:
 # 
-# $ python run.py path/to/solver.prototxt path/to/machine_list.txt
+# $ python run.py path/to/solver.prototxt path/to/machine_list.txt machines_per_batch
 # 
 # ==============================================================================
 
@@ -47,6 +47,9 @@ skip_lmdb_generation = False
 # Run with GPUs. If neither is True, uses CPU only.
 use_4_gpu = True   # Takes precedence if both this and use_1_gpu are True
 use_1_gpu = False
+
+# Temporary parameter -- eventually this will be true by default
+multi_gpu_model_parallelism = False  # If using > 1 GPU, do model parallelism on FC
 
 
 # ==============================================================================
@@ -117,8 +120,8 @@ fc server (running on master)
 # Parse arguments
 # ==============================================================================
 
-if len(sys.argv) != 3:
-    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt'
+if len(sys.argv) not in [4,5]:
+    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch'
     sys.exit(0)
 
 # Check that the distributed cct binary exists before running this script
@@ -132,6 +135,10 @@ if not os.path.exists('./tools/size_util/size_util'):
 
 solver_file = sys.argv[1]
 machine_list_file = sys.argv[2]
+machines_per_batch = int(sys.argv[3])
+
+if len(sys.argv) == 5 and sys.argv[4] == 's':
+    skip_lmdb_generation = True
 
 
 # ==============================================================================
@@ -173,6 +180,35 @@ else:
     conv_compute_server_machines = machine_list[2:]
 num_conv_compute_servers = len(conv_compute_server_machines)
 
+# Now determine the number of groups
+num_groups = num_conv_compute_servers / machines_per_batch
+assert num_groups > 0
+if num_conv_compute_servers % machines_per_batch > 0:
+    print 'Warning: Not using ' + str(num_conv_compute_servers % machines_per_batch) + ' machines'
+
+
+# ------------------------------------------------------------------------------
+# Find ports for the machines above
+# ------------------------------------------------------------------------------
+# Now we need to create 2 ports per group (one to listen and one to broadcast)
+# SHADJIS TODO: We should get a list of free ports both on the conv model server
+# machine and the fc server machine. For now, I am only getting a list of free
+# ports on the current machine (running this script) and re-using for the machines
+# running these servers, which is wrong. If this causes errors, can log in to 
+# each machine and run a script (get_n_free_ports.py), then use those ports.
+
+import socket
+
+# SHADJIS TODO: ssh into conv model / fc server machines and run this there
+ports = []
+for i in range(num_groups*2):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    addr = s.getsockname()
+    # E.g. parse 40582 from ('0.0.0.0', 40582) SHADJIS TODO: Support other formats
+    ports.append(str(addr[1]))
+    s.close()
+
 
 # ------------------------------------------------------------------------------
 # Parse the solver prototxt to get the name of the train prototxt file
@@ -201,6 +237,9 @@ f.close()
 # Parse the train prototxt file for lmdb names
 # ------------------------------------------------------------------------------
 # First parse the file to obtain the lmdb names
+# Also while parsing, count the number of FC layers. This is only used for 
+# multi-GPU model parallelism
+num_fc_layers_total = 0
 f = open(train_proto)
 lmdb_databases = []
 for line in f:
@@ -209,7 +248,16 @@ for line in f:
     match = re.search(r'source\s*:\s*"\s*(\S+)\s*"', line, flags=re.IGNORECASE)
     if match:
         lmdb_databases.append(match.group(1))
+    
+    # Also check if this is an fc layer
+    match = re.search(r'type\s*:\s*"\s*(\S+)\s*"', line, flags=re.IGNORECASE)
+    if match:
+        type = match.group(1)
+        if 'INNERPRODUCT' in type.upper():
+            num_fc_layers_total += 1
+
 assert len(lmdb_databases) in [1,2]
+assert num_fc_layers_total > 0    # For softmax
 if len(lmdb_databases) == 2:
     print 'Warning: For now, validation / test sets are ignored.'
     print '         This will be supported soon.'
@@ -243,9 +291,10 @@ fc_section = False
 lines_for_current_layer = []
 lines_for_current_layer_no_gpu = []
 f = open(train_proto)
+num_fc_layers_found = 0
 for line in f:
     # Check if this is the start of a new layer
-    # SHADJIS TODO: I think proto can skip a line bfore the curly brace but I'll ignore that for now
+    # SHADJIS TODO: I think proto can skip a line before the curly brace but I'll ignore that for now
     if re.search(r'layer\s*\{', line, flags=re.IGNORECASE):
         layer_str = ''.join(lines_for_current_layer)
         layer_str_no_gpu = ''.join(lines_for_current_layer_no_gpu)
@@ -259,9 +308,18 @@ for line in f:
             # We want to append this layer to all the networks
             conv_model_server_proto_str += layer_str_no_gpu # No GPU for now on the conv model server
             # For each conv compute network, we need to replace the LMDB
+            # We also need to reduce the batch size
+            layer_str_copy = layer_str
+            match = re.search(r'batch_size\s*:\s*(\d+)', layer_str, flags=re.IGNORECASE)
+            if match:
+                batch_size = int(match.group(1))
+                assert batch_size % machines_per_batch == 0
+                batch_size_reduced = int(batch_size / machines_per_batch)
+                layer_str_copy = re.sub(r'batch_size\s*:\s*(\d+)', 'batch_size: ' + str(batch_size_reduced), layer_str_copy, 1, flags=re.IGNORECASE)
             for i in range(num_conv_compute_servers):
-                conv_compute_server_proto_strs[i] += layer_str.replace(conv_movel_server_train_lmdb_name, conv_compute_server_train_lmdb_names[i])
+                conv_compute_server_proto_strs[i] += layer_str_copy.replace(conv_movel_server_train_lmdb_name, conv_compute_server_train_lmdb_names[i])
             # For the FC network, we need to do some replacements and then also replace the LMDB:
+            # SHADJIS TODO: Use regex to replace the mirror in mirror: true/false, but not others
             layer_str = re.sub(r'mirror',    '#mirror',    layer_str , 1, flags=re.IGNORECASE)
             layer_str = re.sub(r'crop_size', '#crop_size', layer_str , 1, flags=re.IGNORECASE)
             layer_str = re.sub(r'mean_file', '#mean_file', layer_str , 1, flags=re.IGNORECASE)
@@ -293,6 +351,7 @@ for line in f:
                     data_section = False
                     conv_section = True
             elif 'INNERPRODUCT' in type.upper():
+                num_fc_layers_found += 1
                 data_section = False
                 conv_section = False
                 fc_section = True
@@ -322,13 +381,58 @@ for line in f:
                     elif use_1_gpu:
                         lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
 ''')
-                # FC can use up to 1 GPU
+                # FC can use up to 1 GPU with model parallelism disabled,
+                # and all the GPUs with model parallelism enabled
                 elif fc_section and type.upper() != 'SOFTMAXWITHLOSS':
-                    if use_4_gpu or use_1_gpu:
+                    if use_1_gpu or (use_4_gpu and not multi_gpu_model_parallelism):
                         lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
 ''')
+                    # If 4 GPUs and model parallelism is enabled, the type of parallelism and
+                    # number of GPUs depends on the layer. 
+                    # By default, FC layers get 4 GPUs and model parallelism, and non-FC layers
+                    # get 4 GPUs and data parallelism. However the final FC layer may be faster
+                    # on just 1 GPU because:
+                    #  - 4 GPUs data parallelism: this is slow because the computation is small
+                    #    for the final FC layer so there is little speedup  from using
+                    #    multiple GPUs, but accumulating the gradients requires
+                    #    copying the gradients from each GPU and model back to each GPU
+                    #  - 4 GPUs model parallelism: this is fast but requires copying all the
+                    #    data to each GPU then back to the host in backward pass to sum gradients
+                    # It turns out that because the computation is fast for the last FC, minimizing copies 
+                    # is more important, so using 1 GPU (and keeping gradients on device at all times)
+                    # is fastest. Then to avoid copies to that GPU, it is also fastest if all
+                    # the preceding layers (e.g. ReLU, dropout) also use 1 GPU (1 GPU is batch
+                    # parallelism by default, but 1 GPU batch and 1 GPU depth are equivalent).
+                    elif use_4_gpu:
+                        # Now how many GPUs to use depends on the layer
+                        assert multi_gpu_model_parallelism
+                        # If we are past the second-last FC, use 1 GPU
+                        if type.upper() == 'INNERPRODUCT':
+                            assert num_fc_layers_found >= 1
+                            assert num_fc_layers_found <= num_fc_layers_total
+                            if num_fc_layers_found == num_fc_layers_total:  # Last FC
+                                lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+''')
+                            else:
+                                lines_for_current_layer.append('''  gpu_0_depth_proportion: 0.25
+  gpu_1_depth_proportion: 0.25
+  gpu_2_depth_proportion: 0.25
+  gpu_3_depth_proportion: 0.25
+''')
+                        else:
+                            if num_fc_layers_found >= num_fc_layers_total-1:  # Right before last FC
+                                lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+''')
+                            else:
+                                lines_for_current_layer.append('''  gpu_0_batch_proportion: 0.25
+  gpu_1_batch_proportion: 0.25
+  gpu_2_batch_proportion: 0.25
+  gpu_3_batch_proportion: 0.25
+''')
+
+
 f.close()
-        
+
 # Call code above for the last layer too now
 layer_str = ''.join(lines_for_current_layer)
 layer_str_no_gpu = ''.join(lines_for_current_layer_no_gpu)
@@ -536,11 +640,24 @@ for i in range(num_conv_compute_servers):
 # FC server
 print '  Writing ' + fc_server_cfg
 f = open(fc_server_cfg, 'w')
-f.write('''name = "FCComputeModelServer on tcp://''' + fc_server_machine + ''':5556";
-bind = "tcp://*:5556";
+f.write('''name = "FCComputeModelServer on tcp://''' + fc_server_machine + '''";
 type = "FCComputeModelServer";
-solver = "''' + fc_server_solver_file + '''"
-train_bin = "''' + dummy_file + '''"
+solver = "''' + fc_server_solver_file + '''";
+train_bin = "''' + dummy_file + '''";
+group_size = ''' + str(machines_per_batch) + ''';
+
+ports = (
+''')
+for i in range(num_groups):
+    if i != 0:
+        f.write(',')
+    f.write('''
+  {
+    broadcast = "tcp://*:''' + str(ports[2*i]) + '''",
+    listen = "tcp://*:''' + str(ports[2*i + 1]) + '''"
+  }''')
+f.write('''
+);
 ''')
 f.close()
 cmd_params.append((fc_server_machine, fc_server_cfg))
@@ -548,25 +665,43 @@ cmd_params.append((fc_server_machine, fc_server_cfg))
 # Conv model server
 print '  Writing ' + conv_model_server_cfg
 f = open(conv_model_server_cfg, 'w')
-f.write('''name = "ConvModelServer on tcp://''' + conv_model_server_machine + ''':5555";
-bind = "tcp://*:5555";
+f.write('''name = "ConvModelServer on tcp://''' + conv_model_server_machine + '''";
 type = "ConvModelServer";
-solver = "''' + conv_model_server_solver_file + '''"
-train_bin = "''' + dummy_file + '''"
+solver = "''' + conv_model_server_solver_file + '''";
+train_bin = "''' + dummy_file + '''";
+group_size = ''' + str(machines_per_batch) + ''';
+
+ports = (
+''')
+for i in range(num_groups):
+    if i != 0:
+        f.write(',')
+    f.write('''
+  {
+    broadcast = "tcp://*:''' + str(ports[2*i    ]) + '''",
+    listen = "tcp://*:'''    + str(ports[2*i + 1]) + '''"
+  }''')
+f.write('''
+);
 ''')
 f.close()
 cmd_params.append((conv_model_server_machine, conv_model_server_cfg))
 
 # Conv compute servers
 for i in range(num_conv_compute_servers):
+    group_of_this_machine = i / machines_per_batch
     print '  Writing ' + conv_compute_server_cfgs[i]
     f = open(conv_compute_server_cfgs[i], 'w')
     f.write('''name = "ConvComputeServer ''' + str(i) + '''";
-conv_bind = "tcp://''' + conv_model_server_machine + ''':5555";
-fc_bind = "tcp://''' + fc_server_machine + ''':5556";
+conv_listen_bind = "tcp://''' + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
+conv_send_bind = "tcp://'''   + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
+fc_listen_bind = "tcp://'''   + fc_server_machine         + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
+fc_send_bind = "tcp://'''     + fc_server_machine         + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
 type = "ConvComputeServer";
-solver = "''' + conv_compute_server_solver_files[i] + '''"
-train_bin = "''' + conv_compute_server_train_lmdb_names[i] + '''.bin"
+solver = "''' + conv_compute_server_solver_files[i] + '''";
+train_bin = "''' + conv_compute_server_train_lmdb_names[i] + '''.bin";
+group_size = ''' + str(machines_per_batch) + ''';
+rank_in_group = ''' + str(i%machines_per_batch) + ''';
 ''')
     f.close()
     cmd_params.append((conv_compute_server_machines[i], conv_compute_server_cfgs[i]))
@@ -592,7 +727,8 @@ for cmd_param in cmd_params:
 f = open('kill_servers.sh', 'w')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
-    f.write('ssh ' + user + '@' + machine + ' \'pkill dcct; fuser -k 5555/tcp; fuser -k 5556/tcp;\' &' + "\n")
+    # f.write('ssh ' + user + '@' + machine + ' \'pkill dcct; fuser -k 5555/tcp; fuser -k 5556/tcp;\' &' + "\n")
+    f.write('ssh ' + user + '@' + machine + ' \'pkill dcct;\' &' + "\n")
 f.close()
 
 print '''

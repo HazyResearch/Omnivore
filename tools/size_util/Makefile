@@ -65,7 +65,7 @@ LINKCC = $(CC)
 LINKFLAG = $(CFLAGS) $(LDFLAGS)
 
 ifdef NVCC
-LINKFLAG += -lcublas -lcudart
+LINKFLAG += -lcurand -lcublas -lcudart
 NVCC_LINK = dlink.o
 endif
 

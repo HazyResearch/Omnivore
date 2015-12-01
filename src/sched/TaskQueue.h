@@ -54,7 +54,7 @@ public:
 
     std::vector<std::thread> threads;
 
-    for(int i=0;i<tasks.size();i++){
+    for(size_t i=0;i<tasks.size();i++){
       threads.push_back(std::thread(run_task, &tasks[i]));
     }
 

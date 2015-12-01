@@ -24,8 +24,10 @@ public:
   std::string solver_file;
   std::string data_binary;
   
-  std::string conv_bind;
-  std::string fc_bind;
+  std::string conv_listen_bind;
+  std::string conv_send_bind;
+  std::string fc_listen_bind;
+  std::string fc_send_bind;
 
   int group_size;
   int rank_in_group;
@@ -36,17 +38,19 @@ public:
   int nfloats_model;
   int nfloats_output_data;
 
-  ConvComputeServer(string _name, std::string _conv_bind, std::string _fc_bind, std::string _solver_file, std::string _data_binary,
+  ConvComputeServer(string _name, std::string _conv_listen_bind, std::string _conv_send_bind,
+    std::string _fc_listen_bind, std::string _fc_send_bind, std::string _solver_file, std::string _data_binary,
     int _groupsize, int _rank_in_group) : 
     name(_name), solver_file(_solver_file), data_binary(_data_binary), 
-    conv_bind(_conv_bind), fc_bind(_fc_bind),
-    nfloats_model(0), nfloats_output_data(0),
-    group_size(_groupsize), rank_in_group(_rank_in_group)
+    conv_listen_bind(_conv_listen_bind), conv_send_bind(_conv_send_bind),
+    fc_listen_bind(_fc_listen_bind), fc_send_bind(_fc_send_bind),
+    group_size(_groupsize), rank_in_group(_rank_in_group),
+    nfloats_model(0), nfloats_output_data(0)
   {}
 
   void start(){
   
-    LOG(INFO) << "Starting ConvComputeServer[" << name << "]..." << std::endl;
+    VLOG(2) << "Starting ConvComputeServer[" << name << "]..." << std::endl;
 
     // -------------------------------------------------------------------------
     // Bind to both servers
@@ -57,17 +61,14 @@ public:
      
     int rc;
 
-    /********
-     * TODO CE: THIS IS WHERE THE SCHEDULER COMES IN
-     ********/
     void *context_model_agg = zmq_ctx_new ();
     void *responder_model_agg = zmq_socket (context_model_agg, ZMQ_REQ);
-    rc = zmq_connect (responder_model_agg, "tcp://master:7555"); //tcp://master:5555
+    rc = zmq_connect (responder_model_agg, conv_listen_bind.c_str());
     assert (rc == 0);
 
     void *context_model_broadcast = zmq_ctx_new ();
     void *responder_model_broadcast = zmq_socket (context_model_broadcast, ZMQ_SUB);
-    rc = zmq_connect (responder_model_broadcast, "tcp://master:7556"); //tcp://master:5555
+    rc = zmq_connect (responder_model_broadcast, conv_send_bind.c_str());
     assert (rc == 0);
     rc = zmq_setsockopt (responder_model_broadcast, ZMQ_SUBSCRIBE, "", 0);
     assert (rc == 0);
@@ -75,12 +76,12 @@ public:
 
     void *context_fc_agg = zmq_ctx_new ();
     void *responder_fc_agg = zmq_socket (context_fc_agg, ZMQ_REQ);
-    rc = zmq_connect (responder_fc_agg, "tcp://node001:7555"); //tcp://master:5555
+    rc = zmq_connect (responder_fc_agg, fc_listen_bind.c_str());
     assert (rc == 0);
 
     void *context_fc_broadcast = zmq_ctx_new ();
     void *responder_fc_broadcast = zmq_socket (context_fc_broadcast, ZMQ_SUB);
-    rc = zmq_connect (responder_fc_broadcast, "tcp://node001:7556"); //tcp://master:5555
+    rc = zmq_connect (responder_fc_broadcast, fc_send_bind.c_str());
     assert (rc == 0);
     rc = zmq_setsockopt (responder_fc_broadcast, ZMQ_SUBSCRIBE, "", 0);
     assert (rc == 0);
@@ -94,6 +95,15 @@ public:
       (*bridge)->set_update_model_gradients(false);
     }
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
+    
+    // SHADJIS TODO: Later we will call this:
+    //   bridges.back()->update_p_output_layer_gradient_CPU_ONLY(&incoming_msg_data_grads->content[rank_in_group*nfloats_output_data]);
+    // But the last bridge by default owns the memory of its output cubes, so once we
+    // change the pointer it will have a memory leak. We should make a change here to
+    // free that cube and replace it with a dummy cube, or specify more intelligently
+    // when a layer should not own its output cubes. E.g. we also would not want to if
+    // the output of the bridge never needs to get copied back to the host.
+    
     // Open the file for the first time during training
     FILE * pFile = fopen (corpus->filename.c_str(), "rb");
     if (!pFile)
@@ -121,13 +131,13 @@ public:
     // assert(sizeof(OmvMessage) == 8); // Eventually we should assert the zero-length array has size 0 bytes
                                         // If not the buffer sizes below might be off by 1
     int outgoing_model_grad_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*nfloats_model;
-    LOG(INFO) << "Allocating " << (1.0*outgoing_model_grad_buf_size/1024/1024) << " MB for outgoing model gradients" << std::endl;
+    VLOG(2) << "Allocating " << (1.0*outgoing_model_grad_buf_size/1024/1024) << " MB for outgoing model gradients" << std::endl;
     char * outgoing_model_grad_buf = new char[outgoing_model_grad_buf_size];
     
     // Outgoing data
     // Recall that we need to pass labels as well.
     int outgoing_data_buf_size = sizeof(OmvMessage) + 1*sizeof(float)*(nfloats_output_data + corpus->mini_batch_size);
-    LOG(INFO) << "Allocating " << (1.0*outgoing_data_buf_size/1024/1024) << " MB for outgoing data" << std::endl;
+    VLOG(2) << "Allocating " << (1.0*outgoing_data_buf_size/1024/1024) << " MB for outgoing data" << std::endl;
     char * outgoing_data_buf = new char[outgoing_data_buf_size];
 
     
@@ -166,12 +176,12 @@ public:
     
     // Incoming model
     int incoming_model_buf_size = sizeof(OmvMessage) + 2*sizeof(float)*nfloats_model;
-    LOG(INFO) << "Allocating " << (1.0*incoming_model_buf_size/1024/1024) << " MB for incoming model" << std::endl;
+    VLOG(2) << "Allocating " << (1.0*incoming_model_buf_size/1024/1024) << " MB for incoming model" << std::endl;
     char * incoming_model_buf = new char[incoming_model_buf_size];
 
     // Incoming data gradients
     int incoming_data_grad_buf_size = sizeof(OmvMessage) + 2*sizeof(float)*nfloats_output_data*group_size;
-    LOG(INFO) << "Allocating " << (1.0*incoming_data_grad_buf_size/1024/1024) << " MB for incoming data gradients" << std::endl;
+    VLOG(2) << "Allocating " << (1.0*incoming_data_grad_buf_size/1024/1024) << " MB for incoming data gradients" << std::endl;
     char * incoming_data_grad_buf = new char[incoming_data_grad_buf_size];
 
     // Incoming message which acknowledges that the model gradients we
@@ -185,7 +195,7 @@ public:
     incoming_msg_model_grad_updated.rank_in_group = rank_in_group;
     assert(incoming_msg_model_grad_updated.size() == sizeof(OmvMessage));
 
-    char dummy[50];
+    char dummy[50]; // SHADJIS TODO: Not sure what this is, need to add a comment and remove hard-coding of 50
 
     OmvMessage * incoming_msg_new_model;
 
@@ -197,7 +207,7 @@ public:
         // -----------------------------------------------------------------------
         // Read in the next mini-batch from file and update labels from lmdb
         // -----------------------------------------------------------------------
-        LOG(INFO) << "~~~~ ENTER STATE Read corpus" << std::endl;
+        VLOG(2) << "~~~~ ENTER STATE Read corpus" << std::endl;
         
         // Read in the next mini-batch from file
         size_t rs = fread(corpus->images->get_p_data(), sizeof(DataType_SFFloat), corpus->images->n_elements, pFile);
@@ -260,7 +270,7 @@ public:
         // This assertion isn't needed, it just checks my understanding of how we pass data
         assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == corpus->images->physical_get_RCDslice(0));
       
-        LOG(INFO) << "~~~~ EXIT STATE Read corpus" << std::endl;
+        VLOG(2) << "~~~~ EXIT STATE Read corpus" << std::endl;
       }
     );
 
@@ -275,24 +285,24 @@ public:
             &responder_model_broadcast](){
 
             if((*bridge)->get_model_cube() == NULL){
-              LOG(INFO) << "------Skipping Bridge " << ct1 << " does not have model" << std::endl;
+              VLOG(2) << "------Skipping Bridge " << ct1 << " does not have model" << std::endl;
             }else{
-              LOG(INFO) << "Sending ASK_MODEL Request Bridge " << ct1 << std::endl;
-              LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
+              VLOG(2) << "Sending ASK_MODEL Request Bridge " << ct1 << std::endl;
+              VLOG(2) << "~~~~ ENTER STATE IDLE" << std::endl;
               outgoing_msg_ask_model.bridgeid = ct1;
               zmq_send (responder_model_agg, &outgoing_msg_ask_model, outgoing_msg_ask_model.size(), 0);
               zmq_recv (responder_model_agg, dummy, 50, 0);
-              LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
+              VLOG(2) << "~~~~ EXIT STATE IDLE" << std::endl;
 
-              LOG(INFO) << "RECEIVING MODEL FOR BRIDGE " << ct1 << std::endl;
+              VLOG(2) << "RECEIVING MODEL FOR BRIDGE " << ct1 << std::endl;
               zmq_recv (responder_model_broadcast, incoming_model_buf, incoming_model_buf_size, 0);
               incoming_msg_new_model = reinterpret_cast<OmvMessage*>(incoming_model_buf);
-              LOG(INFO) << "RCV MSG " << incoming_msg_new_model->msg_type << "   " << ANSWER_MODEL << std::endl;
-              LOG(INFO) << "SIZE = " << incoming_msg_new_model->size() << std::endl;
+              VLOG(2) << "RCV MSG " << incoming_msg_new_model->msg_type << "   " << ANSWER_MODEL << std::endl;
+              VLOG(2) << "SIZE = " << incoming_msg_new_model->size() << std::endl;
               assert(incoming_msg_new_model->msg_type == ANSWER_MODEL);
               //assert(incoming_msg_new_model->size() == outgoing_model_grad_buf_size);
               DeepNet::set_ith_models(bridges, incoming_msg_new_model->content, ct1);
-              LOG(INFO) << "RECEIVED MODEL FOR BRIDGE " << ct1 << std::endl;
+              VLOG(2) << "RECEIVED MODEL FOR BRIDGE " << ct1 << std::endl;
             }
           }
       ));
@@ -310,9 +320,10 @@ public:
       tasks_forward.push_back(
         Task(
           [bridge, ct](){
-            LOG(INFO) << "RUNNING FORWARD FOR BRIDGE " << ct << std::endl;
+            VLOG(2) << "RUNNING FORWARD FOR BRIDGE " << ct << std::endl;
+            assert((*bridge)->get_model_parallelism_group_size() == 1);
             (*bridge)->forward();
-            LOG(INFO) << "FINISH FORWARD MODEL FOR BRIDGE " << ct << std::endl;
+            VLOG(2) << "FINISH FORWARD MODEL FOR BRIDGE " << ct << std::endl;
           }
       ));
       if(ct >= 1){
@@ -345,40 +356,40 @@ public:
           sizeof(float)*nfloats_output_data);
         // Debug
         // cout << "~" << outgoing_msg_send_data_and_ask_grad->content[0] << std::endl;
-        LOG(INFO) << "~~~~ EXIT STATE Copy FW" << std::endl;
+        VLOG(2) << "~~~~ EXIT STATE Copy FW" << std::endl;
 
         // -----------------------------------------------------------------------
         // Send output of FW Pass to FC Server and simultaneously ask for gradients
         // -----------------------------------------------------------------------
-        LOG(INFO) << "Sending output data with Request ASK_GRADIENT_OF_SENT_DATA and waiting for data gradients..." << std::endl;
+        VLOG(2) << "Sending output data with Request ASK_GRADIENT_OF_SENT_DATA and waiting for data gradients..." << std::endl;
         // Send data output
-        LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
+        VLOG(2) << "~~~~ ENTER STATE IDLE" << std::endl;
         zmq_send (responder_fc_agg, outgoing_msg_send_data_and_ask_grad, outgoing_msg_send_data_and_ask_grad->size(), 0);
         zmq_recv (responder_fc_agg, dummy, 50, 0);
-        LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
+        VLOG(2) << "~~~~ EXIT STATE IDLE" << std::endl;
         // Wait for data gradients
-        LOG(INFO) << "Waiting for ANSWER_GRADIENT_OF_SENT_DATA Response..." << std::endl;
-        LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
+        VLOG(2) << "Waiting for ANSWER_GRADIENT_OF_SENT_DATA Response..." << std::endl;
+        VLOG(2) << "~~~~ ENTER STATE IDLE" << std::endl;
         zmq_recv (responder_fc_broadcast, incoming_data_grad_buf, incoming_data_grad_buf_size, 0);
-        LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
-        LOG(INFO) << "~~~~ ENTER STATE Read msg" << std::endl;
+        VLOG(2) << "~~~~ EXIT STATE IDLE" << std::endl;
+        VLOG(2) << "~~~~ ENTER STATE Read msg" << std::endl;
         OmvMessage * incoming_msg_data_grads = reinterpret_cast<OmvMessage*>(incoming_data_grad_buf);
         assert(incoming_msg_data_grads->msg_type == ANSWER_GRADIENT_OF_SENT_DATA);
         assert(incoming_msg_data_grads->size() == int(sizeof(OmvMessage) + group_size*sizeof(float)*nfloats_output_data));
-        LOG(INFO) << "~~~~ EXIT STATE Read msg" << std::endl;
-        LOG(INFO) << "Received data gradients" << std::endl;
+        VLOG(2) << "~~~~ EXIT STATE Read msg" << std::endl;
+        VLOG(2) << "Received data gradients" << std::endl;
 
         // -----------------------------------------------------------------------
         // Update last layer input data gradients with incoming_msg_data_grads->content
         // -----------------------------------------------------------------------
-        LOG(INFO) << "~~~~ ENTER STATE Update gradients" << std::endl;
+        VLOG(2) << "~~~~ ENTER STATE Update gradients" << std::endl;
         assert(!bridges.back()->get_share_pointer_with_next_bridge());
         bridges.back()->update_p_output_layer_gradient_CPU_ONLY(&incoming_msg_data_grads->content[rank_in_group*nfloats_output_data]);
         assert(bridges.back()->p_output_layer->p_gradient_cube->get_p_data() == &incoming_msg_data_grads->content[rank_in_group*nfloats_output_data]);
-        LOG(INFO) << "~~~~ EXIT STATE Update gradients" << std::endl;
+        VLOG(2) << "~~~~ EXIT STATE Update gradients" << std::endl;
 
-        std::cout << incoming_msg_data_grads->nelem << std::endl;
-        std::cout << rank_in_group << " " << nfloats_output_data << " " << rank_in_group*nfloats_output_data << std::endl;
+        // std::cout << incoming_msg_data_grads->nelem << std::endl;
+        // std::cout << rank_in_group << " " << nfloats_output_data << " " << rank_in_group*nfloats_output_data << std::endl;
 
       }
     );
@@ -392,9 +403,9 @@ public:
       tasks_backward.push_back(
         Task(
           [bridge, ct, nbridge](){
-            LOG(INFO) << "RUNNING BACKWARD FOR BRIDGE " << (nbridge-ct) << std::endl;
+            VLOG(2) << "RUNNING BACKWARD FOR BRIDGE " << (nbridge-ct) << std::endl;
             (*bridge)->backward();
-            LOG(INFO) << "FINISH BACKWARD MODEL FOR BRIDGE " << (nbridge-ct) << std::endl;
+            VLOG(2) << "FINISH BACKWARD MODEL FOR BRIDGE " << (nbridge-ct) << std::endl;
           }
       ));
       if(ct >= 1){
@@ -412,24 +423,25 @@ public:
           [bridge, ct, &bridges, &dummy, &outgoing_msg_send_model_grad, nbridge,
             &responder_model_agg, &responder_model_broadcast, &incoming_msg_model_grad_updated](){
             if((*bridge)->get_model_cube() == NULL){
-              LOG(INFO) << "------Skipping Bridge (b)" << nbridge-ct << " does not have model" << std::endl;
+              VLOG(2) << "------Skipping Bridge (b)" << nbridge-ct << " does not have model" << std::endl;
             }else{
               outgoing_msg_send_model_grad->bridgeid = nbridge-ct;
-              DeepNet::get_ith_gradient(bridges, outgoing_msg_send_model_grad->content, nbridge-ct);
+              size_t model_nelem = DeepNet::get_ith_gradient(bridges, outgoing_msg_send_model_grad->content, nbridge-ct);
+              outgoing_msg_send_model_grad->nelem = model_nelem;
 
-              LOG(INFO) << "Sending ASK_UPDATE_GRADIENT Request BRIDGE " << nbridge-ct << std::endl;
-              LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
+              VLOG(2) << "Sending ASK_UPDATE_GRADIENT Request BRIDGE " << nbridge-ct << std::endl;
+              VLOG(2) << "~~~~ ENTER STATE IDLE" << std::endl;
               zmq_send (responder_model_agg, outgoing_msg_send_model_grad, outgoing_msg_send_model_grad->size(), 0);
               zmq_recv (responder_model_agg, dummy, 50, 0);
-              LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
+              VLOG(2) << "~~~~ EXIT STATE IDLE" << std::endl;
 
               // -----------------------------------------------------------------------
               // Wait until update is done
               // -----------------------------------------------------------------------
-              LOG(INFO) << "Waiting for ANSWER_UPDATE_GRADIENT Request BRIDGE " << nbridge-ct << std::endl;
-              LOG(INFO) << "~~~~ ENTER STATE IDLE" << std::endl;
+              VLOG(2) << "Waiting for ANSWER_UPDATE_GRADIENT Request BRIDGE " << nbridge-ct << std::endl;
+              VLOG(2) << "~~~~ ENTER STATE IDLE" << std::endl;
               zmq_recv (responder_model_broadcast, &incoming_msg_model_grad_updated, incoming_msg_model_grad_updated.size(), 0);
-              LOG(INFO) << "~~~~ EXIT STATE IDLE" << std::endl;
+              VLOG(2) << "~~~~ EXIT STATE IDLE" << std::endl;
               assert(incoming_msg_model_grad_updated.msg_type == ANSWER_UPDATE_GRADIENT);
               assert(incoming_msg_model_grad_updated.size() == sizeof(OmvMessage));
             }
@@ -445,17 +457,17 @@ public:
     // Create Queuq
     TaskQueue queue;
     queue.tasks.push_back(task_load_data);
-    for(int i=0;i<tasks_get_model.size();i++){
+    for(size_t i=0;i<tasks_get_model.size();i++){
       queue.tasks.push_back(tasks_get_model[i]);
     }
-    for(int i=0;i<tasks_forward.size();i++){
+    for(size_t i=0;i<tasks_forward.size();i++){
       queue.tasks.push_back(tasks_forward[i]);
     }
     queue.tasks.push_back(task_get_bw_grad);
-    for(int i=0;i<tasks_backward.size();i++){
+    for(size_t i=0;i<tasks_backward.size();i++){
       queue.tasks.push_back(tasks_backward[i]);
     }
-    for(int i=0;i<tasks_update_grad.size();i++){
+    for(size_t i=0;i<tasks_update_grad.size();i++){
       queue.tasks.push_back(tasks_update_grad[i]);
     }
 

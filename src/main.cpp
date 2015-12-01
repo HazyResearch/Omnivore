@@ -26,16 +26,39 @@ Server * initConvModelServer(Config & cfg, char * filename){
   LOG(INFO) << "Initializing ConvModelServer from " << filename << endl;
 
   string NAME      = cfg.lookup("name");
-  string BIND      = cfg.lookup("bind");
   string SOLVER    = cfg.lookup("solver");
   string TRAIN_BIN = cfg.lookup("train_bin");
+  int    GROUPSIZE = cfg.lookup("group_size");
+  
+  // Now parse each group of ports
+  // Recall a conv model server has 2 ports per conv compute group
+  // (1 port for broadcasting, 1 for listening)
+  const Setting& root = cfg.getRoot();
+  int num_groups = root["ports"].getLength();
+  
+  LOG(INFO) << "GROUPSIZE  = " << GROUPSIZE  << std::endl;
+  LOG(INFO) << "NUM GROUPS = " << num_groups << std::endl;
+  LOG(INFO) << "NAME       = " << NAME       << std::endl;
+  LOG(INFO) << "SOLVER     = " << SOLVER     << std::endl;
+  LOG(INFO) << "TRAIN_BIN  = " << TRAIN_BIN  << std::endl;
 
-  LOG(INFO) << "NAME      = " << NAME      << std::endl;
-  LOG(INFO) << "BIND      = " << BIND      << std::endl;
-  LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
-  LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
+  // Read the ports
+  std::vector <string> broadcast_ports;
+  std::vector <string> listen_ports;
+  for(int i=0;i<num_groups;i++){
+    const Setting & port_pair = root["ports"][i];
+    string broadcast;
+    string listen;
+    port_pair.lookupValue("broadcast", broadcast);
+    port_pair.lookupValue("listen", listen);
+    LOG(INFO) << "Group " << i << " listening on port " << listen << " and broadcasting on port " 
+              << broadcast << std::endl;
+    broadcast_ports.push_back(broadcast);
+    listen_ports.push_back(listen);
+  }
 
-  Server * s = new ConvModelServer(NAME, BIND, SOLVER, TRAIN_BIN);
+  Server * s = new ConvModelServer(NAME, SOLVER, TRAIN_BIN, GROUPSIZE,
+    broadcast_ports, listen_ports);
   return s;
 }
 
@@ -45,16 +68,39 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
   LOG(INFO) << "Initializing initFCComputeModelServer from " << filename << endl;
 
   string NAME      = cfg.lookup("name");
-  string BIND      = cfg.lookup("bind");
   string SOLVER    = cfg.lookup("solver");
   string TRAIN_BIN = cfg.lookup("train_bin");
+  int    GROUPSIZE = cfg.lookup("group_size");
 
-  LOG(INFO) << "NAME      = " << NAME      << std::endl;
-  LOG(INFO) << "BIND      = " << BIND      << std::endl;
-  LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
-  LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
+  // Now parse each group of ports
+  // Recall a conv model server has 2 ports per conv compute group
+  // (1 port for broadcasting, 1 for listening)
+  const Setting& root = cfg.getRoot();
+  int num_groups = root["ports"].getLength();
+  
+  LOG(INFO) << "GROUPSIZE  = " << GROUPSIZE  << std::endl;
+  LOG(INFO) << "NUM GROUPS = " << num_groups << std::endl;
+  LOG(INFO) << "NAME       = " << NAME       << std::endl;
+  LOG(INFO) << "SOLVER     = " << SOLVER     << std::endl;
+  LOG(INFO) << "TRAIN_BIN  = " << TRAIN_BIN  << std::endl;
 
-  Server * s = new FCComputeModelServer(NAME, BIND, SOLVER, TRAIN_BIN);
+  // Read the ports
+  std::vector <string> broadcast_ports;
+  std::vector <string> listen_ports;
+  for(int i=0;i<num_groups;i++){
+    const Setting & port_pair = root["ports"][i];
+    string broadcast;
+    string listen;
+    port_pair.lookupValue("broadcast", broadcast);
+    port_pair.lookupValue("listen", listen);
+    LOG(INFO) << "Group " << i << " listening on port " << listen << " and broadcasting on port " 
+              << broadcast << std::endl;
+    broadcast_ports.push_back(broadcast);
+    listen_ports.push_back(listen);
+  }
+
+  Server * s = new FCComputeModelServer(NAME, SOLVER, TRAIN_BIN, GROUPSIZE,
+    broadcast_ports, listen_ports);
   return s;
 }
 
@@ -63,25 +109,30 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
 Server * initConvComputeServer(Config & cfg, char * filename){
   LOG(INFO) << "Initializing ConvComputeServer from " << filename << endl;
 
-  string NAME      = cfg.lookup("name");
-  string CONV_BIND = cfg.lookup("conv_bind");
-  string FC_BIND   = cfg.lookup("fc_bind");
-  string SOLVER    = cfg.lookup("solver");
-  string TRAIN_BIN = cfg.lookup("train_bin");
+  string NAME             = cfg.lookup("name");
+  string CONV_LISTEN_BIND = cfg.lookup("conv_listen_bind");
+  string CONV_SEND_BIND   = cfg.lookup("conv_send_bind");
+  string FC_LISTEN_BIND   = cfg.lookup("fc_listen_bind");
+  string FC_SEND_BIND     = cfg.lookup("fc_send_bind");
+  string SOLVER           = cfg.lookup("solver");
+  string TRAIN_BIN        = cfg.lookup("train_bin");
 
   int    GROUPSIZE = cfg.lookup("group_size");
   int RANK_IN_GROUP= cfg.lookup("rank_in_group");
 
-  LOG(INFO) << "NAME      = " << NAME      << std::endl;
-  LOG(INFO) << "CONV_BIND = " << CONV_BIND << std::endl;
-  LOG(INFO) << "FC_BIND   = " << FC_BIND   << std::endl;
-  LOG(INFO) << "SOLVER    = " << SOLVER    << std::endl;
-  LOG(INFO) << "TRAIN_BIN = " << TRAIN_BIN << std::endl;
+  LOG(INFO) << "NAME             = " << NAME             << std::endl;
+  LOG(INFO) << "CONV_LISTEN_BIND = " << CONV_LISTEN_BIND << std::endl;
+  LOG(INFO) << "CONV_SEND_BIND   = " << CONV_SEND_BIND   << std::endl;
+  LOG(INFO) << "FC_LISTEN_BIND   = " << FC_LISTEN_BIND   << std::endl;
+  LOG(INFO) << "FC_SEND_BIND     = " << FC_SEND_BIND     << std::endl;
+  LOG(INFO) << "SOLVER           = " << SOLVER           << std::endl;
+  LOG(INFO) << "TRAIN_BIN        = " << TRAIN_BIN        << std::endl;
 
   LOG(INFO) << "GROUPSIZE = " << GROUPSIZE << std::endl;
   LOG(INFO) << "RANK      = " << RANK_IN_GROUP << std::endl;
 
-  Server * s = new ConvComputeServer(NAME, CONV_BIND, FC_BIND, SOLVER, TRAIN_BIN, GROUPSIZE, RANK_IN_GROUP);
+  Server * s = new ConvComputeServer(NAME, CONV_LISTEN_BIND, CONV_SEND_BIND, FC_LISTEN_BIND,
+    FC_SEND_BIND, SOLVER, TRAIN_BIN, GROUPSIZE, RANK_IN_GROUP);
   return s;
 }
 
@@ -94,7 +145,7 @@ int main(int argc, char **argv)
   Config cfg;
   
   // Expect config file as first and only argument
-  if(argc != 2){
+  if(argc < 2){
     LOG(FATAL) << "Error: Expecting path to config file as the first and only argument."
                << endl;
   }
