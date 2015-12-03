@@ -259,7 +259,7 @@ public:
         };  // END UDF
 
         // Start this broker with the input ports
-        Broker_N_1<decltype(UDF)> broker(listen_ports[thread_idx], broadcast_ports[thread_idx], outgoing_data_grad_buf_size, outgoing_data_grad_buf_size, group_size);
+        Broker_N_1<decltype(UDF)> broker(listen_ports[thread_idx], broadcast_ports[thread_idx], incoming_data_buf_size, outgoing_data_grad_buf_size, group_size);
         broker.start(UDF);
 
       }));  // END THREAD LAMBDA

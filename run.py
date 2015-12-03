@@ -49,7 +49,7 @@ use_4_gpu = True   # Takes precedence if both this and use_1_gpu are True
 use_1_gpu = False
 
 # Temporary parameter -- eventually this will be true by default
-multi_gpu_model_parallelism = False  # If using > 1 GPU, do model parallelism on FC
+multi_gpu_model_parallelism = True  # If using > 1 GPU, do model parallelism on FC
 
 
 # ==============================================================================
