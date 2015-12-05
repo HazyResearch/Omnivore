@@ -118,11 +118,16 @@ public:
           // Receive gradients and update model
           }else if(incoming_msg->msg_type == ASK_UPDATE_GRADIENT){
             VLOG(2) << "Responding to ASK_UPDATE_GRADIENT Request of BRIDGE " << incoming_msg->bridgeid << std::endl;
-            // CE TODO: Gradient should be divided by # workers in the group.
-            for(int i=0;i<nmsg;i++){
-              //DeepNet::update_all_models_with_gradients(bridges, msgs[i]->content);
-              DeepNet::update_ith_models_with_gradients(bridges, msgs[i]->content, incoming_msg->bridgeid);
+            // Now that we have all the gradients, we can either update multiple times (for each one)
+            // or add them then do a single update. In order to preserve the statistical efficiency
+            // in all cases, we will add first then update once.
+            // SHADJIS TODO: I can make this faster by minimizing # writes the way we do in SplitBridge backward pass
+            for(int i=1;i<nmsg;i++){
+              for(int elem=0; elem < msgs[0]->nelem; ++elem){
+                msgs[0]->content[elem] += msgs[i]->content[elem];
+              }
             }
+            DeepNet::update_ith_models_with_gradients(bridges, msgs[0]->content, incoming_msg->bridgeid);
             msg = &outgoing_msg_reply_update_gradient;
           }else{
             LOG(WARNING) << "Ignore unsupported message type " << incoming_msg->msg_type << std::endl;
