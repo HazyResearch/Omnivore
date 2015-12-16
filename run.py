@@ -59,7 +59,7 @@ multi_gpu_model_parallelism = True
 
 
 # FC Compute / Model Server Parameters
-single_FC_server = False
+single_FC_server = True
 
 if not single_FC_server:
     # The remaining parameters are only valid if single_FC_server is False
@@ -210,7 +210,7 @@ if not os.path.exists('./tools/size_util/size_util'):
 
 solver_file = sys.argv[1]
 machine_list_file = sys.argv[2]
-machines_per_batch = int(sys.argv[3])
+machines_per_batch = int(sys.argv[3])       # SHADJIS TODO: Eventually optimizer will select this
 
 if len(sys.argv) == 5 and sys.argv[4] == 's':
     skip_lmdb_generation = True
@@ -1046,7 +1046,7 @@ Beginning to run commands for each server (commands also written to rerun_experi
 '''
 
 # Run the commmands
-f = open('rerun_experiment.sh')
+f = open('rerun_experiment.sh', 'w')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
     cfg_file = cmd_param[1]
@@ -1055,7 +1055,7 @@ for cmd_param in cmd_params:
     cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &; sleep 5'
     f.write(cmd + "\n")
     print cmd
-    # os.system(cmd)
+    os.system(cmd)
 f.close()
 
 # Also generate a script that can be used to kill all these servers
