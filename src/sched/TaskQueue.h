@@ -11,7 +11,7 @@ public:
 
   std::mutex * mymutex;
 
-  std::vector<std::mutex*> depend_ons; 
+  std::vector<std::mutex*> dependencies;
 
   std::function<void()> func;
 
@@ -23,7 +23,7 @@ public:
 };
 
 void run_task(Task * task){
-  for(auto pmutex : task->depend_ons){
+  for(auto pmutex : task->dependencies){
     pmutex->lock();
     pmutex->unlock();
   }
@@ -40,7 +40,7 @@ public:
     // unlock everything
     for(auto task : tasks){
       task.mymutex->unlock();
-      for(auto & pmutex : task.depend_ons){
+      for(auto & pmutex : task.dependencies){
         pmutex->unlock();
       }
     }

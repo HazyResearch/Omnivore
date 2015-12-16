@@ -48,6 +48,15 @@ public:
     nfloats_model(0), nfloats_output_data(0)
   {}
 
+  // The conv compute server is defined by 6 types of tasks:
+  //  - Read data for fw pass (from disk)
+  //  - Read data for bw pass (from fc server)
+  //  - And then 4 more which are per-bridge:
+  //    - run fw
+  //    - run bw
+  //    - ask for new model
+  //    - send back gradient
+  
   void start(){
   
     VLOG(2) << "Starting ConvComputeServer[" << name << "]..." << std::endl;
@@ -307,7 +316,7 @@ public:
           }
       ));
       if(ct1 >= 1){
-        tasks_get_model[ct1].depend_ons.push_back(tasks_get_model[ct1-1].mymutex);
+        tasks_get_model[ct1].dependencies.push_back(tasks_get_model[ct1-1].mymutex);
       }
       ct1 ++;
     }
@@ -327,13 +336,13 @@ public:
           }
       ));
       if(ct >= 1){
-        tasks_forward[ct].depend_ons.push_back(tasks_forward[ct-1].mymutex);
+        tasks_forward[ct].dependencies.push_back(tasks_forward[ct-1].mymutex);
       }
-      //tasks_forward[ct].depend_ons.push_back(tasks_get_model[ct].mymutex);
-      tasks_forward[ct].depend_ons.push_back(tasks_get_model[ct].mymutex);
+      //tasks_forward[ct].dependencies.push_back(tasks_get_model[ct].mymutex);
+      tasks_forward[ct].dependencies.push_back(tasks_get_model[ct].mymutex);
       ct ++;
     }
-    tasks_forward[0].depend_ons.push_back(task_load_data.mymutex);
+    tasks_forward[0].dependencies.push_back(task_load_data.mymutex);
 
     Task task_get_bw_grad(
       [&](){
@@ -393,7 +402,7 @@ public:
 
       }
     );
-    task_get_bw_grad.depend_ons.push_back(tasks_forward[ct-1].mymutex);
+    task_get_bw_grad.dependencies.push_back(tasks_forward[ct-1].mymutex);
 
     std::vector<Task> tasks_backward;
     // for each bridge, there is a task that runs the backward loop.
@@ -409,11 +418,11 @@ public:
           }
       ));
       if(ct >= 1){
-        tasks_backward[ct].depend_ons.push_back(tasks_backward[ct-1].mymutex);
+        tasks_backward[ct].dependencies.push_back(tasks_backward[ct-1].mymutex);
       }
       ct ++;
     }
-    tasks_backward[0].depend_ons.push_back(task_get_bw_grad.mymutex);
+    tasks_backward[0].dependencies.push_back(task_get_bw_grad.mymutex);
 
     std::vector<Task> tasks_update_grad;
     ct = 0;
@@ -423,7 +432,7 @@ public:
           [bridge, ct, &bridges, &dummy, &outgoing_msg_send_model_grad, nbridge,
             &responder_model_agg, &responder_model_broadcast, &incoming_msg_model_grad_updated](){
             if((*bridge)->get_model_cube() == NULL){
-              VLOG(2) << "------Skipping Bridge (b)" << nbridge-ct << " does not have model" << std::endl;
+              VLOG(2) << "------Skipping Bridge " << nbridge-ct << " does not have model" << std::endl;
             }else{
               outgoing_msg_send_model_grad->bridgeid = nbridge-ct;
               size_t model_nelem = DeepNet::get_ith_gradient(bridges, outgoing_msg_send_model_grad->content, nbridge-ct);
@@ -448,9 +457,9 @@ public:
           }
       ));
       if(ct >= 1){
-        tasks_update_grad[ct].depend_ons.push_back(tasks_update_grad[ct-1].mymutex);
+        tasks_update_grad[ct].dependencies.push_back(tasks_update_grad[ct-1].mymutex);
       }
-      tasks_update_grad[ct].depend_ons.push_back(tasks_backward[ct].mymutex);
+      tasks_update_grad[ct].dependencies.push_back(tasks_backward[ct].mymutex);
       ct ++;
     }
 

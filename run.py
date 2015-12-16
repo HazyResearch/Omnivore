@@ -45,11 +45,55 @@ extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bi
 skip_lmdb_generation = False
 
 # Run with GPUs. If neither is True, uses CPU only.
+# This is for both conv compute and fc compute/model servers
+# For the fc compute server (case when single_FC_server = False), set num_gpu_per_fcc
+# These will eventually not be bools but rather ints selected by the optimizer
+# (for now, only support 0, 1, or 4 GPUs). Set both to false to use CPU only.
 use_4_gpu = True   # Takes precedence if both this and use_1_gpu are True
 use_1_gpu = False
 
-# Temporary parameter -- eventually this will be true by default
-multi_gpu_model_parallelism = True  # If using > 1 GPU, do model parallelism on FC
+# If using > 1 GPU, do model parallelism on FC
+# This applies regardless of whether fc compute and model are one server or
+# separate servers
+multi_gpu_model_parallelism = True 
+
+
+# FC Compute / Model Server Parameters
+single_FC_server = False
+
+if not single_FC_server:
+    # The remaining parameters are only valid if single_FC_server is False
+    # For FC, the scheduler may choose to have a single fc compute + model server ("fccm",
+    # or the case when single_FC_server = True), or to have one or more fc compute ("fcc")
+    # servers as well as a separate fc model ("fcm") server.
+    #  - If there is a single server for both fc model and fc compute (single_FC_server = True),
+    #    then this server will use a number of gpus decided by use_4_gpu and use_1_gpu above 
+    #    (only 0, 1 or 4 GPUs per server supported). Then the parameters below are not used.
+    #  - If there are separate servers for fc compute and fc model (single_FC_server = False),
+    #    then for now fc model will be its own machine and fc computes will be spread across
+    #    the remaining machines. However, it is possible to have many fc compute (fcc) on 1 
+    #    machine, if and only if that machine has multiple GPUs. E.g. if we have 4 GPUs/machine,
+    #    there are 3 cases:
+    #       - 1 fc compute server on that machine, using either 1 GPU, 4 GPUs or CPU only
+    #       - 2 fc compute servers on that machine, using up to 2 GPUs each (or each can use 1 GPU)
+    #       - 4 fc compute servers on that machine, each using exactly 1 GPU (none will use CPU)
+
+    # Now, use_1_gpu and use_4_gpu will be IGNORED for FC, and applied only to conv. The params
+    # below take precedence for FC.
+    num_fcc_per_machine = 1
+    num_gpu_per_fcc_machine = 4
+    # If num_gpu_per_fcc > 1, then that fcc server will use model 
+    # parallelism iff multi_gpu_model_parallelism = True
+    num_gpu_per_fcc = num_gpu_per_fcc_machine / num_fcc_per_machine
+
+    # Finally, we have the following: total # machines, # machines / conv compute group, # fc compute / machine, 
+    # and we know that there will be # fc compute servers = # conv compute groups (for now), and
+    # 1 machine allocated to conv model and fc model. So from all these it should be possible to do something
+    # like: # machines left = # machines - 2 (one for fcm, one for cm), then given the remaining machines, 
+    # we need to select # conv compute groups given that this will also be the # of fc compute servers and 
+    # given our knowledge of the # machines / conv compute group and the # fc compute / machine.
+    # But instead of choosing the number of groups now, I will just hard-code.
+    num_groups = 2
 
 
 # ==============================================================================
@@ -74,6 +118,37 @@ Task:
 - Partition the lmdb for each server
 - Create config files for each server
 - Run ssh commands on each server
+
+
+--------------------------------------------------------------------------------
+Scheduler tradeoffs:
+--------------------------------------------------------------------------------
+
+- Machine types are conv model, conv compute, fc compute, fc model, and also
+  combinations: conv compute/model (unimplemented), fc compute/model, 
+  model server (unimplemented) and compute server (unimplemented)
+    - Decide which to use and how many of each
+- Number of servers to allocate to a single machine (e.g. allocate two conv
+  compute to a single machine to hide stalled time waiting for fc to return
+  gradients), and also how many GPUs per server (e.g. scheduler may decide
+  given a number of machines to create 2 fc compute servers, one per machine,
+  or to create 2 but on the same machine, each using 2 GPUs, and use the extra
+  machine for another conv compute, or to create a single FC compute/model server
+  to minimize communication)
+- Data parallelism: Decide how many machines to use within a batch
+- How to use each box (CPU, GPU, both, use each GPU as a different server, or use
+  4 GPU model/data parallelism, see also below)
+- Model parallelism: Decide how many machines to use to partition models,
+  or how many GPUs on a single machine (model parallelism across 
+  machines unimplemented)
+- Precision (lossy, lossless, e.g. given AVX2, lossy compression makes sense)
+- Hogwild vs. model averaging vs. other methods (when using many model servers),
+  also must choose isolation levels
+
+Inputs:
+- Throughput per box (not simply black box however, since a single machine with
+  4 GPUs can be seen as a single box or as 4 slower boxes)
+- Network speed
 
 
 --------------------------------------------------------------------------------
@@ -159,32 +234,111 @@ assert len(machine_list) >= 1
 
 # Allocate each server to machines
 
-# The FC server is always the first machine
-fc_server_machine = machine_list[0]
+# This depends on how many FC servers we have
 
-# Conv Model Server:
-# If there are 3 or more machines, assign conv model server to machine 1 (i.e. 2nd one)
-# If there are only 1 or 2 machines, assign this to the first machine (machine 0).
-# That way if there are 2 machines, the conv compute server will have its own machine.
-if len(machine_list) > 2:
+if single_FC_server:
+
+    # The FC server is always the first machine
+    fc_server_machine = machine_list[0]
+
+    # Conv Model Server:
+    # If there are 3 or more machines, assign conv model server to machine 1 (i.e. 2nd one)
+    # If there are only 1 or 2 machines, assign this to the first machine (machine 0).
+    # That way if there are 2 machines, the conv compute server will have its own machine.
+    # (Edit: see comment below, this needs to be fixed)
+    if len(machine_list) > 2:
+        conv_model_server_machine = machine_list[1]
+    else:
+        conv_model_server_machine = machine_list[0]
+
+    # Conv Compute Server:
+    if len(machine_list) == 1:
+        conv_compute_server_machines = [machine_list[0]]
+    # SHADJIS TODO: This is wrong, if there are 2 machines it does not help to 
+    # have a single conv compute on a separate machine, since it will be idle
+    # while fc is running anyway. If 2 machines, we should put conv model and
+    # fc on one machine, and conv compute on each machine.
+    elif len(machine_list) == 2:
+        conv_compute_server_machines = [machine_list[1]]
+    else:
+        conv_compute_server_machines = machine_list[2:]
+    num_conv_compute_servers = len(conv_compute_server_machines)
+
+    # Now determine the number of groups
+    num_groups = num_conv_compute_servers / machines_per_batch
+    assert num_groups > 0
+    if num_conv_compute_servers % machines_per_batch > 0:
+        print 'Warning: Not using ' + str(num_conv_compute_servers % machines_per_batch) + ' machines'
+
+else:
+
+    # Determine how to allocate machines
+    num_machines = len(machine_list)
+    
+    # For now let's assert 4 or more machines:
+    #  1. On a single machine it doesn't make sense to have multiple fc compute servers, since
+    #     they cannot run at the same time so might as well just use a single one
+    #  2. SHADJIS TODO: In the case of 2 machines, each machine can have a conv compute and an FC, 
+    #     so that data does not need to be copied. However since there is only a single conv model
+    #     and fc model server, we need to allocate these. The scheduler will do it later so for
+    #     now I will just exit in this case
+    #  3. SHADJIS TODO: In the case of 3 machines, it is again possible to have intelligent machine
+    #     allocation, but for now I will ignore this case as well
+    assert num_machines > 3
+    
+    # Above are special-cases. It may be beneficial to have multiple fc compute servers when the
+    # number of machines < 4, but for now we will assume 4 or more machines and that if there are
+    # fewer machines then there will be a single fc compute and model server (since it is less
+    # likely to be the bottleneck if there are few conv compute machines)
+    
+    # For now, if there are 4 or more machines, and FC model / computation are on different machines, 
+    # then currently machine allocations will be: 1 conv model, 1 fc model, and a number of conv compute
+    # and fc compute specified at the top of the file.
+    # In the future it will be possible to have other configurations, e.g. multiple groups allocated
+    # to one fc compute server, but for now 1 group per fc will be used.
+    
+    # The FC model server can be the first machine, and conv model on second
+    fc_model_server_machine = machine_list[0]
     conv_model_server_machine = machine_list[1]
-else:
-    conv_model_server_machine = machine_list[0]
+    num_machines_left = num_machines - 2
+    
+    # Next we must allocate a number of fc compute servers equal to the number of groups.
+    num_fc_compute_servers = num_groups
+    assert num_groups > 0
+    num_machines_for_fc_compute_servers = ( num_fc_compute_servers + num_fcc_per_machine - 1 )/ num_fcc_per_machine  # Round up
+    
+    # Allocate machines for these fc compute servers
+    fc_compute_server_machines = []
+    current_machine = 2 # Since we allocated the first 2 to the model servers
+    servers_on_current_machine = 0
+    for i in range(num_fc_compute_servers):
+        fc_compute_server_machines.append(machine_list[current_machine])
+        servers_on_current_machine += 1
+        if servers_on_current_machine == num_fcc_per_machine:
+            servers_on_current_machine = 0
+            current_machine += 1
+    # Make sure we assigned all the machines that we had allocated for fcc servers (maybe the last one is
+    # not 100% full so check for that case as well)
+    assert (current_machine == 2 + num_machines_for_fc_compute_servers) or (current_machine == 2 + num_machines_for_fc_compute_servers - 1)
+    current_machine = 2 + num_machines_for_fc_compute_servers
+    
+    # Now, the remaining number of machines must be able to fit the conv compute servers
+    num_machines_for_conv_compute_servers = num_groups * machines_per_batch
+    if num_machines_for_conv_compute_servers + current_machine > num_machines:
+        print 'Error: your configuration requires more machines than provided (' + \
+            str(num_machines) + ' provided, ' + str(num_machines_for_conv_compute_servers + current_machine) + ' needed)'
+        assert False
+    
+    conv_compute_server_machines = machine_list[current_machine : current_machine + num_machines_for_conv_compute_servers]
+    num_conv_compute_servers = len(conv_compute_server_machines)
 
-# Conv Compute Server:
-if len(machine_list) == 1:
-    conv_compute_server_machines = [machine_list[0]]
-elif len(machine_list) == 2:
-    conv_compute_server_machines = [machine_list[1]]
-else:
-    conv_compute_server_machines = machine_list[2:]
-num_conv_compute_servers = len(conv_compute_server_machines)
-
-# Now determine the number of groups
-num_groups = num_conv_compute_servers / machines_per_batch
-assert num_groups > 0
-if num_conv_compute_servers % machines_per_batch > 0:
-    print 'Warning: Not using ' + str(num_conv_compute_servers % machines_per_batch) + ' machines'
+    # Now we have the following set:
+    #   - num_groups
+    #   - fc_model_server_machine   (as opposed to fc_server_machine for the case of single fc server)
+    #   - conv_model_server_machine
+    #   - fc_compute_server_machines, num_fc_compute_servers, num_gpu_per_fcc
+    #   - conv_compute_server_machines and num_conv_compute_servers, and use_1_gpu or use_4_gpu
+    # The rest of the file will use these variables
 
 
 # ------------------------------------------------------------------------------
@@ -200,6 +354,12 @@ if num_conv_compute_servers % machines_per_batch > 0:
 import socket
 
 # SHADJIS TODO: ssh into conv model / fc server machines and run this there
+
+# We need at least num_groups * 2 unique ports. In fact, this is enough because we can
+# re-use these ports #s across machines (to be sure, we should ssh into each and generate
+# the ports). But if we ever want to merge the model servers into one machine we need
+# more ports. For now we will just re-use the ports.
+
 ports = []
 for i in range(num_groups*2):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -208,7 +368,7 @@ for i in range(num_groups*2):
     # E.g. parse 40582 from ('0.0.0.0', 40582) SHADJIS TODO: Support other formats
     ports.append(str(addr[1]))
     s.close()
-
+    
 
 # ------------------------------------------------------------------------------
 # Parse the solver prototxt to get the name of the train prototxt file
@@ -278,9 +438,16 @@ for i in range(num_conv_compute_servers):
 # Now read through the file again, this time partitioning into conv and fc layers
 # Here we want to make 2 networks: first with everything up to first FC, then
 # first FC to the end
+# Note: in the case of separate fcc and fcm servers, the protos are identical
+# except GPU info. However, the GPU info can be complicated because fcm has no
+# GPU (this is easy to handle) but fcc's potentially each have different GPUs.
 conv_model_server_proto_str = ''
-fc_server_proto_str = ''
 conv_compute_server_proto_strs = ['']*num_conv_compute_servers
+if single_FC_server:
+    fc_server_proto_str = ''
+else:
+    fcm_server_proto_str = ''
+    fcc_server_proto_strs = ['']*num_fc_compute_servers
 
 # Where we are in the file
 data_section = True
@@ -306,7 +473,7 @@ for line in f:
         # Case 1, this is a data layer
         if data_section:
             # We want to append this layer to all the networks
-            conv_model_server_proto_str += layer_str_no_gpu # No GPU for now on the conv model server
+            conv_model_server_proto_str += layer_str_no_gpu # No GPU for now on the conv model server. SHADJIS TODO: Why is this needed for data section? Assert same as no gpu
             # For each conv compute network, we need to replace the LMDB
             # We also need to reduce the batch size
             layer_str_copy = layer_str
@@ -323,7 +490,13 @@ for line in f:
             layer_str = re.sub(r'mirror',    '#mirror',    layer_str , 1, flags=re.IGNORECASE)
             layer_str = re.sub(r'crop_size', '#crop_size', layer_str , 1, flags=re.IGNORECASE)
             layer_str = re.sub(r'mean_file', '#mean_file', layer_str , 1, flags=re.IGNORECASE)
-            fc_server_proto_str += layer_str.replace(conv_movel_server_train_lmdb_name, fc_server_train_lmdb_name)
+            layer_str_for_fc = layer_str.replace(conv_movel_server_train_lmdb_name, fc_server_train_lmdb_name)
+            if single_FC_server:
+                fc_server_proto_str += layer_str_for_fc
+            else:
+                fcm_server_proto_str += layer_str_for_fc
+                for i in range(num_fc_compute_servers):
+                    fcc_server_proto_strs[i] += layer_str_for_fc
         # Case 2, this is a layer in the conv part
         elif conv_section:
             conv_model_server_proto_str += layer_str_no_gpu
@@ -331,7 +504,25 @@ for line in f:
                 conv_compute_server_proto_strs[i] += layer_str
         # Case 3, this is a layer in the FC part
         elif fc_section:
-            fc_server_proto_str += layer_str
+            if single_FC_server:
+                fc_server_proto_str += layer_str
+            else:
+                fcm_server_proto_str += layer_str_no_gpu
+                # Now we need to substitute in {SUB_GPU_NUM_HERE} for the correct gpu numbers
+                # Iterate over each server and assign GPUs. Keep in mind that multiple servers
+                # may be assigned to a single machine
+                # Start at machine 0 GPU 0 and increment the GPU each time. Reset once we 
+                # reach num_gpu_per_fcc_machine (this moves to a new machine, although the
+                # machine assignments are not done here, since they were already done above)
+                current_gpu = 0
+                for i in range(num_fc_compute_servers):
+                    layer_str_this_fcc_server = layer_str
+                    for g in range(num_gpu_per_fcc):
+                        layer_str_this_fcc_server = layer_str_this_fcc_server.replace('{SUB_GPU_NUM_HERE}', str(current_gpu), 1)
+                        current_gpu += 1
+                        if current_gpu == num_gpu_per_fcc_machine:
+                            current_gpu = 0
+                    fcc_server_proto_strs[i] += layer_str_this_fcc_server
             
     # Otherwise this is part of a layer
     else:
@@ -384,50 +575,95 @@ for line in f:
                 # FC can use up to 1 GPU with model parallelism disabled,
                 # and all the GPUs with model parallelism enabled
                 elif fc_section and type.upper() != 'SOFTMAXWITHLOSS':
-                    if use_1_gpu or (use_4_gpu and not multi_gpu_model_parallelism):
-                        lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+                    if single_FC_server:
+                        if use_1_gpu or (use_4_gpu and not multi_gpu_model_parallelism):
+                            lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
 ''')
-                    # If 4 GPUs and model parallelism is enabled, the type of parallelism and
-                    # number of GPUs depends on the layer. 
-                    # By default, FC layers get 4 GPUs and model parallelism, and non-FC layers
-                    # get 4 GPUs and data parallelism. However the final FC layer may be faster
-                    # on just 1 GPU because:
-                    #  - 4 GPUs data parallelism: this is slow because the computation is small
-                    #    for the final FC layer so there is little speedup  from using
-                    #    multiple GPUs, but accumulating the gradients requires
-                    #    copying the gradients from each GPU and model back to each GPU
-                    #  - 4 GPUs model parallelism: this is fast but requires copying all the
-                    #    data to each GPU then back to the host in backward pass to sum gradients
-                    # It turns out that because the computation is fast for the last FC, minimizing copies 
-                    # is more important, so using 1 GPU (and keeping gradients on device at all times)
-                    # is fastest. Then to avoid copies to that GPU, it is also fastest if all
-                    # the preceding layers (e.g. ReLU, dropout) also use 1 GPU (1 GPU is batch
-                    # parallelism by default, but 1 GPU batch and 1 GPU depth are equivalent).
-                    elif use_4_gpu:
-                        # Now how many GPUs to use depends on the layer
-                        assert multi_gpu_model_parallelism
-                        # If we are past the second-last FC, use 1 GPU
-                        if type.upper() == 'INNERPRODUCT':
-                            assert num_fc_layers_found >= 1
-                            assert num_fc_layers_found <= num_fc_layers_total
-                            if num_fc_layers_found == num_fc_layers_total:  # Last FC
-                                lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+                        # If 4 GPUs and model parallelism is enabled, the type of parallelism and
+                        # number of GPUs depends on the layer. 
+                        # By default, FC layers get 4 GPUs and model parallelism, and non-FC layers
+                        # get 4 GPUs and data parallelism. However the final FC layer may be faster
+                        # on just 1 GPU because:
+                        #  - 4 GPUs data parallelism: this is slow because the computation is small
+                        #    for the final FC layer so there is little speedup  from using
+                        #    multiple GPUs, but accumulating the gradients requires
+                        #    copying the gradients from each GPU and model back to each GPU
+                        #  - 4 GPUs model parallelism: this is fast but requires copying all the
+                        #    data to each GPU then back to the host in backward pass to sum gradients
+                        # It turns out that because the computation is fast for the last FC, minimizing copies 
+                        # is more important, so using 1 GPU (and keeping gradients on device at all times)
+                        # is fastest. Then to avoid copies to that GPU, it is also fastest if all
+                        # the preceding layers (e.g. ReLU, dropout) also use 1 GPU (1 GPU is batch
+                        # parallelism by default, but 1 GPU batch and 1 GPU depth are equivalent).
+                        elif use_4_gpu:
+                            # Now how many GPUs to use depends on the layer
+                            assert multi_gpu_model_parallelism
+                            # If we are past the second-last FC, use 1 GPU
+                            # Note that this conditional branch seems useless (same result in both cases)
+                            # but is not because of batch vs depth proportion
+                            if type.upper() == 'INNERPRODUCT':
+                                assert num_fc_layers_found >= 1
+                                assert num_fc_layers_found <= num_fc_layers_total
+                                if num_fc_layers_found == num_fc_layers_total:  # Last FC
+                                    lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
 ''')
-                            else:
-                                lines_for_current_layer.append('''  gpu_0_depth_proportion: 0.25
+                                else:
+                                    lines_for_current_layer.append('''  gpu_0_depth_proportion: 0.25
   gpu_1_depth_proportion: 0.25
   gpu_2_depth_proportion: 0.25
   gpu_3_depth_proportion: 0.25
 ''')
-                        else:
-                            if num_fc_layers_found >= num_fc_layers_total-1:  # Right before last FC
-                                lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
-''')
                             else:
-                                lines_for_current_layer.append('''  gpu_0_batch_proportion: 0.25
+                                if num_fc_layers_found >= num_fc_layers_total-1:  # Right before last FC
+                                    lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
+''')
+                                else:
+                                    lines_for_current_layer.append('''  gpu_0_batch_proportion: 0.25
   gpu_1_batch_proportion: 0.25
   gpu_2_batch_proportion: 0.25
   gpu_3_batch_proportion: 0.25
+''')
+                    # not single_FC_server
+                    else:
+                        if num_gpu_per_fcc == 1 or (num_gpu_per_fcc > 1 and not multi_gpu_model_parallelism):
+                            lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 1.0
+''')
+                        # See model parallelism comment in code above
+                        elif num_gpu_per_fcc > 1:
+                            # Now how many GPUs to use depends on the layer
+                            assert multi_gpu_model_parallelism
+                            # If we are past the second-last FC, use 1 GPU
+                            if type.upper() == 'INNERPRODUCT':
+                                assert num_fc_layers_found >= 1
+                                assert num_fc_layers_found <= num_fc_layers_total
+                                if num_fc_layers_found == num_fc_layers_total:  # Last FC
+                                    lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 1.0
+''')
+                                elif num_gpu_per_fcc == 2:
+                                    lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_depth_proportion: 0.5
+  gpu_{SUB_GPU_NUM_HERE}_depth_proportion: 0.5
+''')
+                                else:
+                                    assert num_gpu_per_fcc == 4
+                                    lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_depth_proportion: 0.25
+  gpu_{SUB_GPU_NUM_HERE}_depth_proportion: 0.25
+  gpu_{SUB_GPU_NUM_HERE}_depth_proportion: 0.25
+  gpu_{SUB_GPU_NUM_HERE}_depth_proportion: 0.25
+''')
+                            else:
+                                if num_fc_layers_found >= num_fc_layers_total-1:  # Right before last FC
+                                    lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 1.0
+''')
+                                elif num_gpu_per_fcc == 2:
+                                    lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 0.5
+  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 0.5
+''')
+                                else:
+                                    assert num_gpu_per_fcc == 4
+                                    lines_for_current_layer.append('''  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 0.25
+  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 0.25
+  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 0.25
+  gpu_{SUB_GPU_NUM_HERE}_batch_proportion: 0.25
 ''')
 
 
@@ -438,7 +674,12 @@ layer_str = ''.join(lines_for_current_layer)
 layer_str_no_gpu = ''.join(lines_for_current_layer_no_gpu)
 assert layer_str == layer_str_no_gpu # Last layer (softmax) should not use GPU
 assert fc_section
-fc_server_proto_str += layer_str
+if single_FC_server:
+    fc_server_proto_str += layer_str
+else:
+    fcm_server_proto_str += layer_str_no_gpu
+    for i in range(num_fc_compute_servers):
+        fcc_server_proto_strs[i] += layer_str
 
 
 # ------------------------------------------------------------------------------
@@ -451,7 +692,11 @@ os.system('touch ' + dummy_file)
 print 'Writing input prototxt files to ' + input_file_dir + '/'
 
 # First create the solver files for the model servers
-for server in ['conv_model', 'fc_model_compute']:
+if single_FC_server:
+    server_types = ['conv_model', 'fc_model_compute']
+else:
+    server_types = ['conv_model', 'fc_model']
+for server in server_types:
 
     solver_name = input_file_dir + '/solver.' + server + '_server.prototxt'
     train_name  = input_file_dir + '/train_val.' + server + '_server.prototxt'
@@ -468,20 +713,24 @@ for server in ['conv_model', 'fc_model_compute']:
     if server == 'conv_model':
         f.write(conv_model_server_proto_str)
         conv_model_server_solver_file = solver_name
-    else:
-        assert server == 'fc_model_compute'
+    elif server == 'fc_model_compute':
+        assert single_FC_server
         f.write(fc_server_proto_str)
         fc_server_solver_file = solver_name
+    else:
+        assert server == 'fc_model'
+        assert not single_FC_server
+        f.write(fcm_server_proto_str)
+        fcm_server_solver_file = solver_name
     f.close()
     
-
 # Now create the solver files for the conv compute servers
 conv_compute_server_solver_files = []
 for i in range(num_conv_compute_servers):
 
     solver_name = input_file_dir + '/solver.conv_compute_server.' + str(i) + '.prototxt'
     conv_compute_server_solver_files.append(solver_name)
-    train_name  = input_file_dir + '/train_val.conv_compute_server_server.' + str(i) + '.prototxt'
+    train_name  = input_file_dir + '/train_val.conv_compute_server.' + str(i) + '.prototxt'
     
     # Make a solver for this server
     f = open(solver_name, 'w')
@@ -494,6 +743,27 @@ for i in range(num_conv_compute_servers):
     print '  Writing ' + train_name
     f.write(conv_compute_server_proto_strs[i])
     f.close()
+
+# Now create the solver files for the fc compute servers, if any
+if not single_FC_server:
+    fc_compute_server_solver_files = []
+    for i in range(num_fc_compute_servers):
+
+        solver_name = input_file_dir + '/solver.fc_compute_server.' + str(i) + '.prototxt'
+        fc_compute_server_solver_files.append(solver_name)
+        train_name  = input_file_dir + '/train_val.fc_compute_server.' + str(i) + '.prototxt'
+        
+        # Make a solver for this server
+        f = open(solver_name, 'w')
+        print '  Writing ' + solver_name
+        f.write(solver_file_str.replace('__TRAIN_PROTO__', train_name))
+        f.close()
+
+        # Make a train file for this server
+        f = open(train_name, 'w')
+        print '  Writing ' + train_name
+        f.write(fcc_server_proto_strs[i])
+        f.close()
 
 
 # ==============================================================================
@@ -629,7 +899,13 @@ print 'Generating configuration files for each server'
 cmd_params = []
 
 # Get the config file names
-fc_server_cfg = input_file_dir + '/fc_server.cfg'
+if single_FC_server:
+    fc_server_cfg = input_file_dir + '/fc_server.cfg'
+else:
+    fcm_server_cfg = input_file_dir + '/fc_model_server.cfg'
+    fcc_server_cfgs = []
+    for i in range(num_fc_compute_servers):
+        fcc_server_cfgs.append(input_file_dir + '/fc_compute_server.' + str(i) + '.cfg')
 conv_model_server_cfg = input_file_dir + '/conv_model_server.cfg'
 conv_compute_server_cfgs = []
 for i in range(num_conv_compute_servers):
@@ -637,10 +913,11 @@ for i in range(num_conv_compute_servers):
 
 # Write config files
 
-# FC server
-print '  Writing ' + fc_server_cfg
-f = open(fc_server_cfg, 'w')
-f.write('''name = "FCComputeModelServer on tcp://''' + fc_server_machine + '''";
+if single_FC_server:
+    # FC server
+    print '  Writing ' + fc_server_cfg
+    f = open(fc_server_cfg, 'w')
+    f.write('''name = "FCComputeModelServer on tcp://''' + fc_server_machine + '''";
 type = "FCComputeModelServer";
 solver = "''' + fc_server_solver_file + '''";
 train_bin = "''' + dummy_file + '''";
@@ -648,19 +925,45 @@ group_size = ''' + str(machines_per_batch) + ''';
 
 ports = (
 ''')
-for i in range(num_groups):
-    if i != 0:
-        f.write(',')
-    f.write('''
+    for i in range(num_groups):
+        if i != 0:
+            f.write(',')
+        f.write('''
   {
-    broadcast = "tcp://*:''' + str(ports[2*i]) + '''",
-    listen = "tcp://*:''' + str(ports[2*i + 1]) + '''"
+    broadcast = "tcp://*:''' + str(ports[2*i    ]) + '''",
+    listen = "tcp://*:'''    + str(ports[2*i + 1]) + '''"
   }''')
-f.write('''
+    f.write('''
 );
 ''')
-f.close()
-cmd_params.append((fc_server_machine, fc_server_cfg))
+    f.close()
+    cmd_params.append((fc_server_machine, fc_server_cfg))
+else:
+    # FC model server
+    # Note group_size = 1 since the fc compute servers will be connecting to this
+    print '  Writing ' + fcm_server_cfg
+    f = open(fcm_server_cfg, 'w')
+    f.write('''name = "FCModelServer on tcp://''' + fc_model_server_machine + '''";
+type = "FCModelServer";
+solver = "''' + fcm_server_solver_file + '''";
+train_bin = "''' + dummy_file + '''";
+group_size = 1;
+
+ports = (
+''')
+    for i in range(num_groups):
+        if i != 0:
+            f.write(',')
+        f.write('''
+  {
+    broadcast = "tcp://*:''' + str(ports[2*i    ]) + '''",
+    listen = "tcp://*:'''    + str(ports[2*i + 1]) + '''"
+  }''')
+    f.write('''
+);
+''')
+    f.close()
+    cmd_params.append((fc_model_server_machine, fcm_server_cfg))
 
 # Conv model server
 print '  Writing ' + conv_model_server_cfg
@@ -692,11 +995,17 @@ for i in range(num_conv_compute_servers):
     group_of_this_machine = i / machines_per_batch
     print '  Writing ' + conv_compute_server_cfgs[i]
     f = open(conv_compute_server_cfgs[i], 'w')
+    
+    if single_FC_server:
+        fc_bind_machine = fc_server_machine
+    else:
+        fc_bind_machine = fc_compute_server_machines[group_of_this_machine]
+    
     f.write('''name = "ConvComputeServer ''' + str(i) + '''";
 conv_listen_bind = "tcp://''' + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
 conv_send_bind = "tcp://'''   + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
-fc_listen_bind = "tcp://'''   + fc_server_machine         + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
-fc_send_bind = "tcp://'''     + fc_server_machine         + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
+fc_listen_bind = "tcp://'''   + fc_bind_machine           + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
+fc_send_bind = "tcp://'''     + fc_bind_machine           + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
 type = "ConvComputeServer";
 solver = "''' + conv_compute_server_solver_files[i] + '''";
 train_bin = "''' + conv_compute_server_train_lmdb_names[i] + '''.bin";
@@ -706,22 +1015,48 @@ rank_in_group = ''' + str(i%machines_per_batch) + ''';
     f.close()
     cmd_params.append((conv_compute_server_machines[i], conv_compute_server_cfgs[i]))
 
+# FC compute servers
+if not single_FC_server:
+    # Note rank in group is always 0 because there is only one fcc per group
+    for i in range(num_fc_compute_servers):
+        print '  Writing ' + fcc_server_cfgs[i]
+        f = open(fcc_server_cfgs[i], 'w')
+        f.write('''name = "FCComputeServer ''' + str(i) + '''";
+conv_listen_bind = "tcp://''' + '*'                     + ''':''' + str(ports[2*i + 1]) + '''";
+conv_send_bind = "tcp://'''   + '*'                     + ''':''' + str(ports[2*i    ]) + '''";
+fc_listen_bind = "tcp://'''   + fc_model_server_machine + ''':''' + str(ports[2*i + 1]) + '''";
+fc_send_bind = "tcp://'''     + fc_model_server_machine + ''':''' + str(ports[2*i    ]) + '''";
+type = "FCComputeServer";
+solver = "''' + fc_compute_server_solver_files[i] + '''";
+train_bin = "''' + dummy_file + '''";
+group_size = ''' + str(machines_per_batch) + ''';
+rank_in_group = 0;
+''')
+        f.close()
+        cmd_params.append((fc_compute_server_machines[i], fcc_server_cfgs[i]))
+
+
 
 # ==============================================================================
 # Run ssh commands
 # ==============================================================================
 
 print '''
-Beginning to run commands for each server
+Beginning to run commands for each server (commands also written to rerun_experiment.sh)
 '''
 
 # Run the commmands
+f = open('rerun_experiment.sh')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
     cfg_file = cmd_param[1]
-    cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &'
+    # SHADJIS TODO: I added sleep 5 after each command -- might not be necessary but I noticed this prevented
+    # servers from hanging in some cases. The order in which servers run also seems to matter?
+    cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &; sleep 5'
+    f.write(cmd + "\n")
     print cmd
-    os.system(cmd)
+    # os.system(cmd)
+f.close()
 
 # Also generate a script that can be used to kill all these servers
 f = open('kill_servers.sh', 'w')
