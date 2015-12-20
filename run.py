@@ -195,8 +195,8 @@ fc server (running on master)
 # Parse arguments
 # ==============================================================================
 
-if len(sys.argv) not in [4,5]:
-    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch'
+if len(sys.argv) not in [5,6]:
+    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU'
     sys.exit(0)
 
 # Check that the distributed cct binary exists before running this script
@@ -211,9 +211,22 @@ if not os.path.exists('./tools/size_util/size_util'):
 solver_file = sys.argv[1]
 machine_list_file = sys.argv[2]
 machines_per_batch = int(sys.argv[3])       # SHADJIS TODO: Eventually optimizer will select this
+node_hw = sys.argv[4]
 
-if len(sys.argv) == 5 and sys.argv[4] == 's':
+if len(sys.argv) == 6 and sys.argv[5] == 's':
     skip_lmdb_generation = True
+
+if node_hw == 'CPU':
+    use_4_gpu = False
+    use_1_gpu = False
+elif node_hw == '1GPU':
+    use_4_gpu = False
+    use_1_gpu = True
+elif node_hw == '4GPU':
+    use_4_gpu = True
+    use_1_gpu = False
+else:
+    assert False
 
 
 # ==============================================================================
@@ -1050,9 +1063,19 @@ f = open('rerun_experiment.sh', 'w')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
     cfg_file = cmd_param[1]
-    # SHADJIS TODO: I added sleep 5 after each command -- might not be necessary but I noticed this prevented
-    # servers from hanging in some cases. The order in which servers run also seems to matter?
-    cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &; sleep 5'
+    cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &'
+    f.write(cmd + "\n")
+    print cmd
+    os.system(cmd)
+    
+    # SHADJIS TODO: To prevent FC (ZMQ SUB) from missing model from CM, sleep (make more permanent solution later)
+    # Most of the time it works to sleep 15s only after model servers, but then for 32 machines, 1 group it hangs.
+    # However if I sleep 0 after each conv compute (i.e. do nothing differently) it works. Since this is a hack 
+    # anyway and has to do with e.g. OS scheduling it is probably not that unexpected and probably random.
+    if 'fc_server' in cmd or 'conv_model_server' in cmd:        # SHADJIS TODO: FCC and FCM also have PUB
+        cmd = 'sleep 15'
+    else:
+        cmd = 'sleep 1' # sleep 0 works too, but not removing the command entirely
     f.write(cmd + "\n")
     print cmd
     os.system(cmd)
