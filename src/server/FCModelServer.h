@@ -1,6 +1,6 @@
 
-#ifndef _CONVMODELSERVER_H
-#define _CONVMODELSERVER_H
+#ifndef _FCMODELSERVER_H
+#define _FCMODELSERVER_H
 
 #include <iostream>
 #include <string>
@@ -18,7 +18,7 @@
 #include "broker/Broker_N_1.h"
 
 
-class ConvModelServer : public Server{
+class FCModelServer : public Server{
 public:
 
   // SHADJIS TODO: These 3 should be taken from the parent class with using
@@ -33,21 +33,25 @@ public:
   int nfloats;  // For both model and gradient buffers
   int group_size;
 
-  ConvModelServer(string _name, std::string _solver_file, std::string _data_binary,
+  FCModelServer(string _name, std::string _solver_file, std::string _data_binary,
     int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports) : 
     name(_name), solver_file(_solver_file), data_binary(_data_binary),
     broadcast_ports(_broadcast_ports), listen_ports(_listen_ports),
-    nfloats(0), group_size(_groupsize) {}
+    nfloats(0), group_size(_groupsize) {
+    
+    assert(group_size == 1); // For now, barrier should be before FC compute
+    
+  }
 
   /**
-   * A ConvModelServer does two things
+   * A FCModelServer does two things
    *   - listen to request that asks model.
    *   - listen to response that returns the gradient.
    **/
 
   void start(){
   
-    VLOG(2) << "Starting ConvModelServer[" << name << "]..." << std::endl;
+    VLOG(2) << "Starting FCModelServer[" << name << "]..." << std::endl;
 
     // -------------------------------------------------------------------------
     // Read parameter files and construct network
@@ -59,17 +63,24 @@ public:
     // this server only needs the models and learning rates / regularization per layer.
     // However the data is small so this does not matter. The LMDB is also unused except
     // for the size of the input layer which is stored in each datum.
-    std::string output_model_file = "conv_model.bin";
+    std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
-    // Get the number of conv compute server groups
+    // Get the number of fc compute servers
+    // For the conv model server, we had 2 ports (1 to listen, 1 to broadcast) per groups of conv compute servers
+    // So if we had 8 groups each with 4 servers, we had 8 listen and 8 broadcast ports, each listening to / broadcasting 
+    // to 4 conv compute servers.
+    // For FC, we do an aggregation of the batch before FC compute forward pass, so that reduces the number of
+    // fc compute machines needed by a factor of group size compared to number of conv compute machines needed.
+    // Then, each fc compute machine will communicate models/gradients with the fc model server.
+    // So here we get the number of fc compute servers, which was equal to the number of conv compute parallel groups.
     assert(broadcast_ports.size() == listen_ports.size());
-    const size_t num_groups = broadcast_ports.size();
+    const size_t num_groups = broadcast_ports.size();       // AKA number of fc compute servers
     
     // Start a thread for each group
-    const int snapshot = solver_param.snapshot() * 2 * num_groups * 5;   // SHADJIS TODO: Mult by #conv layers (since async fw and bw), not 5 hardcoded
+    const int snapshot = solver_param.snapshot() * 2 * num_groups * 3;   // SHADJIS TODO: Mult by #fc layers (since async fw and bw), not 3 hardcoded
     int batch = 0;
     std::vector<std::thread> threads;
     for (size_t thread_idx=0; thread_idx < num_groups; ++thread_idx) {
@@ -107,7 +118,7 @@ public:
         // -------------------------------------------------------------------------
         auto UDF = [&](OmvMessage ** msgs, int nmsg, OmvMessage * & msg){
           OmvMessage * incoming_msg = msgs[0];
-          // Answer request for the conv model
+          // Answer request for the fc model
           hogwild_lock.lock();
           if(incoming_msg->msg_type == ASK_MODEL){
             VLOG(2) << "Responding to ASK_MODEL Request of BRIDGE " << incoming_msg->bridgeid << std::endl;

@@ -14,7 +14,7 @@ layer {
   }
   data_param {
     source: "/home/software/dcct/ilsvrc12_train_lmdb_8"
-    batch_size: 16
+    batch_size: 256
     backend: LMDB
   }
 }
@@ -33,7 +33,7 @@ layer {
   }
   data_param {
     source: "/home/software/dcct/ilsvrc12_val_lmdb_8"
-    batch_size: 16
+    batch_size: 256
     backend: LMDB
   }
 }

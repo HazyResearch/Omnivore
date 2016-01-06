@@ -5,7 +5,7 @@ enum OmvMessageType {
   
   // Messages that ask for something
   // (if received, need to send something. If sent, wait to receive something)
-  ASK_MODEL = 0,                        // This sends nothing, waits for a model
+  ASK_MODEL = -1,                        // This sends nothing, waits for a model
   ASK_UPDATE_GRADIENT = 1,              // This sends model gradients, waits for acknowledgement
   ASK_GRADIENT_OF_SENT_DATA = 2,        // This sends data, waits for data gradients
   
@@ -23,6 +23,12 @@ struct OmvMessage {
   OmvMessageType msg_type;
 
   int nelem;
+
+  int bridgeid;
+
+  int group_size;
+
+  int rank_in_group;
 
   float content[0];
 

@@ -15,7 +15,7 @@ LD_BASE=$(foreach l, $(LIBS), -l$l)
 
 # Header directories
 INCLUDE_DIRS=$(BOOST_INCLUDE) $(GLOG_INCLUDE) \
-	     $(LMDB_INCLUDE) $(BLAS_INCLUDE) ./src ./CaffeConTroll/src/parser/
+	     $(LMDB_INCLUDE) $(BLAS_INCLUDE) ./src ./CaffeConTroll/src/parser/  /usr/include/
 INCLUDE_STR=$(foreach d, $(INCLUDE_DIRS), -I$d)
 
 # Library directories
@@ -65,7 +65,7 @@ LINKCC = $(CC)
 LINKFLAG = $(CFLAGS) $(LDFLAGS)
 
 ifdef NVCC
-LINKFLAG += -lcublas -lcudart
+LINKFLAG += -lcurand -lcublas -lcudart
 NVCC_LINK = dlink.o
 endif
 
@@ -77,6 +77,15 @@ endif
 all: CFLAGS += $(PRODUCT_FLAGS) 
 all: LINKFLAG += $(PRODUCT_FLAGS) 
 all: $(OBJ_FILES) cnn.pb.o $(MAIN_CUDA_OBJ_FILES)
+ifdef NVCC
+	$(NVCC) -dlink $^ -o $(NVCC_LINK)
+endif
+	$(LINKCC) $^ $(NVCC_LINK) -o $(TARGET) $(LINKFLAG) $(DIR_PARAMS) $(LDFLAGS) $(PROTOBUF_LIB)
+
+# Assert build, same as default target but with -D_DO_ASSERT
+assert: CFLAGS += $(PRODUCT_FLAGS) -D_DO_ASSERT
+assert: LINKFLAG += $(PRODUCT_FLAGS) 
+assert: $(OBJ_FILES) cnn.pb.o $(MAIN_CUDA_OBJ_FILES)
 ifdef NVCC
 	$(NVCC) -dlink $^ -o $(NVCC_LINK)
 endif
