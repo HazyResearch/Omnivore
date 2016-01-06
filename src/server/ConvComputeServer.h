@@ -99,11 +99,11 @@ public:
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     // Modify all bridges to not update model gradients in backward pass (saves time)
     for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
       (*bridge)->set_update_model_gradients(false);
     }
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     
     // SHADJIS TODO: Later we will call this:
     //   bridges.back()->update_p_output_layer_gradient_CPU_ONLY(&incoming_msg_data_grads->content[rank_in_group*nfloats_output_data]);
@@ -207,6 +207,8 @@ public:
     char dummy[50]; // SHADJIS TODO: Not sure what this is, need to add a comment and remove hard-coding of 50
 
     OmvMessage * incoming_msg_new_model;
+    
+    int batch = 0;
 
     // TASKS
     
@@ -280,6 +282,11 @@ public:
         assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == corpus->images->physical_get_RCDslice(0));
       
         VLOG(2) << "~~~~ EXIT STATE Read corpus" << std::endl;
+        
+        ++batch;
+        if (batch % 100 == 0) {
+          std::cout << "Beginning iteration " << batch << std::endl;
+        }
       }
     );
 

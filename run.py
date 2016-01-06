@@ -4,7 +4,7 @@
 # 
 # usage:
 # 
-# $ python run.py path/to/solver.prototxt path/to/machine_list.txt machines_per_batch
+# $ python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc    (map_fcc_to_cc=)1|0
 # 
 # ==============================================================================
 
@@ -55,45 +55,32 @@ use_1_gpu = False
 # If using > 1 GPU, do model parallelism on FC
 # This applies regardless of whether fc compute and model are one server or
 # separate servers
-multi_gpu_model_parallelism = True 
+multi_gpu_model_parallelism = True  # Will be default true later or selected by optimizer , e.g. turn off if fcc / fcm
 
 
 # FC Compute / Model Server Parameters
 single_FC_server = True
 
-if not single_FC_server:
-    # The remaining parameters are only valid if single_FC_server is False
-    # For FC, the scheduler may choose to have a single fc compute + model server ("fccm",
-    # or the case when single_FC_server = True), or to have one or more fc compute ("fcc")
-    # servers as well as a separate fc model ("fcm") server.
-    #  - If there is a single server for both fc model and fc compute (single_FC_server = True),
-    #    then this server will use a number of gpus decided by use_4_gpu and use_1_gpu above 
-    #    (only 0, 1 or 4 GPUs per server supported). Then the parameters below are not used.
-    #  - If there are separate servers for fc compute and fc model (single_FC_server = False),
-    #    then for now fc model will be its own machine and fc computes will be spread across
-    #    the remaining machines. However, it is possible to have many fc compute (fcc) on 1 
-    #    machine, if and only if that machine has multiple GPUs. E.g. if we have 4 GPUs/machine,
-    #    there are 3 cases:
-    #       - 1 fc compute server on that machine, using either 1 GPU, 4 GPUs or CPU only
-    #       - 2 fc compute servers on that machine, using up to 2 GPUs each (or each can use 1 GPU)
-    #       - 4 fc compute servers on that machine, each using exactly 1 GPU (none will use CPU)
+# The remaining parameters are only valid if single_FC_server is False
+# For FC, the scheduler may choose to have a single fc compute + model server ("fccm",
+# or the case when single_FC_server = True), or to have one or more fc compute ("fcc")
+# servers as well as a separate fc model ("fcm") server.
+#  - If there is a single server for both fc model and fc compute (single_FC_server = True),
+#    then this server will use a number of gpus decided by use_4_gpu and use_1_gpu above 
+#    (only 0, 1 or 4 GPUs per server supported). Then the parameters below are not used.
+#  - If there are separate servers for fc compute and fc model (single_FC_server = False),
+#    then for now fc model will be its own machine and fc computes will be spread across
+#    the remaining machines. However, it is possible to have many fc compute (fcc) on 1 
+#    machine, if and only if that machine has multiple GPUs. E.g. if we have 4 GPUs/machine,
+#    there are 3 cases:
+#       - 1 fc compute server on that machine, using either 1 GPU, 4 GPUs or CPU only
+#       - 2 fc compute servers on that machine, using up to 2 GPUs each (or each can use 1 GPU)
+#       - 4 fc compute servers on that machine, each using exactly 1 GPU (none will use CPU)
 
-    # Now, use_1_gpu and use_4_gpu will be IGNORED for FC, and applied only to conv. The params
-    # below take precedence for FC.
-    num_fcc_per_machine = 1
-    num_gpu_per_fcc_machine = 4
-    # If num_gpu_per_fcc > 1, then that fcc server will use model 
-    # parallelism iff multi_gpu_model_parallelism = True
-    num_gpu_per_fcc = num_gpu_per_fcc_machine / num_fcc_per_machine
-
-    # Finally, we have the following: total # machines, # machines / conv compute group, # fc compute / machine, 
-    # and we know that there will be # fc compute servers = # conv compute groups (for now), and
-    # 1 machine allocated to conv model and fc model. So from all these it should be possible to do something
-    # like: # machines left = # machines - 2 (one for fcm, one for cm), then given the remaining machines, 
-    # we need to select # conv compute groups given that this will also be the # of fc compute servers and 
-    # given our knowledge of the # machines / conv compute group and the # fc compute / machine.
-    # But instead of choosing the number of groups now, I will just hard-code.
-    num_groups = 2
+# Now, use_1_gpu and use_4_gpu will be IGNORED for FC, and applied only to conv. The params
+# below take precedence for FC.
+num_fcc_per_machine = 1
+num_gpu_per_fcc_machine = 4
 
 
 # ==============================================================================
@@ -195,8 +182,25 @@ fc server (running on master)
 # Parse arguments
 # ==============================================================================
 
-if len(sys.argv) not in [5,6]:
-    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU'
+if len(sys.argv) not in [7,8]:
+    # SHADJIS TODO: map_fcc_to_cc is only used if many_fc is set.
+    # Eventually there will also be an option to map fcm and cm to the same machine,
+    # either by making two separate servers and assigning them to one machine or using
+    # an AllModelServer (and then also an AllComputeServer can be used)
+    # SHADJIS TODO: These can be in a config file if there are too many params
+    # SHADJIS TODO: Or even better, rather than a bool for every case (fcc + cc on same machine,
+    # etc.), for now we can read in a machine list file which has cols for each machine, e.g.
+    # if we have:
+    #       master   cc0.0  fcc0
+    #       node001  cc0.1
+    #       node002  cc1.0  fcc1
+    #       node003  cc1.1
+    #       node003  fcm
+    #       node003  cm
+    # then it is clear how machines should be assigned. The scheduler will then eventually
+    # generate this file (e.g. a JSON format which specifies each server, its machine,
+    # its GPUs, etc.)
+    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc  (map_fcc_to_cc=)1|0'
     sys.exit(0)
 
 # Check that the distributed cct binary exists before running this script
@@ -212,8 +216,24 @@ solver_file = sys.argv[1]
 machine_list_file = sys.argv[2]
 machines_per_batch = int(sys.argv[3])       # SHADJIS TODO: Eventually optimizer will select this
 node_hw = sys.argv[4]
+if sys.argv[5] == 'single_fc':
+    single_FC_server = True
+    del num_fcc_per_machine     # These are unused
+    del num_gpu_per_fcc_machine
+else:
+    assert sys.argv[5] == 'many_fc'
+    print 'Using 1 fc compute server per conv compute group'
+    single_FC_server = False
+    if sys.argv[6] == '1':
+        # If we want to map the fcc to the same machine as cc we need to replace the 
+        # port with a local port.
+        map_fcc_to_cc = True
+        print 'Assigning fcc servers to same machine as (some) cc servers'
+    else:
+        assert sys.argv[6] == '0'
+        map_fcc_to_cc = False
 
-if len(sys.argv) == 6 and sys.argv[5] == 's':
+if len(sys.argv) == 8 and sys.argv[7] == 's':
     skip_lmdb_generation = True
 
 if node_hw == 'CPU':
@@ -227,6 +247,8 @@ elif node_hw == '4GPU':
     use_1_gpu = False
 else:
     assert False
+
+# assert skip_lmdb_generation
 
 
 # ==============================================================================
@@ -273,15 +295,18 @@ if single_FC_server:
     # fc on one machine, and conv compute on each machine.
     elif len(machine_list) == 2:
         conv_compute_server_machines = [machine_list[1]]
+        num_conv_compute_servers = 1
     else:
-        conv_compute_server_machines = machine_list[2:]
-    num_conv_compute_servers = len(conv_compute_server_machines)
+        # Calculate the number of conv compute servers
+        num_machines_left = len(machine_list)-2
+        # Make sure it divides the number of machines per batch
+        num_conv_compute_servers = (num_machines_left/machines_per_batch) * machines_per_batch
+        conv_compute_server_machines = machine_list[2:2+num_conv_compute_servers]
 
     # Now determine the number of groups
     num_groups = num_conv_compute_servers / machines_per_batch
     assert num_groups > 0
-    if num_conv_compute_servers % machines_per_batch > 0:
-        print 'Warning: Not using ' + str(num_conv_compute_servers % machines_per_batch) + ' machines'
+    assert num_conv_compute_servers % machines_per_batch == 0
 
 else:
 
@@ -315,35 +340,63 @@ else:
     conv_model_server_machine = machine_list[1]
     num_machines_left = num_machines - 2
     
-    # Next we must allocate a number of fc compute servers equal to the number of groups.
-    num_fc_compute_servers = num_groups
-    assert num_groups > 0
-    num_machines_for_fc_compute_servers = ( num_fc_compute_servers + num_fcc_per_machine - 1 )/ num_fcc_per_machine  # Round up
-    
-    # Allocate machines for these fc compute servers
-    fc_compute_server_machines = []
-    current_machine = 2 # Since we allocated the first 2 to the model servers
-    servers_on_current_machine = 0
-    for i in range(num_fc_compute_servers):
-        fc_compute_server_machines.append(machine_list[current_machine])
-        servers_on_current_machine += 1
-        if servers_on_current_machine == num_fcc_per_machine:
-            servers_on_current_machine = 0
-            current_machine += 1
-    # Make sure we assigned all the machines that we had allocated for fcc servers (maybe the last one is
-    # not 100% full so check for that case as well)
-    assert (current_machine == 2 + num_machines_for_fc_compute_servers) or (current_machine == 2 + num_machines_for_fc_compute_servers - 1)
-    current_machine = 2 + num_machines_for_fc_compute_servers
-    
-    # Now, the remaining number of machines must be able to fit the conv compute servers
-    num_machines_for_conv_compute_servers = num_groups * machines_per_batch
-    if num_machines_for_conv_compute_servers + current_machine > num_machines:
-        print 'Error: your configuration requires more machines than provided (' + \
-            str(num_machines) + ' provided, ' + str(num_machines_for_conv_compute_servers + current_machine) + ' needed)'
-        assert False
-    
-    conv_compute_server_machines = machine_list[current_machine : current_machine + num_machines_for_conv_compute_servers]
-    num_conv_compute_servers = len(conv_compute_server_machines)
+    # If num_gpu_per_fcc > 1, then that fcc server will use model 
+    # parallelism iff multi_gpu_model_parallelism = True
+    num_gpu_per_fcc = num_gpu_per_fcc_machine / num_fcc_per_machine
+
+    # Now assign machines to the fcc and conv compute servers
+    # Special case: fcc and cc on same server
+    if map_fcc_to_cc:
+        num_groups = num_machines_left / machines_per_batch
+        num_fc_compute_servers = num_groups
+        assert num_groups > 0
+        # These FC compute servers will be on the same machines and cc servers, so assign those first
+        conv_compute_server_machines = machine_list[2 : 2 + num_groups*machines_per_batch]
+        # Now assign FC as a subset of these machines. If group size is 1, it will be the same
+        # Otherwise, it will be strided by machines_per_batch
+        fc_compute_server_machines = conv_compute_server_machines[::machines_per_batch]
+        num_conv_compute_servers = len(conv_compute_server_machines)
+    # Default case
+    else:
+        # Now we have the following:
+        #   - num_machines_left (after allocating 1 to conv model and 1 to fc model)
+        #   - machines_per_batch (i.e. # machines / conv compute group),
+        #   - num fc compute / machine, 
+        # Now we can calculate how many parallel batches (AKA groups) there will be:
+        #    num_groups = num_machines_left / (num_machines/group)
+        #               = num_machines_left / (num_machines/cc_group + num_machines/fcc_server),
+        #  where #machines/fcc_server = 1/num_fcc_per_machine <= 1
+        num_groups = int( num_machines_left / (machines_per_batch + 1./num_fcc_per_machine) )
+        
+        # Next we must allocate a number of fc compute servers equal to the number of groups.
+        num_fc_compute_servers = num_groups
+        assert num_groups > 0
+        num_machines_for_fc_compute_servers = ( num_fc_compute_servers + num_fcc_per_machine - 1 )/ num_fcc_per_machine  # Round up
+        
+        # Allocate machines for these fc compute servers
+        fc_compute_server_machines = []
+        current_machine = 2 # Since we allocated the first 2 to the model servers
+        servers_on_current_machine = 0
+        for i in range(num_fc_compute_servers):
+            fc_compute_server_machines.append(machine_list[current_machine])
+            servers_on_current_machine += 1
+            if servers_on_current_machine == num_fcc_per_machine:
+                servers_on_current_machine = 0
+                current_machine += 1
+        # Make sure we assigned all the machines that we had allocated for fcc servers (maybe the last one is
+        # not 100% full so check for that case as well)
+        assert (current_machine == 2 + num_machines_for_fc_compute_servers) or (current_machine == 2 + num_machines_for_fc_compute_servers - 1)
+        current_machine = 2 + num_machines_for_fc_compute_servers
+        
+        # Now, the remaining number of machines must be able to fit the conv compute servers
+        num_machines_for_conv_compute_servers = num_groups * machines_per_batch
+        if num_machines_for_conv_compute_servers + current_machine > num_machines:
+            print 'Error: your configuration requires more machines than provided (' + \
+                str(num_machines) + ' provided, ' + str(num_machines_for_conv_compute_servers + current_machine) + ' needed)'
+            assert False
+        
+        conv_compute_server_machines = machine_list[current_machine : current_machine + num_machines_for_conv_compute_servers]
+        num_conv_compute_servers = len(conv_compute_server_machines)
 
     # Now we have the following set:
     #   - num_groups
@@ -352,6 +405,9 @@ else:
     #   - fc_compute_server_machines, num_fc_compute_servers, num_gpu_per_fcc
     #   - conv_compute_server_machines and num_conv_compute_servers, and use_1_gpu or use_4_gpu
     # The rest of the file will use these variables
+
+print 'Number of machines = ' + str(len(machine_list))
+print 'Number of groups   = ' + str(num_groups)
 
 
 # ------------------------------------------------------------------------------
@@ -1012,7 +1068,11 @@ for i in range(num_conv_compute_servers):
     if single_FC_server:
         fc_bind_machine = fc_server_machine
     else:
-        fc_bind_machine = fc_compute_server_machines[group_of_this_machine]
+        # Special case: if these are on the same machine, use localhost
+        if conv_compute_server_machines[i] == fc_compute_server_machines[group_of_this_machine]:
+            fc_bind_machine = '127.0.0.1'   # Localhost
+        else:
+            fc_bind_machine = fc_compute_server_machines[group_of_this_machine]
     
     f.write('''name = "ConvComputeServer ''' + str(i) + '''";
 conv_listen_bind = "tcp://''' + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
@@ -1072,8 +1132,10 @@ for cmd_param in cmd_params:
     # Most of the time it works to sleep 15s only after model servers, but then for 32 machines, 1 group it hangs.
     # However if I sleep 0 after each conv compute (i.e. do nothing differently) it works. Since this is a hack 
     # anyway and has to do with e.g. OS scheduling it is probably not that unexpected and probably random.
-    if 'fc_server' in cmd or 'conv_model_server' in cmd:        # SHADJIS TODO: FCC and FCM also have PUB
+    if 'fc_server' in cmd or 'conv_model_server' in cmd or 'fc_model_server' in cmd:
         cmd = 'sleep 15'
+    elif 'fc_compute_server' in cmd:        # SHADJIS TODO: May be able to reduce this delay
+        cmd = 'sleep 5'
     else:
         cmd = 'sleep 1' # sleep 0 works too, but not removing the command entirely
     f.write(cmd + "\n")

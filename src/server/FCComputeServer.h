@@ -148,11 +148,11 @@ public:
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     // Modify all bridges to not update model gradients in backward pass (saves time)
     for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
       (*bridge)->set_update_model_gradients(false);
     }
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
     SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
     LogicalCubeFloat * const labels = softmax->p_data_labels;
     
@@ -638,6 +638,7 @@ public:
               int total_model_size = 0;
               int total_model_and_bias_size = 0;
               auto bridge_mutable = bridge;
+              // Note that unlike the fw pass get model tasks, here we traverse in reverse
               for (int b = 0; b < num_bridges_in_this_group; ++b) {
                 model_sizes.push_back ((*bridge_mutable)->get_model_cube()->n_elements);
                 total_model_size    += (*bridge_mutable)->get_model_cube()->n_elements;
@@ -653,11 +654,14 @@ public:
               int model_offset = 0;
               int bias_offset = 0;
               for (int b = 0; b < num_bridges_in_this_group; ++b) {
+                // We want to fill the gradient buffer in the order bridge0 bridge1 bridge2 bridge3 etc.,
+                // but note we are iterating in reverse, so convert 3 to 0, 2 to 1, etc.:
+                const int b_idx = num_bridges_in_this_group - 1 - b;
                 // Copy model and bias
-                DeepNet::get_ith_gradient_model_only(bridges, outgoing_msg_send_model_grad->content + model_offset, bridge_id_with_model_p-b);
-                DeepNet::get_ith_gradient_bias_only (bridges, outgoing_msg_send_model_grad->content + total_model_size + bias_offset, bridge_id_with_model_p-b);
-                model_offset += model_sizes[b];
-                bias_offset  += bias_sizes[b];
+                DeepNet::get_ith_gradient_model_only(bridges, outgoing_msg_send_model_grad->content + model_offset, bridge_id_with_model_p - b_idx);
+                DeepNet::get_ith_gradient_bias_only (bridges, outgoing_msg_send_model_grad->content + total_model_size + bias_offset, bridge_id_with_model_p - b_idx);
+                model_offset += model_sizes[b_idx];
+                bias_offset  += bias_sizes [b_idx];
               }
               
               // Now send the model gradients
