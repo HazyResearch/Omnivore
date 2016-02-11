@@ -24,7 +24,6 @@ public:
   // SHADJIS TODO: These 3 should be taken from the parent class with using
   std::string name;
   std::string solver_file;
-  std::string data_binary;
   
   int nfloats;      // For input data and gradients (unlike ConvModelServer,
                     // where nfloats is model and model gradient size)
@@ -34,9 +33,9 @@ public:
   std::vector <std::string> broadcast_ports;
   std::vector <std::string> listen_ports;
 
-  FCComputeModelServer(string _name, std::string _solver_file, std::string _data_binary,
+  FCComputeModelServer(string _name, std::string _solver_file,
     int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports) : 
-    name(_name), solver_file(_solver_file), data_binary(_data_binary),
+    name(_name), solver_file(_solver_file),
     nfloats(0), group_size(_groupsize),
     broadcast_ports(_broadcast_ports), listen_ports(_listen_ports) {}
 
@@ -58,7 +57,7 @@ public:
     // first fc layer (stored in each datum).
     std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
     
     SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
     LogicalCubeFloat * const labels = softmax->p_data_labels;

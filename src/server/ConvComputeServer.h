@@ -22,7 +22,6 @@ public:
   // SHADJIS TODO: These 3 should be taken from the parent class with using
   std::string name;
   std::string solver_file;
-  std::string data_binary;
   
   std::string conv_listen_bind;
   std::string conv_send_bind;
@@ -39,9 +38,9 @@ public:
   int nfloats_output_data;
 
   ConvComputeServer(string _name, std::string _conv_listen_bind, std::string _conv_send_bind,
-    std::string _fc_listen_bind, std::string _fc_send_bind, std::string _solver_file, std::string _data_binary,
+    std::string _fc_listen_bind, std::string _fc_send_bind, std::string _solver_file,
     int _groupsize, int _rank_in_group) : 
-    name(_name), solver_file(_solver_file), data_binary(_data_binary), 
+    name(_name), solver_file(_solver_file),
     conv_listen_bind(_conv_listen_bind), conv_send_bind(_conv_send_bind),
     fc_listen_bind(_fc_listen_bind), fc_send_bind(_fc_send_bind),
     group_size(_groupsize), rank_in_group(_rank_in_group),
@@ -99,7 +98,7 @@ public:
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
     // Modify all bridges to not update model gradients in backward pass (saves time)
     for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
       (*bridge)->set_update_model_gradients(false);

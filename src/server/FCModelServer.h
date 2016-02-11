@@ -24,7 +24,6 @@ public:
   // SHADJIS TODO: These 3 should be taken from the parent class with using
   std::string name;
   std::string solver_file;
-  std::string data_binary;
   
   std::mutex hogwild_lock;
   std::vector <std::string> broadcast_ports;
@@ -33,9 +32,9 @@ public:
   int nfloats;  // For both model and gradient buffers
   int group_size;
 
-  FCModelServer(string _name, std::string _solver_file, std::string _data_binary,
+  FCModelServer(string _name, std::string _solver_file,
     int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports) : 
-    name(_name), solver_file(_solver_file), data_binary(_data_binary),
+    name(_name), solver_file(_solver_file),
     broadcast_ports(_broadcast_ports), listen_ports(_listen_ports),
     nfloats(0), group_size(_groupsize) {
     
@@ -65,7 +64,7 @@ public:
     // for the size of the input layer which is stored in each datum.
     std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
     // Get the number of fc compute servers

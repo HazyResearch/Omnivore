@@ -156,7 +156,6 @@ conv model server (running on node015)
     bind = "tcp://*:5555";
     type = "ConvModelServer";
     solver_file = "protos/solver.conv_model_server.prototxt";
-    data_binary = "protos/dummy.bin";   // Empty file (no file needed, but prevents automatic binary creation)
     output_model_file = "conv_model.bin";
 
 conv compute server (running on node019)
@@ -165,14 +164,12 @@ conv compute server (running on node019)
     fc_bind = "tcp://master:5556";
     type = "ConvComputeServer";
     solver_file = "protos/solver.conv_compute_server.prototxt";
-    data_binary = "/home/software/dcct/8_train_NEW.bin";
 
 fc server (running on master)
     name = "Example FCComputeModelServer on 5556";
     bind = "tcp://*:5556";
     type = "FCComputeModelServer";
     solver_file = "protos/solver.fc_model_server.prototxt";
-    data_binary = "protos/dummy.bin";   // Empty file (no file needed, but prevents automatic binary creation)
     output_model_file = "fc_model.bin";
 
 """
@@ -756,8 +753,6 @@ else:
 # ------------------------------------------------------------------------------
 input_file_dir = 'server_input_files-' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 os.system('mkdir -p ' + input_file_dir)
-dummy_file = input_file_dir + '/dummy.bin'
-os.system('touch ' + dummy_file)
 print 'Writing input prototxt files to ' + input_file_dir + '/'
 
 # First create the solver files for the model servers
@@ -939,7 +934,7 @@ if not skip_lmdb_generation:
 
     # This requires calling a utility which loads the network and prints the size
     # of the output of the final conv layer.
-    util_output_str = subprocess.check_output(['./tools/size_util/size_util', conv_model_server_solver_file, dummy_file])
+    util_output_str = subprocess.check_output(['./tools/size_util/size_util', conv_model_server_solver_file])
     num_fc_inputs = int(util_output_str.strip().split("\n")[-1].strip())
 
     # Now create a new LMDB with 1 datum that contains the right size
@@ -989,7 +984,6 @@ if single_FC_server:
     f.write('''name = "FCComputeModelServer on tcp://''' + fc_server_machine + '''";
 type = "FCComputeModelServer";
 solver = "''' + fc_server_solver_file + '''";
-train_bin = "''' + dummy_file + '''";
 group_size = ''' + str(machines_per_batch) + ''';
 
 ports = (
@@ -1015,7 +1009,6 @@ else:
     f.write('''name = "FCModelServer on tcp://''' + fc_model_server_machine + '''";
 type = "FCModelServer";
 solver = "''' + fcm_server_solver_file + '''";
-train_bin = "''' + dummy_file + '''";
 group_size = 1;
 
 ports = (
@@ -1040,7 +1033,6 @@ f = open(conv_model_server_cfg, 'w')
 f.write('''name = "ConvModelServer on tcp://''' + conv_model_server_machine + '''";
 type = "ConvModelServer";
 solver = "''' + conv_model_server_solver_file + '''";
-train_bin = "''' + dummy_file + '''";
 group_size = ''' + str(machines_per_batch) + ''';
 
 ports = (
@@ -1101,7 +1093,6 @@ fc_listen_bind = "tcp://'''   + fc_model_server_machine + ''':''' + str(ports[2*
 fc_send_bind = "tcp://'''     + fc_model_server_machine + ''':''' + str(ports[2*i    ]) + '''";
 type = "FCComputeServer";
 solver = "''' + fc_compute_server_solver_files[i] + '''";
-train_bin = "''' + dummy_file + '''";
 group_size = ''' + str(machines_per_batch) + ''';
 rank_in_group = 0;
 ''')
