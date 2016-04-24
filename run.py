@@ -4,7 +4,7 @@
 # 
 # usage:
 # 
-# $ python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc    (map_fcc_to_cc=)1|0
+# $ python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc    (map_fcc_to_cc=)1|0    base_dir
 # 
 # ==============================================================================
 
@@ -33,7 +33,20 @@ user = 'root'
 #  - cd into correct directory
 #  - path commands in .bashrc (ssh does not source .bashrc so its load libary 
 #    commands may need to be included here, see the example below)
-extra_cmd = 'cd ../home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-7.0/lib64;'
+extra_cmd = 'cd /home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-7.0/lib64;'
+
+# These 3 meaningless if FCC
+FCCM_and_CM_to_CC = False
+CM_only_to_CC = True        # no effect if FCCM_and_CM_to_CC = True (that takes precedence)
+# If this next one is true then it will put 2 CC per machine (note: assumes no FCC)
+# More complex patterns exist, e.g. if we have many m/g and separate FCC
+# we will have some CC with FCC and some without, so only those without can
+# take a CC, etc. For now though just assume this next option implies FCCM.
+double_subscribe_cc = False#True
+
+# This meaningless unless FCC
+CM_and_FCM_together = True
+
 
 
 # ------------------------------------------------------------------------------
@@ -80,7 +93,63 @@ single_FC_server = True
 # Now, use_1_gpu and use_4_gpu will be IGNORED for FC, and applied only to conv. The params
 # below take precedence for FC.
 num_fcc_per_machine = 1
-num_gpu_per_fcc_machine = 4
+# If CPU machine only, just set this to 0 and it will be ignored. We could also just use
+# the input command line argument (CPU, GPU, 4GPU) to set this, but maybe the FCC machine
+# is different from the other machines, etc.
+num_gpu_per_fcc_machine = 0
+
+
+# SHADJIS TODO: For now we configure the servers by args and options above, but a future change could be by config file (created externally and passed in).
+# Then internally this script reads that file and creates the mapping without having to calculate / decide the mapping.
+#
+# The cases it should handle are:
+#   - default case: 1 CC per machine, + 2 machines (FCCM, CM)
+#   - FCCM_and_CM_to_CC (FCCM to 1 CC, CM to another)
+#   - CM_only_to_CC (FCCM alone, CM to a CC)
+#   - single_FC_server  (default true, if false, then will have 1 FCC per group, but on separate machines)
+#   - map_fcc_to_cc (default false, but if true puts FCC on CC)
+#   - CM_and_FCM_together (default false, if true will put CM and FCM together. If FCM = FCCM, later will put those together too, but for now only works when single_FC_server = 0)
+#   - num_fcc_per_machine
+#   - num_gpu_per_fcc_machine
+#   - double_subscribe_cc
+#   - maybe even multi-machine model parallelism for FC
+#
+# Examples:
+#    master  FCC, FCC, FCC, FCC, FCM, CM      # Here it is 4 groups of size 1, each FC is 1 GPU, then once we get FCC model grads, we pull out an send to FCM
+#    node001 CC
+#    node002 CC
+#    node003 CC
+#    node004 CC
+#
+#    master  FCC, FCC, FCC, FCC, FCM, CM      # Here it is 8 groups of size 1, each FC is 1 GPU, then once we get FCC model grads, we pull out an send to FCM
+#    node001 CC, CC
+#    node002 CC, CC
+#    node003 CC, CC
+#    node004 CC, CC
+#
+#    master  FCCM, CM
+#    node001 CC
+#    node002 CC
+#    node003 CC
+#    node004 CC
+#
+#    master  FCCM
+#    node001 CC
+#    node002 CC
+#    node003 CC
+#    node004 CC, CM
+#
+#    master  FCM, CM
+#    node001 CC,FCC
+#    node002 CC,FCC
+#    node003 CC,FCC
+#    node004 CC,FCC
+#
+#    master  CC,FCC,FCM
+#    node001 CC,FCC,CM
+#    node002 CC,FCC
+#    node003 CC,FCC
+#
 
 
 # ==============================================================================
@@ -182,7 +251,8 @@ fc server (running on master)
 # Parse arguments
 # ==============================================================================
 
-if len(sys.argv) not in [7,8]:
+EXPECTED_NUM_ARGS = 8
+if len(sys.argv) not in [EXPECTED_NUM_ARGS,EXPECTED_NUM_ARGS+1]:
     # SHADJIS TODO: map_fcc_to_cc is only used if many_fc is set.
     # Eventually there will also be an option to map fcm and cm to the same machine,
     # either by making two separate servers and assigning them to one machine or using
@@ -191,12 +261,16 @@ if len(sys.argv) not in [7,8]:
     # SHADJIS TODO: Or even better, rather than a bool for every case (fcc + cc on same machine,
     # etc.), for now we can read in a machine list file which has cols for each machine, e.g.
     # if we have:
-    #       master   cc0.0  fcc0
-    #       node001  cc0.1
-    #       node002  cc1.0  fcc1
-    #       node003  cc1.1
-    #       node003  fcm
-    #       node003  cm
+    #
+    #    master   cc0.0  fcc0
+    #    node001  cc0.1
+    #    node002  cc1.0  fcc1
+    #    node003  cc1.1
+    #    node003  fcm
+    #    node003  cm
+    #
+    # Or even simpler: see comments @ top
+    #
     # then it is clear how machines should be assigned. The scheduler will then eventually
     # generate this file (e.g. a JSON format which specifies each server, its machine,
     # its GPUs, etc.)
@@ -233,7 +307,11 @@ else:
         assert sys.argv[6] == '0'
         map_fcc_to_cc = False
 
-if len(sys.argv) == 8 and sys.argv[7] == 's':
+base_dir = sys.argv[7]
+if base_dir[-1] != '/':
+    base_dir += '/'
+
+if len(sys.argv) == EXPECTED_NUM_ARGS+1 and sys.argv[EXPECTED_NUM_ARGS] == 's':
     skip_lmdb_generation = True
 
 if node_hw == 'CPU':
@@ -276,32 +354,64 @@ if single_FC_server:
     # The FC server is always the first machine
     fc_server_machine = machine_list[0]
 
+    # SHADJIS TODO: This now assumes that given e.g. N machines, the best way to use them is to
+    # allocate 1 machine to FCCM, 1 to CM, and the remaining N-2 are CC. In general this probably
+    # makes sense as N is large, but for small N e.g. 2 machines should handle this better. Even
+    # on e.g. 8 machines which is not too small, it makes sense to be able to map CM and FCCM to
+    # same machine, or CM to a CC and FCCM to another CC, or CM and FCCM and CC all one 1 machine.
+    # The optimizer can decide this layout later and pass in a config file (as mentioned above)
+    # which lists, for each machine, which servers map to it. For now, I will just set a bool at
+    # the top of this file which if true will put FCCM on a CC and CM on another CC. Then we can
+    # handle more general cases later (along with single_fc|many_fc, (map_fcc_to_cc=)1|0 , etc.)
+    
     # Conv Model Server:
-    # If there are 3 or more machines, assign conv model server to machine 1 (i.e. 2nd one)
-    # If there are only 1 or 2 machines, assign this to the first machine (machine 0).
-    # That way if there are 2 machines, the conv compute server will have its own machine.
-    # (Edit: see comment below, this needs to be fixed)
-    if len(machine_list) > 2:
-        conv_model_server_machine = machine_list[1]
-    else:
+    # If there is 1 machine, it must be CM
+    # If 2 or more machines, now we can choose, e.g. (CM,CC) and (FCCM,CC) or (CM,FCCM,CC) and (CC),
+    # etc. Having (CM, FCCM), (CC) would thrash less but would be certainly slower than 1 machine
+    if len(machine_list) == 1:
         conv_model_server_machine = machine_list[0]
+    else:
+        # SHADJIS TODO: Optimizer should decide if this goes on server 0 (with FCCM and CC) or 
+        # server 1 (alone with a CC). For now hard-code this one.
+        conv_model_server_machine = machine_list[1]
 
     # Conv Compute Server:
-    if len(machine_list) == 1:
+    if len(machine_list) == 1:  # There is only 1 machine, so CC goes here
         conv_compute_server_machines = [machine_list[0]]
-    # SHADJIS TODO: This is wrong, if there are 2 machines it does not help to 
-    # have a single conv compute on a separate machine, since it will be idle
-    # while fc is running anyway. If 2 machines, we should put conv model and
-    # fc on one machine, and conv compute on each machine.
-    elif len(machine_list) == 2:
-        conv_compute_server_machines = [machine_list[1]]
         num_conv_compute_servers = 1
+    elif len(machine_list) == 2:
+        conv_compute_server_machines = machine_list # Put a CC on each
+        num_conv_compute_servers = 2
     else:
         # Calculate the number of conv compute servers
-        num_machines_left = len(machine_list)-2
+        # In the default case, the number of CC servers is #machines - 2
+        # However, we may choose to make it #machines or #machines-1, and map
+        # CM or FC or both to CC. In the future, #CC can also be > #machines,
+        # i.e. pipelining
+        # SHADJIS TODO: Can also map e.g. a CM to a CC but separate FCCM, etc.
+        if FCCM_and_CM_to_CC:
+            num_machines_reserved = 0
+        elif CM_only_to_CC: # In this case we have N-1 CC machines
+            num_machines_reserved = 1
+        else:
+            num_machines_reserved = 2
+        num_machines_left = len(machine_list) - num_machines_reserved
         # Make sure it divides the number of machines per batch
         num_conv_compute_servers = (num_machines_left/machines_per_batch) * machines_per_batch
-        conv_compute_server_machines = machine_list[2:2+num_conv_compute_servers]
+        conv_compute_server_machines = machine_list[num_machines_reserved : num_machines_reserved + num_conv_compute_servers]
+        # SHADJIS TODO: If there are leftovers because num_conv_compute_servers < len(machine_list),
+        # the CM and FCCM can go there, but for now ignore that case
+
+        # For now this will just take the # of CC from before and multiply by 2
+        # Later more complicated things can be done
+        # So #groups is just double what it was going to be before
+        if double_subscribe_cc:
+            num_conv_compute_servers *= 2
+            # Note how this is happening: if we have 8 machines and group size 4, we put
+            # G1 on 0-3, G2 on 4-7, G3 on 0-3, and G4 on 4-7
+            # Specifically, we do not put G1 on 0-1 (2 CC/machine), since then while FC is processing
+            # that group, it will be idle
+            conv_compute_server_machines = conv_compute_server_machines * 2
 
     # Now determine the number of groups
     num_groups = num_conv_compute_servers / machines_per_batch
@@ -309,6 +419,11 @@ if single_FC_server:
     assert num_conv_compute_servers % machines_per_batch == 0
 
 else:
+
+    # For now do not support FCC and double CC
+    # - if 1 m/g, NO help from pipelining
+    # - if 2 m/g or more, than can cleverly put extra CC and FCC on un-utilized CC, but will IGNORE THIS CASE for now
+    assert not double_subscribe_cc
 
     # Determine how to allocate machines
     num_machines = len(machine_list)
@@ -335,10 +450,18 @@ else:
     # In the future it will be possible to have other configurations, e.g. multiple groups allocated
     # to one fc compute server, but for now 1 group per fc will be used.
     
-    # The FC model server can be the first machine, and conv model on second
-    fc_model_server_machine = machine_list[0]
-    conv_model_server_machine = machine_list[1]
-    num_machines_left = num_machines - 2
+    # SHADJIS TODO: do config file later, once we know what is fast
+    if CM_and_FCM_together:
+        # The FC model server can be the first machine, and conv model on second
+        fc_model_server_machine = machine_list[0]
+        conv_model_server_machine = machine_list[0]
+        num_machines_reserved = 1
+    else:
+        # The FC model server can be the first machine, and conv model on second
+        fc_model_server_machine = machine_list[0]
+        conv_model_server_machine = machine_list[1]
+        num_machines_reserved = 2
+    num_machines_left = num_machines - num_machines_reserved
     
     # If num_gpu_per_fcc > 1, then that fcc server will use model 
     # parallelism iff multi_gpu_model_parallelism = True
@@ -351,11 +474,13 @@ else:
         num_fc_compute_servers = num_groups
         assert num_groups > 0
         # These FC compute servers will be on the same machines and cc servers, so assign those first
-        conv_compute_server_machines = machine_list[2 : 2 + num_groups*machines_per_batch]
+        conv_compute_server_machines = machine_list[num_machines_reserved : num_machines_reserved + num_groups*machines_per_batch]
         # Now assign FC as a subset of these machines. If group size is 1, it will be the same
         # Otherwise, it will be strided by machines_per_batch
         fc_compute_server_machines = conv_compute_server_machines[::machines_per_batch]
         num_conv_compute_servers = len(conv_compute_server_machines)
+        assert num_fcc_per_machine == 1 # Makes sense, since it also has a CC on it
+        
     # Default case
     else:
         # Now we have the following:
@@ -375,7 +500,7 @@ else:
         
         # Allocate machines for these fc compute servers
         fc_compute_server_machines = []
-        current_machine = 2 # Since we allocated the first 2 to the model servers
+        current_machine = num_machines_reserved # Since we allocated some to the model servers
         servers_on_current_machine = 0
         for i in range(num_fc_compute_servers):
             fc_compute_server_machines.append(machine_list[current_machine])
@@ -385,10 +510,11 @@ else:
                 current_machine += 1
         # Make sure we assigned all the machines that we had allocated for fcc servers (maybe the last one is
         # not 100% full so check for that case as well)
-        assert (current_machine == 2 + num_machines_for_fc_compute_servers) or (current_machine == 2 + num_machines_for_fc_compute_servers - 1)
-        current_machine = 2 + num_machines_for_fc_compute_servers
+        assert (current_machine == num_machines_reserved + num_machines_for_fc_compute_servers) or (current_machine == num_machines_reserved + num_machines_for_fc_compute_servers - 1)
+        current_machine = num_machines_reserved + num_machines_for_fc_compute_servers
         
         # Now, the remaining number of machines must be able to fit the conv compute servers
+        # Edit: I think this can never happen since we fit the # FCC to your # machines, but anyway good to assert
         num_machines_for_conv_compute_servers = num_groups * machines_per_batch
         if num_machines_for_conv_compute_servers + current_machine > num_machines:
             print 'Error: your configuration requires more machines than provided (' + \
@@ -429,14 +555,40 @@ import socket
 # the ports). But if we ever want to merge the model servers into one machine we need
 # more ports. For now we will just re-use the ports.
 
-ports = []
-for i in range(num_groups*2):
+# Update: In order to map FCCM and CM to the same machine we can make separate ports
+# (this is not needed for FCCM to go on a CC or for CM to go on a CC, just when FCCM/CM
+# are on same machine)
+
+cm_ports = []
+while len(cm_ports) != num_groups*2:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('', 0))
     addr = s.getsockname()
     # E.g. parse 40582 from ('0.0.0.0', 40582) SHADJIS TODO: Support other formats
-    ports.append(str(addr[1]))
+    if str(addr[1]) not in cm_ports:
+        cm_ports.append(str(addr[1]))
     s.close()
+
+fc_ports = []  # Also used for fcc, since that is what cc binds to
+while len(fc_ports) != num_groups*2:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', 0))
+    addr = s.getsockname()
+    # E.g. parse 40582 from ('0.0.0.0', 40582) SHADJIS TODO: Support other formats
+    if str(addr[1]) not in fc_ports and str(addr[1]) not in cm_ports:
+        fc_ports.append(str(addr[1]))
+    s.close()
+
+if not single_FC_server:
+    fcm_ports = []  # Also used for fccm
+    while len(fcm_ports) != num_groups*2:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('', 0))
+        addr = s.getsockname()
+        # E.g. parse 40582 from ('0.0.0.0', 40582) SHADJIS TODO: Support other formats
+        if str(addr[1]) not in fc_ports and str(addr[1]) not in cm_ports and str(addr[1]) not in fcm_ports:
+            fcm_ports.append(str(addr[1]))
+        s.close()
     
 
 # ------------------------------------------------------------------------------
@@ -497,8 +649,14 @@ train_lmdb_name = lmdb_databases[0].rstrip('/')
 conv_movel_server_train_lmdb_name = train_lmdb_name
 fc_server_train_lmdb_name = train_lmdb_name + '_FC'
 conv_compute_server_train_lmdb_names = []
-for i in range(num_conv_compute_servers):
-    conv_compute_server_train_lmdb_names.append(train_lmdb_name + '_p' + str(i))
+skip_main_lmdb_only = False
+if num_conv_compute_servers == 1:
+    conv_compute_server_train_lmdb_names.append(train_lmdb_name)
+    skip_main_lmdb_only = True
+else:
+    os.system('mkdir -p ' + train_lmdb_name + '_' + str(num_conv_compute_servers) + '_PARTITION')
+    for i in range(num_conv_compute_servers):
+        conv_compute_server_train_lmdb_names.append(train_lmdb_name + '_' + str(num_conv_compute_servers) + '_PARTITION/' + str(num_conv_compute_servers) + 'P_p' + str(i))
 
 
 # ------------------------------------------------------------------------------
@@ -754,7 +912,7 @@ else:
 # ------------------------------------------------------------------------------
 # Create new solver and network prototxt files
 # ------------------------------------------------------------------------------
-input_file_dir = 'server_input_files-' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+input_file_dir = base_dir + 'server_input_files-' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")       # SHADJIS TODO: base_dir can include this later
 os.system('mkdir -p ' + input_file_dir)
 dummy_file = input_file_dir + '/dummy.bin'
 os.system('touch ' + dummy_file)
@@ -856,13 +1014,21 @@ if not single_FC_server:
 # First, make the lmdb for each conv compute server
 # ------------------------------------------------------------------------------
 
-if not skip_lmdb_generation:
+def open_new_write_lmdb_helper(new_lmdb_name, num_imgs, map_size):
+    os.system('rm -rf ' + new_lmdb_name)
+    os.system('rm -rf ' + new_lmdb_name + '.bin')
+    write_env = lmdb.open(new_lmdb_name, readonly=False, lock=False, map_size=map_size)
+    write_txn = write_env.begin(write=True)
+    print '  Writing ' + str(num_imgs) + ' images to ' + new_lmdb_name
+    return write_env, write_txn
+map_size = 1024*1024*1024*1024
+
+if not (skip_lmdb_generation or skip_main_lmdb_only):
 
     # SHADJIS TODO: Skip this if there is only 1 partition, and re-use existing lmdb
 
     # Open the full lmdb that we will read from
     read_lmdb_name = conv_movel_server_train_lmdb_name
-    map_size = 1024*1024*1024*1024
 
     # First count the number of images
     read_env = lmdb.open(read_lmdb_name, readonly=True)
@@ -872,6 +1038,7 @@ if not skip_lmdb_generation:
             for key, value in read_cursor:
                 num_images += 1
     read_env.close()
+    # num_images = 129395
     print 'LMDB ' + read_lmdb_name + ' contains ' + str(num_images)
 
     # Now split by the number of conv compute servers
@@ -884,14 +1051,6 @@ if not skip_lmdb_generation:
     assert sum(num_images_per_conv_compute_server) == num_images
 
     # Now create the lmdb for each conv compute server
-
-    def open_new_write_lmdb_helper(new_lmdb_name, num_imgs, map_size):
-        os.system('rm -rf ' + new_lmdb_name)
-        os.system('rm -rf ' + new_lmdb_name + '.bin')
-        write_env = lmdb.open(new_lmdb_name, readonly=False, lock=False, map_size=map_size)
-        write_txn = write_env.begin(write=True)
-        print '  Writing ' + str(num_imgs) + ' images to ' + new_lmdb_name
-        return write_env, write_txn
 
     read_env = lmdb.open(read_lmdb_name, readonly=True)
     with read_env.begin() as read_txn:
@@ -999,8 +1158,8 @@ ports = (
             f.write(',')
         f.write('''
   {
-    broadcast = "tcp://*:''' + str(ports[2*i    ]) + '''",
-    listen = "tcp://*:'''    + str(ports[2*i + 1]) + '''"
+    broadcast = "tcp://*:''' + str(fc_ports[2*i    ]) + '''",
+    listen = "tcp://*:'''    + str(fc_ports[2*i + 1]) + '''"
   }''')
     f.write('''
 );
@@ -1025,8 +1184,8 @@ ports = (
             f.write(',')
         f.write('''
   {
-    broadcast = "tcp://*:''' + str(ports[2*i    ]) + '''",
-    listen = "tcp://*:'''    + str(ports[2*i + 1]) + '''"
+    broadcast = "tcp://*:''' + str(fcm_ports[2*i    ]) + '''",
+    listen = "tcp://*:'''    + str(fcm_ports[2*i + 1]) + '''"
   }''')
     f.write('''
 );
@@ -1050,8 +1209,8 @@ for i in range(num_groups):
         f.write(',')
     f.write('''
   {
-    broadcast = "tcp://*:''' + str(ports[2*i    ]) + '''",
-    listen = "tcp://*:'''    + str(ports[2*i + 1]) + '''"
+    broadcast = "tcp://*:''' + str(cm_ports[2*i    ]) + '''",
+    listen = "tcp://*:'''    + str(cm_ports[2*i + 1]) + '''"
   }''')
 f.write('''
 );
@@ -1065,8 +1224,14 @@ for i in range(num_conv_compute_servers):
     print '  Writing ' + conv_compute_server_cfgs[i]
     f = open(conv_compute_server_cfgs[i], 'w')
     
+    # Check which FC machine to bind to (the port is fixed but the machine may change)
+    # Specifically, if the FC server and conv server are mapped to the same machine,
+    # then this will change. That can be true if the FC server is an FCCM or an FCC.
     if single_FC_server:
-        fc_bind_machine = fc_server_machine
+        if conv_compute_server_machines[i] == fc_server_machine:
+            fc_bind_machine = '127.0.0.1'   # Localhost
+        else:
+            fc_bind_machine = fc_server_machine
     else:
         # Special case: if these are on the same machine, use localhost
         if conv_compute_server_machines[i] == fc_compute_server_machines[group_of_this_machine]:
@@ -1074,11 +1239,19 @@ for i in range(num_conv_compute_servers):
         else:
             fc_bind_machine = fc_compute_server_machines[group_of_this_machine]
     
+    # Check also which CM machine to bind to. This is like above but simpler because
+    # there is no distinction like FCCM vs FCC for CM, it is always just a CM
+    if conv_compute_server_machines[i] == conv_model_server_machine:
+        cm_bind_machine = '127.0.0.1'   # Localhost
+    else:
+        cm_bind_machine = conv_model_server_machine
+    
+    
     f.write('''name = "ConvComputeServer ''' + str(i) + '''";
-conv_listen_bind = "tcp://''' + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
-conv_send_bind = "tcp://'''   + conv_model_server_machine + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
-fc_listen_bind = "tcp://'''   + fc_bind_machine           + ''':''' + str(ports[2*group_of_this_machine + 1]) + '''";
-fc_send_bind = "tcp://'''     + fc_bind_machine           + ''':''' + str(ports[2*group_of_this_machine    ]) + '''";
+conv_listen_bind = "tcp://''' + cm_bind_machine + ''':''' + str(cm_ports[2*group_of_this_machine + 1]) + '''";
+conv_send_bind = "tcp://'''   + cm_bind_machine + ''':''' + str(cm_ports[2*group_of_this_machine    ]) + '''";
+fc_listen_bind = "tcp://'''   + fc_bind_machine + ''':''' + str(fc_ports[2*group_of_this_machine + 1]) + '''";
+fc_send_bind = "tcp://'''     + fc_bind_machine + ''':''' + str(fc_ports[2*group_of_this_machine    ]) + '''";
 type = "ConvComputeServer";
 solver = "''' + conv_compute_server_solver_files[i] + '''";
 train_bin = "''' + conv_compute_server_train_lmdb_names[i] + '''.bin";
@@ -1095,10 +1268,10 @@ if not single_FC_server:
         print '  Writing ' + fcc_server_cfgs[i]
         f = open(fcc_server_cfgs[i], 'w')
         f.write('''name = "FCComputeServer ''' + str(i) + '''";
-conv_listen_bind = "tcp://''' + '*'                     + ''':''' + str(ports[2*i + 1]) + '''";
-conv_send_bind = "tcp://'''   + '*'                     + ''':''' + str(ports[2*i    ]) + '''";
-fc_listen_bind = "tcp://'''   + fc_model_server_machine + ''':''' + str(ports[2*i + 1]) + '''";
-fc_send_bind = "tcp://'''     + fc_model_server_machine + ''':''' + str(ports[2*i    ]) + '''";
+conv_listen_bind = "tcp://''' + '*'                     + ''':''' + str(fc_ports[2*i + 1]) + '''";
+conv_send_bind = "tcp://'''   + '*'                     + ''':''' + str(fc_ports[2*i    ]) + '''";
+fc_listen_bind = "tcp://'''   + fc_model_server_machine + ''':''' + str(fcm_ports[2*i + 1]) + '''";
+fc_send_bind = "tcp://'''     + fc_model_server_machine + ''':''' + str(fcm_ports[2*i    ]) + '''";
 type = "FCComputeServer";
 solver = "''' + fc_compute_server_solver_files[i] + '''";
 train_bin = "''' + dummy_file + '''";
@@ -1135,9 +1308,9 @@ for cmd_param in cmd_params:
     if 'fc_server' in cmd or 'conv_model_server' in cmd or 'fc_model_server' in cmd:
         cmd = 'sleep 15'
     elif 'fc_compute_server' in cmd:        # SHADJIS TODO: May be able to reduce this delay
-        cmd = 'sleep 5'
+        cmd = 'sleep 1'
     else:
-        cmd = 'sleep 1' # sleep 0 works too, but not removing the command entirely
+        cmd = 'sleep 0' # sleep 0 works too, but not removing the command entirely (for 128, 0 does not work -- some msgs lost)
     f.write(cmd + "\n")
     print cmd
     os.system(cmd)
