@@ -12,15 +12,17 @@ Install the following dependencies
 
   - zeromq
      - The zeromq website seems to be out of date. If so, you can try [this helpful blog post](https://tuananh.org/2015/06/16/how-to-install-zeromq-on-ubuntu/)
-  - Protobuf 3.0.0, e.g. using the command `pip install protobuf==3.0.0a3`
-  - LMDB, e.g. using the command `pip install lmdb`
-  - glog (this dependency may be removed soon)
+  - glog (this dependency may be removed soon, but currently it is a dependency for both CcT and dcct)
   - [libconfig++](http://www.hyperrealm.com/libconfig/) (this dependency may be removed soon)
-  
+  - Python library: Protobuf 3.0.0, e.g. using the command `pip install protobuf==3.0.0a3` (the C++ library still needs to be installed below)
+  - Python library: LMDB, e.g. using the command `pip install lmdb` (the C++ library still needs to be installed below)
+
+Also install the dependencies for the CaffeConTroll submodule (follow steps 1 and 3 [here](https://github.com/HazyResearch/CaffeConTroll/tree/experiments#installation-from-source))
+
 Compile dcct
 
-    `make -j`
-    `cd tools/size_util/; make -j; cd -`
+    make -j
+    cd tools/size_util/; make -j; cd -
     
 This will produce a binary `dcct`.
 
