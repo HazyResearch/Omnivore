@@ -12,14 +12,18 @@ import os
 import sys
 
 # config file provides all parameters, but here are some extra ones
-random_seeds = [1]  # Seeds matter a lot, but will not search now (save time)
+
+base_dir = '/home/software/dcct/experiments/'
+hw_types = ['4GPU']
+
+random_seeds_phase_0 = [1]  # Seeds matter a lot, but will not search now (save time)
 EXTRA_TIME_FIRST = 0
 MAKE_LMDB_FIRST = False
 FCC = False
 
 # leave these empty to let the system guess
 momentum_list_phase_0 = []
-LR_list_phase_0 = []
+LR_list_phase_0 = [0.001, 0.01]
 
 
 # ==============================================================================
@@ -121,7 +125,7 @@ assert time_per_exp_phase1
 # assert time_per_exp_phase2
 solver_name = solver_template.split('/')[-1].split('.')[0]
 SOLVER_DIR = 'solvers_' + solver_name
-os.system('mkdir ' + SOLVER_DIR)
+os.system('mkdir -p ' + SOLVER_DIR)
 
 
 # ------------------------------------------------------------------------------
@@ -151,8 +155,6 @@ assert increment
 # ------------------------------------------------------------------------------
 # For now these ones will be  hard-coded
 # ------------------------------------------------------------------------------
-base_dir = '/home/software/dcct/experiments/'
-hw_types = ['CPU']
 if FCC:
     fc_type = 'many_fc'
     map_fcc_to_cc = '1'
@@ -233,7 +235,8 @@ def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output
     fname = SOLVER_DIR + '/solver' + run_id + '.prototxt'
     
     # Create the command to run
-    logfile_out = 'logs/log.' + str(group_size) + 'mpg.' + hw_type + run_id
+    os.system('mkdir -p logs')
+    logfile_out = 'logs/log.' + hw_type + run_id
     run_experiment_command = 'python ' + script_name + ' ' + fname + ' example/machine_list.txt ' + str(group_size) + ' ' + hw_type + ' ' + fc_type + ' ' + map_fcc_to_cc + ' ' + output_dir_base + ' ' + skip_string + ' > ' + logfile_out + ' 2>&1'
 
     if print_only:
@@ -278,7 +281,7 @@ def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output
 
 def print_estimation_time(hw_types, random_seeds, group_size, momentum_list, LR_list, time_per_exp):
     time_for_1_run = int( time_per_exp + 15 + 15 )
-    time_estimate = time_for_1_run*len(hw_types)*len(hw_types)*len(random_seeds)*len(momentum_list)*len(LR_list)
+    time_estimate = time_for_1_run*len(hw_types)*len(random_seeds)*len(momentum_list)*len(LR_list)
     time_estimate /= 60 # minutes
     if time_estimate > 60:
         print 'Estimated runtime: ' + str(time_estimate/60) + ' hours and ' + str(time_estimate%60) + ' minutes'
@@ -308,15 +311,13 @@ for group_size in group_size_list:
     else:
         momentum_list = [0.0, 0.3, 0.6, 0.9]
         
-    if LR_list_list_phase_0:
-        LR_list = LR_list_list_phase_0
+    if LR_list_phase_0:
+        LR_list = LR_list_phase_0
     else:
         LR_list = [initial_LR*10., initial_LR, initial_LR/10.]
     
-    final_tuned_best_s  = None
-    final_tuned_best_m  = None
-    final_tuned_best_LR = None
-
+    random_seeds = random_seeds_phase_0
+    
     for phase in [0,1]:
     
         # Estimate runtime for this phase
@@ -376,9 +377,9 @@ for group_size in group_size_list:
         
         # Now parse the logs above
         # Store the results into a 2D array,  A[m][LR] = final_loss
-        #m_and_LR_to_loss = {}
-        #for m in momentum_list:
-        #    m_and_LR_to_loss[m] = {}
+        m_and_LR_to_loss = {}
+        for m in momentum_list:
+            m_and_LR_to_loss[m] = {}
             
         # Print some output as well
         output_lines = []
@@ -443,9 +444,12 @@ for group_size in group_size_list:
                     list_of_all_losses.append(loss_this_iter)
 
             # Print this row
+            if not list_of_all_losses:
+                print 'MISSING: ' + experiment_dir
+                continue
             average_loss = sum(list_of_all_losses) / float(len(list_of_all_losses))
-            row = "\t".join([random_seed, momentum, base_lr, weight_decay, average_loss])
-            # m_and_LR_to_loss[float(momentum)][float(base_lr)] = average_loss
+            row = "\t".join([random_seed, momentum, base_lr, weight_decay, str(average_loss)])
+            m_and_LR_to_loss[float(momentum)][float(base_lr)] = average_loss
             if average_loss < best_loss:
                 best_loss = average_loss
                 best_str = row + "\t" + experiment_dir
@@ -456,14 +460,35 @@ for group_size in group_size_list:
             f.close()
         
         assert best_str
+        print ''
         print "\t".join(['seed', 'momentum', 'LR', 'loss'])
         print "\n".join(list(sorted(output_lines)))
         print 'Best:'
         print best_str
 
         # Now we have m_and_LR_to_loss for each m / LR and also the best
-        # SHADJIS TODO: m_and_LR_to_loss currently unused, but can use it later for more advanced tuning
-        # SHADJIS TODO: Also use fewer seeds (e.g. only best from above)
+        # Just using the best_* parameters works well, but since we have
+        # m_and_LR_to_loss we can pick parameters which are higher (e.g.
+        # higher LR, higher m) ass long as the final loss is not much
+        # worse (e.g. within 10%). This works better in the long-run.
+        #
+        # First iterate over LR and pick highest LR possible
+        assert len(random_seeds) == 1 # Handle this case later
+        original_best_LR = best_LR
+        original_best_m  = best_m
+        for LR in sorted(LR_list):  # Lowest to highest
+            # only consider LR bigger than or equal to the best one
+            if LR < original_best_LR:
+                continue
+            for m in sorted(momentum_list):     # Lowest to highest
+                # at the same LR, only pick a larger m
+                if LR == original_best_LR and m <= original_best_m:
+                    continue
+                # Check if it is within 10%
+                if m_and_LR_to_loss[m][LR] < best_loss*1.1:
+                    print 'Adjusting best to m = ' + str(m) + ', LR = ' + str(LR) + ', loss = ' + str(m_and_LR_to_loss[m][LR])
+                    best_LR = LR
+                    best_m  = m
         
         if phase == 0:
             # Pick new momentum list:
@@ -486,27 +511,23 @@ for group_size in group_size_list:
             #    assert best_LR == LR_list[1]
             #    LR_list = [LR_list[1]]
             LR_list = [best_LR]
-
-        else:
-            assert phase == 1
-            final_tuned_best_s  = best_s
-            final_tuned_best_m  = best_m
-            final_tuned_best_LR = best_LR
+            random_seeds = [best_s]
             
-        # Break out of loop
-        break
+        # If running more than 2 phases, can made similar parameter adjustments for next phase here
+        #elif...
+        
 
     print "\n" + 'Experiment complete, final tuned result for ' + str(group_size) + ' machines per group:'
-    # print '  s*  = ' + str(final_tuned_best_s)
-    print '  m*  = ' + str(final_tuned_best_m)
-    print '  LR* = ' + str(final_tuned_best_LR)
+    print '  s*  = ' + str(best_s)
+    print '  m*  = ' + str(best_m)
+    print '  LR* = ' + str(best_LR)
     
     # Now run a final experiment with these
     if time_per_exp_phase3 > 0:
         print 'Running for ' + str(time_per_exp_phase3) + ' seconds...'
         experiment_dir = base_dir + '/' + EXP_NAME + '_FINAL_PHASE/'
         for hw_type in hw_types:
-            output_dir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(final_tuned_best_s), First_time_for_this_group_size[group_size], final_tuned_best_m, final_tuned_best_LR, final_tuned_best_s, experiment_dir, time_per_exp_phase3)
+            output_dir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_time_for_this_group_size[group_size], best_m, best_LR, best_s, experiment_dir, time_per_exp_phase3)
             print 'See ' + output_dir
     else:
         print 'Not running the best for longer, re-using the best from phase 1 or 2'
