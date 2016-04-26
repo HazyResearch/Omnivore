@@ -14,7 +14,7 @@ import sys
 # config file provides all parameters, but here are some extra ones
 
 base_dir = '/home/software/dcct/experiments/'
-hw_types = ['4GPU']
+hw_type = 'CPU' #'4GPU' 'GPU'
 
 random_seeds_phase_0 = [1]  # Seeds matter a lot, but will not search now (save time)
 EXTRA_TIME_FIRST = 0
@@ -23,7 +23,7 @@ FCC = False
 
 # leave these empty to let the system guess
 momentum_list_phase_0 = []
-LR_list_phase_0 = [0.001, 0.01]
+LR_list_phase_0 = []
 
 
 # ==============================================================================
@@ -176,12 +176,71 @@ script_name = 'run' + script_name_suffix + '.py'
 # Helper functions
 # ==============================================================================
 
+
+def read_output_by_lines(run_dir):
+    if FCC:
+        fname = run_dir + '/fc_compute_server.0.cfg.out'   # SHADJIS TODO: Should open each and average (else favors fewer fcc)
+    else:
+        fname = run_dir + '/fc_server.cfg.out'
+    f = open(fname)
+    lines = f.read().strip().split("\n")
+    f.close()
+    return lines
+
+
+def get_list_of_all_losses(lines, increment):
+    # For each line, parse the loss
+    started_iterations = False
+    # If this line has a loss, append it to a list
+    list_of_all_losses = []
+    for line in lines:
+        if line.strip().split():
+            if not started_iterations:
+                if line.strip().split()[0] == str(increment):
+                    started_iterations = True
+                else:
+                    continue
+            loss_this_iter = float(line.strip().split()[2])
+            list_of_all_losses.append(loss_this_iter)
+    return list_of_all_losses
+
+
 # Wrapper so I can comment out for debugging
 def run_cmd(cmd):
     if DEBUG:
         return
     else:
         os.system(cmd)
+
+
+def contains_nan(L):
+    import math
+    for l in L:
+        if math.isnan(l):
+            return True
+    return False
+
+
+# Wrapper so I can comment out for debugging
+def get_lr_m_s(lines, group_size):
+    # Do lots of assertions (this can be removed later)
+    # Read the output log and ensure it matches from above
+    # E.g.:
+    #   base_lr: 0.1
+    #   momentum: 0.6
+    base_lr = ''
+    momentum = ''
+    random_seed = ''
+    for line in lines:
+        if 'base_lr' in line:
+            base_lr = line.strip().split()[1]
+        if 'momentum' in line:
+            momentum = line.strip().split()[1]
+        if 'random_seed' in line:
+            random_seed = line.strip().split()[1]
+        if 'GROUPSIZE' in line:
+            assert group_size == int(line.strip().split()[-1])
+    return base_lr, momentum, random_seed
 
 
 # Read in the solver template and fill it in
@@ -279,9 +338,9 @@ def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output
 # Main script
 # ==============================================================================
 
-def print_estimation_time(hw_types, random_seeds, group_size, momentum_list, LR_list, time_per_exp):
+def print_estimation_time(random_seeds, group_size, momentum_list, LR_list, time_per_exp):
     time_for_1_run = int( time_per_exp + 15 + 15 )
-    time_estimate = time_for_1_run*len(hw_types)*len(random_seeds)*len(momentum_list)*len(LR_list)
+    time_estimate = time_for_1_run*len(random_seeds)*len(momentum_list)*len(LR_list)
     time_estimate /= 60 # minutes
     if time_estimate > 60:
         print 'Estimated runtime: ' + str(time_estimate/60) + ' hours and ' + str(time_estimate%60) + ' minutes'
@@ -293,8 +352,31 @@ First_time_for_this_group_size = {}
 for group_size in group_size_list:
     First_time_for_this_group_size[group_size] = True
 
+best_group_size = None
+best_group_size_s = None
+best_group_size_m = None
+best_group_size_LR = None
+best_loss_across_staleness = 10000000000
+
 # Iterate over each group_size setting and optimize each separately
-for group_size in group_size_list:
+# Iterate in order from low staleness to high staleness (i.e. large to small groups)
+# This is because we know that the optimal parameters will be smaller as S increases
+best_LR_last_iteration = None
+best_m_last_iteration = None
+# For the seed, just run multiple seeds with no staleness and then use the best
+# one for other staleness values
+best_seed_last_iteration = None
+
+# SHADJIS TODO: For now I assume the first iteration is a single group, i.e. I assume
+# that when sorting group sizes from largest to smallest the largest group is all machines.
+# This might not be true so can verify. But when running 1 group, don't tune m 
+# Note: it is possible that for S=0, i.e. 1 group, the best momentum is not 0.9, e.g. it is 
+# possible that LR 0.001, m 0.9 does not diverge, and also that LR 0.01, m 0.3 does not diverge.
+# However our contribution is tuning parameters to compensate for staleness, so the optimizer
+# can ignore tuning momentum for the case of no staleness to save time.
+single_group = True
+
+for group_size in reversed(sorted(group_size_list)):
 
     print ''
     print '-----------------------------------------------------------------------------------' 
@@ -309,14 +391,26 @@ for group_size in group_size_list:
     if momentum_list_phase_0:
         momentum_list = momentum_list_phase_0
     else:
-        momentum_list = [0.0, 0.3, 0.6, 0.9]
+        if single_group:
+            # Optimization:
+            # See comment above, if S=0 we can choose to skip momentum tuning
+            momentum_list = [0.9]
+        else:
+            momentum_list = [0.0, 0.3, 0.6, 0.9]
         
     if LR_list_phase_0:
         LR_list = LR_list_phase_0
     else:
         LR_list = [initial_LR*10., initial_LR, initial_LR/10.]
     
-    random_seeds = random_seeds_phase_0
+    # Optimization:
+    # For the first iteration, run multiple seeds
+    # Then pick the best one for later runs
+    if single_group:
+        random_seeds = random_seeds_phase_0
+    else:
+        random_seeds = [best_seed_last_iteration]
+        
     
     for phase in [0,1]:
     
@@ -332,54 +426,37 @@ for group_size in group_size_list:
             print '  Skipping phase, time set to 0'
             break
         
-        print_estimation_time(hw_types, random_seeds, group_size, momentum_list, LR_list, time_per_exp)
+        print_estimation_time(random_seeds, group_size, momentum_list, LR_list, time_per_exp)
         print '  Momentum: ' + str(momentum_list)
         print '  LR:       ' + str(LR_list)
         print '  seeds:    ' + str(random_seeds)
 
-        # Keep a map from dirname to m and LR
-        # map_dir_to_m  = {}
-        # map_dir_to_LR = {}
-        
-        # Also in case there was an interruption or we just want to start the optimization
-        # from a checkpoint, we can check if this has been run already
-        list_of_output_dir = []
+        # Check if any of these have been run already
+        # This is useful in case there is an interruption and the experiment did not complete fully
+        #
+        # Iterate over the existing directories and make a list of the ones already run
+        m_LR_s_to_output_dir = {}   # This one has keys which are strings
+        # Check if any runs exist
         experiment_dir = base_dir + '/' + EXP_NAME + '_PHASE_' + str(phase) + '/'
-        num_experiments_to_skip = 0
-        # Check if this exists
         if os.path.isdir(experiment_dir):
-            # Count the number of experiments in here already
-            num_experiments_to_skip = len(os.listdir(experiment_dir))
+            # Check if any of these have already run
             for subdir in os.listdir(experiment_dir):
-                list_of_output_dir.append(experiment_dir + subdir + '/')
-            
-        # Now run actual commands
-        experiment_count = 0
-        for hw_type in hw_types:
-            for s in random_seeds:
-                print "\n" + 'Running seed ' + str(s)
-                for momentum in momentum_list:
-                    for LR in LR_list:
-                        if experiment_count >= num_experiments_to_skip:
-                            output_dir = run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_time_for_this_group_size[group_size], momentum, LR, s, experiment_dir, time_per_exp)
-                            First_time_for_this_group_size[group_size] = False
-                            list_of_output_dir.append(output_dir)
-                            # map_dir_to_m[output_dir]  = momentum
-                            # map_dir_to_LR[output_dir] = LR
-                        else:
-                            print_only = True
-                            print '  Found m=' + str(momentum) + ' LR=' + str(LR) + ', skipping command:'
-                            run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_time_for_this_group_size[group_size], momentum, LR, s, experiment_dir, time_per_exp, print_only)
-                            
-                        experiment_count += 1
-    
-        print "\nDone running seeds\n"
-        
-        # Now parse the logs above
-        # Store the results into a 2D array,  A[m][LR] = final_loss
-        m_and_LR_to_loss = {}
-        for m in momentum_list:
-            m_and_LR_to_loss[m] = {}
+                # Read the output file and check for errors
+                full_experiment_dir = experiment_dir + subdir + '/'
+                lines = read_output_by_lines(full_experiment_dir)
+                base_lr, momentum, random_seed = get_lr_m_s(lines, group_size)
+                list_of_all_losses = get_list_of_all_losses(lines, increment)
+                # Check for errors
+                if not base_lr or not momentum or not random_seed or not list_of_all_losses:
+                    # This one didn't finish properly, so rerun it later
+                    continue
+                # Otherwise this one ran, so no need to run again
+                m_LR_s_to_output_dir[(momentum, base_lr, random_seed)] = full_experiment_dir
+
+        # Now we have a map (set) of the parameters which finished already
+        # Run the remaining parameters
+        # We will map each run to a loss
+        m_LR_s_to_loss = {}   # This one has keys which are float float int (should make consistent with above map which is strings)
             
         # Print some output as well
         output_lines = []
@@ -388,77 +465,84 @@ for group_size in group_size_list:
         best_m = None
         best_LR = None
         best_loss = 10000000000
-
-        # Read each output log and parse the final (or average, etc.) loss
-        for experiment_dir in list_of_output_dir:
-            if FCC:
-                f = open(experiment_dir + '/fc_compute_server.0.cfg.out')   # SHADJIS TODO: Should open each and average (else favors fewer fcc)
-            else:
-                f = open(experiment_dir + '/fc_server.cfg.out')
-            lines = f.read().strip().split("\n")
-                
-            # Do lots of assertions (this can be removed later)
-            # Read the output log and ensure it matches from above
-            # E.g.:
-            #   base_lr: 0.1
-            #   momentum: 0.6
-            #   weight_decay: 5e-05
-            base_lr = ''
-            momentum = ''
-            weight_decay = ''
-            random_seed = ''
-            for line in lines:
-                if 'base_lr' in line:
-                    base_lr = line.strip().split()[1]
-                if 'momentum' in line:
-                    momentum = line.strip().split()[1]
-                if 'weight_decay' in line:
-                    weight_decay = line.strip().split()[1]
-                if 'random_seed' in line:
-                    random_seed = line.strip().split()[1]
-                if 'GROUPSIZE' in line:
-                    assert group_size == int(line.strip().split()[-1])
-            if not base_lr or not momentum or not weight_decay or not random_seed:
-                print 'ERROR in ' + experiment_dir + '/fc_server.cfg.out'
-            # assert map_dir_to_m[experiment_dir]  == float(momentum)
-            # assert map_dir_to_LR[experiment_dir] == float(LR)
-            
-            # Sometimes this did not run, check if the last line is actual data
-            if 'SOFTMAX' in lines[-1] or 'my_create_zmq' in lines[-1]:
-                print "\t".join([random_seed, momentum, base_lr, weight_decay, 'ERROR ' + experiment_dir])
-                continue
-                
-            # For each line, parse the loss
-            # Print the first iter where loss < final_loss
-            started_iterations = False
-            # If this line has a loss, append it to a list so we can calculate running average
-            list_of_all_losses = []
-            for line in lines:
-                if line.strip().split():
-                    if not started_iterations:
-                        if line.strip().split()[0] == str(increment):
-                            started_iterations = True
-                        else:
-                            continue
-                    loss_this_iter = float(line.strip().split()[2])
-                    list_of_all_losses.append(loss_this_iter)
-
-            # Print this row
-            if not list_of_all_losses:
-                print 'MISSING: ' + experiment_dir
-                continue
-            average_loss = sum(list_of_all_losses) / float(len(list_of_all_losses))
-            row = "\t".join([random_seed, momentum, base_lr, weight_decay, str(average_loss)])
-            m_and_LR_to_loss[float(momentum)][float(base_lr)] = average_loss
-            if average_loss < best_loss:
-                best_loss = average_loss
-                best_str = row + "\t" + experiment_dir
-                best_s  = int(random_seed)
-                best_m  = float(momentum)
-                best_LR = float(base_lr)
-            output_lines.append(row)
-            f.close()
         
+        # Now run commands
+        for s in random_seeds:
+            print "\n" + 'Running seed ' + str(s)
+        
+            # Optimization: if we hit NaN for some parametes, no need to search larger parameters
+            NaN_LR = None
+            NaN_m = None
+
+            # SHADJIS TODO: Optimization:
+            # Iterate from high to low for LR and m and if it ever gets worse
+            # (or e.g. only better by a small margin like 5%), then stop.
+            # This is because we expect the best parameters to be larger than
+            # the smallest parameters we check, so we can save time
+            for LR in sorted(LR_list):  # Low to high
+                for m in sorted(momentum_list): # Low to high
+                
+                    # Optimization:
+                    # Skip this iteration if it will be Nan
+                    # The LR check is redundant since it is in the outer loop, i.e. every LR will be >= NaN_LR
+                    if NaN_LR and NaN_m:
+                        if LR >= NaN_LR and m >= NaN_m:
+                            print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' to avoid NaN'
+                            continue
+                
+                    # Also skip this iteration if LR and m are larger than the previous iteration's optimal LR and m
+                    # This is because we run from low to high staleness
+                    if best_LR_last_iteration and best_m_last_iteration:
+                        if LR > best_LR_last_iteration or (LR == best_LR_last_iteration and m > best_m_last_iteration):
+                            print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' because of previous iteration (staleness)'
+                            continue
+                
+                    # if this seed/momentum/LR ran already, skip it
+                    if (str(m), str(LR), str(s)) in m_LR_s_to_output_dir.keys():
+                        print_only = True
+                        print '  Found m=' + str(m) + ' LR=' + str(LR) + ' s=' + str(s) + ', skipping command:'
+                        run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_time_for_this_group_size[group_size], m, LR, s, experiment_dir, time_per_exp, print_only)
+                        full_experiment_dir = m_LR_s_to_output_dir[(str(m), str(LR), str(s))]
+                    # otherwise run this command
+                    else:
+                        full_experiment_dir = run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_time_for_this_group_size[group_size], m, LR, s, experiment_dir, time_per_exp)
+                        First_time_for_this_group_size[group_size] = False
+
+                    # Now the command has run, read the output log and parse the final (or average, etc.) loss
+                    lines = read_output_by_lines(full_experiment_dir)
+                    base_lr, momentum, random_seed = get_lr_m_s(lines, group_size)
+                    list_of_all_losses = get_list_of_all_losses(lines, increment)
+                    # Check for errors
+                    if not base_lr or not momentum or not random_seed or not list_of_all_losses:
+                        print "\t".join([random_seed, momentum, base_lr, 'ERROR ' + full_experiment_dir])
+                        # We could break here because every larger momentum would be skipped for NaN,
+                        # but by continuing instead it will print that it is skipping them
+                        continue
+                    assert base_lr == str(LR)
+                    assert momentum == str(m)
+                    assert random_seed == str(s)
+                    
+                    # Check also if there was a nan in this result
+                    # If so, we know not to run a higher momentum, although 
+                    if contains_nan(list_of_all_losses):
+                        NaN_LR = LR
+                        NaN_m = m
+                        print '  NaN found for LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s)
+                        continue
+                    
+                    # Calculate average loss for run
+                    average_loss = sum(list_of_all_losses) / float(len(list_of_all_losses))
+                    row = "\t".join([random_seed, momentum, base_lr, str(average_loss)])
+                    m_LR_s_to_loss[(float(momentum), float(base_lr), int(random_seed))] = average_loss
+                    if average_loss < best_loss:
+                        best_loss = average_loss
+                        best_str = row + "\t" + full_experiment_dir
+                        best_s  = int(random_seed)
+                        best_m  = float(momentum)
+                        best_LR = float(base_lr)
+                    output_lines.append(row)
+        
+        # Every command has now run
         assert best_str
         print ''
         print "\t".join(['seed', 'momentum', 'LR', 'loss'])
@@ -466,29 +550,30 @@ for group_size in group_size_list:
         print 'Best:'
         print best_str
 
-        # Now we have m_and_LR_to_loss for each m / LR and also the best
+        # Now we have m_LR_s_to_loss for each m / LR / s and also the best,
         # Just using the best_* parameters works well, but since we have
-        # m_and_LR_to_loss we can pick parameters which are higher (e.g.
+        # m_LR_s_to_loss we can pick parameters which are higher (e.g.
         # higher LR, higher m) ass long as the final loss is not much
         # worse (e.g. within 10%). This works better in the long-run.
         #
         # First iterate over LR and pick highest LR possible
-        assert len(random_seeds) == 1 # Handle this case later
         original_best_LR = best_LR
         original_best_m  = best_m
-        for LR in sorted(LR_list):  # Lowest to highest
-            # only consider LR bigger than or equal to the best one
-            if LR < original_best_LR:
-                continue
-            for m in sorted(momentum_list):     # Lowest to highest
-                # at the same LR, only pick a larger m
-                if LR == original_best_LR and m <= original_best_m:
+        for s in random_seeds:
+            for LR in sorted(LR_list):  # Lowest to highest
+                # only consider LR bigger than or equal to the best one
+                if LR < original_best_LR:
                     continue
-                # Check if it is within 10%
-                if m_and_LR_to_loss[m][LR] < best_loss*1.1:
-                    print 'Adjusting best to m = ' + str(m) + ', LR = ' + str(LR) + ', loss = ' + str(m_and_LR_to_loss[m][LR])
-                    best_LR = LR
-                    best_m  = m
+                for m in sorted(momentum_list):     # Lowest to highest
+                    # at the same LR, only pick a larger m
+                    if LR == original_best_LR and m <= original_best_m:
+                        continue
+                    # Check if it is within 10%
+                    if (m,LR,s) in m_LR_s_to_loss.keys() and m_LR_s_to_loss[(m,LR,s)] < best_loss*1.1:
+                        print 'Adjusting best to m = ' + str(m) + ', LR = ' + str(LR) + ', s = ' + str(s) + ', loss = ' + str(m_LR_s_to_loss[(m,LR,s)])
+                        best_LR = LR
+                        best_m  = m
+                        best_s  = s
         
         if phase == 0:
             # Pick new momentum list:
@@ -511,13 +596,13 @@ for group_size in group_size_list:
             #    assert best_LR == LR_list[1]
             #    LR_list = [LR_list[1]]
             LR_list = [best_LR]
-            random_seeds = [best_s]
+            random_seeds = [best_s] # If we used more than 1 seed for previous phase, only need 1 for next phase
             
         # If running more than 2 phases, can made similar parameter adjustments for next phase here
         #elif...
-        
-
-    print "\n" + 'Experiment complete, final tuned result for ' + str(group_size) + ' machines per group:'
+       
+    print "\n" + '**********************************************************'
+    print 'Experiment complete, final tuned result for ' + str(group_size) + ' machines per group:'
     print '  s*  = ' + str(best_s)
     print '  m*  = ' + str(best_m)
     print '  LR* = ' + str(best_LR)
@@ -525,9 +610,48 @@ for group_size in group_size_list:
     # Now run a final experiment with these
     if time_per_exp_phase3 > 0:
         print 'Running for ' + str(time_per_exp_phase3) + ' seconds...'
-        experiment_dir = base_dir + '/' + EXP_NAME + '_FINAL_PHASE/'
-        for hw_type in hw_types:
-            output_dir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_time_for_this_group_size[group_size], best_m, best_LR, best_s, experiment_dir, time_per_exp_phase3)
-            print 'See ' + output_dir
+        full_experiment_dir = base_dir + '/' + EXP_NAME + '_FINAL_PHASE/'
+        # Check if this exists
+        if os.path.isdir(full_experiment_dir):
+            print '  Skipping, already ran'
+        else:
+            # Run the experiment
+            output_dir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_time_for_this_group_size[group_size], best_m, best_LR, best_s, full_experiment_dir, time_per_exp_phase3)
+            # Parse the output
+            lines = read_output_by_lines(output_dir)
+            if 'SOFTMAX' in lines[-1] or 'my_create_zmq' in lines[-1]:
+                print '  Run failed, need to rerun!'
+                continue
+            list_of_all_losses = get_list_of_all_losses(lines, increment)
+            # Calculate the average loss of the last few iterations, e.g. the last 20%
+            last_few_iter = int(len(list_of_all_losses) * 0.2)
+            assert last_few_iter > 0
+            average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(len(list_of_all_losses))
+            print "\n" + 'Final loss for group size ' + str(group_size) + ' = ' + str(average_loss) + "\n"
     else:
-        print 'Not running the best for longer, re-using the best from phase 1 or 2'
+        print 'Not running the best for longer, re-using the best from phase 1/2'
+        average_loss = m_LR_s_to_loss[(best_m, best_LR, best_s)]
+        print "\n" + 'Final loss for group size ' + str(group_size) + ' = ' + str(average_loss) + "\n"
+    
+    if average_loss < best_loss_across_staleness:            
+        best_group_size = group_size
+        best_loss_across_staleness = average_loss
+        best_group_size_s = best_s
+        best_group_size_m = best_m
+        best_group_size_LR = best_LR
+    
+    # Done this group. If it was the first iteration, now it is not the first iteration anymore
+    single_group = False
+    best_LR_last_iteration = best_LR
+    best_m_last_iteration = best_m
+    best_seed_last_iteration = best_s
+
+print ''
+print 'Finished optimizer, best result is group size ' + str(best_group_size)
+print 'Running this one *without a timeout* (use `bash kill_servers.sh` to end job)'
+full_experiment_dir = base_dir + '/' + EXP_NAME + '_OPTIMIZER_DECISION/'
+if os.path.isdir(full_experiment_dir):
+    print '  Skipping, already ran'
+else:
+    # Run the experiment
+    output_dir = run(best_group_size, hw_type, EXP_NAME + '.OPTIMIZER_DECISION.seed' + str(best_group_size_s), First_time_for_this_group_size[best_group_size], best_group_size_m, best_group_size_LR, best_group_size_s, full_experiment_dir, 600000)
