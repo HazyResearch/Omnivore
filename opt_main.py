@@ -485,14 +485,14 @@ for group_size in reversed(sorted(group_size_list)):
                     # Optimization:
                     # Skip this iteration if it will be Nan
                     # The LR check is redundant since it is in the outer loop, i.e. every LR will be >= NaN_LR
-                    if NaN_LR and NaN_m:
+                    if NaN_LR is not None and NaN_m is not None:
                         if LR >= NaN_LR and m >= NaN_m:
                             print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' to avoid NaN'
                             continue
                 
                     # Also skip this iteration if LR and m are larger than the previous iteration's optimal LR and m
                     # This is because we run from low to high staleness
-                    if best_LR_last_iteration and best_m_last_iteration:
+                    if best_LR_last_iteration is not None and best_m_last_iteration is not None:
                         if LR > best_LR_last_iteration or (LR == best_LR_last_iteration and m > best_m_last_iteration):
                             print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' because of previous iteration (staleness)'
                             continue
@@ -648,7 +648,7 @@ for group_size in reversed(sorted(group_size_list)):
 
 print ''
 print 'Finished optimizer, best result is group size ' + str(best_group_size)
-print 'Running this one *without a timeout* (use `bash kill_servers.sh` to end job)'
+print 'Running this one *without a timeout* (Ctrl-C will (1) stop the job and (2) run kill script)'
 full_experiment_dir = base_dir + '/' + EXP_NAME + '_OPTIMIZER_DECISION/'
 if os.path.isdir(full_experiment_dir):
     print '  Skipping, already ran'
