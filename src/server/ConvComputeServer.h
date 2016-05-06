@@ -22,7 +22,6 @@ public:
   // SHADJIS TODO: These 3 should be taken from the parent class with using
   std::string name;
   std::string solver_file;
-  std::string data_binary;
   
   std::string conv_listen_bind;
   std::string conv_send_bind;
@@ -39,9 +38,9 @@ public:
   int nfloats_output_data;
 
   ConvComputeServer(string _name, std::string _conv_listen_bind, std::string _conv_send_bind,
-    std::string _fc_listen_bind, std::string _fc_send_bind, std::string _solver_file, std::string _data_binary,
+    std::string _fc_listen_bind, std::string _fc_send_bind, std::string _solver_file,
     int _groupsize, int _rank_in_group) : 
-    name(_name), solver_file(_solver_file), data_binary(_data_binary), 
+    name(_name), solver_file(_solver_file),
     conv_listen_bind(_conv_listen_bind), conv_send_bind(_conv_send_bind),
     fc_listen_bind(_fc_listen_bind), fc_send_bind(_fc_send_bind),
     group_size(_groupsize), rank_in_group(_rank_in_group),
@@ -99,7 +98,7 @@ public:
     // Read parameter files and construct network
     // -------------------------------------------------------------------------
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), data_binary.c_str(), solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
     // Modify all bridges to not update model gradients in backward pass (saves time)
     for (auto bridge = bridges.begin(); bridge != bridges.end(); ++bridge) {
       (*bridge)->set_update_model_gradients(false);
@@ -113,12 +112,10 @@ public:
     // when a layer should not own its output cubes. E.g. we also would not want to if
     // the output of the bridge never needs to get copied back to the host.
     
-    // Open the file for the first time during training
-    FILE * pFile = fopen (corpus->filename.c_str(), "rb");
-    if (!pFile)
-      throw std::runtime_error("Error opening the corpus file: " + corpus->filename);
-    // Keep track of the image number in the dataset we are on
-    size_t current_image_location_in_dataset = 0;
+    // It is necessary to open the reader before loading data to initialize
+    // cursor, transaction and environment data
+    corpus->OpenLmdbReader();
+
     // size_t current_epoch = 0;    
 
     // -------------------------------------------------------------------------
@@ -220,64 +217,30 @@ public:
         // -----------------------------------------------------------------------
         VLOG(2) << "~~~~ ENTER STATE Read corpus" << std::endl;
         
-        // Read in the next mini-batch from file
-        size_t rs = fread(corpus->images->get_p_data(), sizeof(DataType_SFFloat), corpus->images->n_elements, pFile);
-        
-        // If we read less than we expected, read the rest from the beginning
-        size_t num_floats_left_to_read = corpus->images->n_elements - rs;
-        if (num_floats_left_to_read > 0) {
-        
-          // Close the file and re-open it
-          fclose(pFile);
-          pFile = fopen (corpus->filename.c_str(), "rb");
-          if (!pFile)
-            throw std::runtime_error("Error opening the corpus file: " + corpus->filename);
-            
-          // Read the remaining data from the file, adjusting the pointer to where we
-          // read until previously as well as the amount to read
-          size_t rs2 = fread((float *) (corpus->images->get_p_data()) + rs, sizeof(DataType_SFFloat), num_floats_left_to_read, pFile);
-          assert(rs2 == num_floats_left_to_read);
-          
-          // Also, we need to copy over the labels to the outgoing message buffer.
-          // The labels are all allocated in corpus->labels. Normally we just copy
-          // from the corpus labels cube data, but since the labels we want are partly
-          // at the end of that array and partly at the beginning, we have to do 2 copies
-          
-          // Check if we actually read nothing (i.e. we were right at the end before)
-          // In this case, we only need one copy
-          if (rs == 0) {
-            assert(current_image_location_in_dataset == 0);
-            memcpy(outgoing_msg_send_data_and_ask_grad->content, corpus->labels->physical_get_RCDslice(0), sizeof(float) * corpus->mini_batch_size);
-          }
-          // Otherwise, we have to copy twice
-          else {
-            size_t num_images_from_end = corpus->n_images - current_image_location_in_dataset;
-            assert(num_images_from_end > 0);
-            assert(num_images_from_end < corpus->mini_batch_size);
-            size_t num_images_from_beginning = corpus->mini_batch_size - num_images_from_end;
-            memcpy(outgoing_msg_send_data_and_ask_grad->content,
-              corpus->labels->physical_get_RCDslice(current_image_location_in_dataset),
-              sizeof(float) * num_images_from_end);
-            memcpy(outgoing_msg_send_data_and_ask_grad->content + num_images_from_end,
-              corpus->labels->physical_get_RCDslice(0),
-              sizeof(float) * num_images_from_beginning);
-          }
+        // Read in the next mini-batch from db
+        size_t rs = corpus->LoadLmdbData();
+
+        // If we read less than we expected, read the rest from the beginning 
+        size_t num_images_left_to_read = corpus->mini_batch_size - rs;
+        if (num_images_left_to_read > 0) {
+       
+          // Simply reset the cursor so the next load will start from the start of the lmdb
+          corpus->ResetCursor();
           
           // ++current_epoch;
+          
+          // Passing in rs allows us to say that we already filled rs spots in images
+          // and now we want to start from that position and complete the set up to mini_batch_size
+          // Eg. Minibatch is 10.  We read 2 images and hit the end of the mldb.  After reseting the
+          // cursor above we can just tell the load function to start from index 2 and continue
+          size_t rs2 = corpus->LoadLmdbData(rs);
+          assert(rs2 == num_images_left_to_read);
         }
-        // Otherwise we will read all of the labels from the corpus
-        else {
-          // Get labels for this mini batch
-          memcpy(outgoing_msg_send_data_and_ask_grad->content, 
-            corpus->labels->physical_get_RCDslice(current_image_location_in_dataset),
-            sizeof(float) * corpus->mini_batch_size);
-        }
+
+        // Copy the labels to the outgoing message buffer.
+        memcpy(outgoing_msg_send_data_and_ask_grad->content, 
+          corpus->labels->get_p_data(), sizeof(float) * corpus->mini_batch_size);
         
-        // Move forwards in the dataset
-        current_image_location_in_dataset += corpus->mini_batch_size;
-        if (current_image_location_in_dataset >= corpus->n_images) {
-          current_image_location_in_dataset -= corpus->n_images;
-        }
         // This assertion isn't needed, it just checks my understanding of how we pass data
         assert(bridges[0]->p_input_layer->p_data_cube->get_p_data() == corpus->images->physical_get_RCDslice(0));
       
@@ -501,7 +464,6 @@ public:
     // Destroy network
     // -------------------------------------------------------------------------
     DeepNet::clean_up(bridges, corpus);
-    fclose(pFile);
 
   }
 };

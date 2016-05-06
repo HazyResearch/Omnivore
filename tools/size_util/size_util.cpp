@@ -7,11 +7,10 @@
 
 int main(int argc, char **argv)
 {
-    assert(argc == 3);
+    assert(argc == 2);
     char * solver_file = argv[1];
-    char * data_binary = argv[2];
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
-    Corpus * const corpus = DeepNet::load_network(solver_file, data_binary, solver_param, net_param, bridges, true);
+    Corpus * const corpus = DeepNet::load_network(solver_file, solver_param, net_param, bridges, true);
     // Size of the last layer (number of floats per image going into first fc layer)
     size_t nfloats_output_data = bridges.back()->get_output_data_size();
     std::cout << nfloats_output_data / corpus->mini_batch_size << "\n";

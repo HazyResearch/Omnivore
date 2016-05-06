@@ -29,7 +29,6 @@ Server * initConvModelServer(Config & cfg, char * filename){
 
   string NAME      = cfg.lookup("name");
   string SOLVER    = cfg.lookup("solver");
-  string TRAIN_BIN = cfg.lookup("train_bin");
   int    GROUPSIZE = cfg.lookup("group_size");
   
   // Now parse each group of ports
@@ -42,7 +41,6 @@ Server * initConvModelServer(Config & cfg, char * filename){
   LOG(INFO) << "NUM GROUPS = " << num_groups << std::endl;
   LOG(INFO) << "NAME       = " << NAME       << std::endl;
   LOG(INFO) << "SOLVER     = " << SOLVER     << std::endl;
-  LOG(INFO) << "TRAIN_BIN  = " << TRAIN_BIN  << std::endl;
 
   // Read the ports
   std::vector <string> broadcast_ports;
@@ -59,7 +57,7 @@ Server * initConvModelServer(Config & cfg, char * filename){
     listen_ports.push_back(listen);
   }
 
-  Server * s = new ConvModelServer(NAME, SOLVER, TRAIN_BIN, GROUPSIZE,
+  Server * s = new ConvModelServer(NAME, SOLVER, GROUPSIZE,
     broadcast_ports, listen_ports);
   return s;
 }
@@ -71,7 +69,6 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
 
   string NAME      = cfg.lookup("name");
   string SOLVER    = cfg.lookup("solver");
-  string TRAIN_BIN = cfg.lookup("train_bin");
   int    GROUPSIZE = cfg.lookup("group_size");
 
   // Now parse each group of ports
@@ -84,7 +81,6 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
   LOG(INFO) << "NUM GROUPS = " << num_groups << std::endl;
   LOG(INFO) << "NAME       = " << NAME       << std::endl;
   LOG(INFO) << "SOLVER     = " << SOLVER     << std::endl;
-  LOG(INFO) << "TRAIN_BIN  = " << TRAIN_BIN  << std::endl;
 
   // Read the ports
   std::vector <string> broadcast_ports;
@@ -101,7 +97,7 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
     listen_ports.push_back(listen);
   }
 
-  Server * s = new FCComputeModelServer(NAME, SOLVER, TRAIN_BIN, GROUPSIZE,
+  Server * s = new FCComputeModelServer(NAME, SOLVER, GROUPSIZE,
     broadcast_ports, listen_ports);
   return s;
 }
@@ -117,7 +113,6 @@ Server * initFCComputeServer(Config & cfg, char * filename){
   string CONV_LISTEN_BIND = cfg.lookup("conv_listen_bind");
   string CONV_SEND_BIND   = cfg.lookup("conv_send_bind");
   string SOLVER           = cfg.lookup("solver");
-  string TRAIN_BIN        = cfg.lookup("train_bin");
   int    GROUPSIZE = cfg.lookup("group_size");
   int RANK_IN_GROUP= cfg.lookup("rank_in_group");
 
@@ -127,12 +122,11 @@ Server * initFCComputeServer(Config & cfg, char * filename){
   LOG(INFO) << "CONV_LISTEN_BIND = " << CONV_LISTEN_BIND << std::endl;
   LOG(INFO) << "CONV_SEND_BIND   = " << CONV_SEND_BIND   << std::endl;
   LOG(INFO) << "SOLVER           = " << SOLVER           << std::endl;
-  LOG(INFO) << "TRAIN_BIN        = " << TRAIN_BIN        << std::endl;
   LOG(INFO) << "GROUPSIZE        = " << GROUPSIZE << std::endl;
   LOG(INFO) << "RANK             = " << RANK_IN_GROUP << std::endl;
 
   Server * s = new FCComputeServer(NAME, FC_LISTEN_BIND, FC_SEND_BIND,
-    CONV_LISTEN_BIND, CONV_SEND_BIND, SOLVER, TRAIN_BIN, GROUPSIZE, RANK_IN_GROUP);
+    CONV_LISTEN_BIND, CONV_SEND_BIND, SOLVER, GROUPSIZE, RANK_IN_GROUP);
   return s;
 }
 
@@ -143,7 +137,6 @@ Server * initFCModelServer(Config & cfg, char * filename){
 
   string NAME      = cfg.lookup("name");
   string SOLVER    = cfg.lookup("solver");
-  string TRAIN_BIN = cfg.lookup("train_bin");
   int    GROUPSIZE = cfg.lookup("group_size");
 
   // Now parse each group of ports
@@ -156,7 +149,6 @@ Server * initFCModelServer(Config & cfg, char * filename){
   LOG(INFO) << "NUM GROUPS = " << num_groups << std::endl;
   LOG(INFO) << "NAME       = " << NAME       << std::endl;
   LOG(INFO) << "SOLVER     = " << SOLVER     << std::endl;
-  LOG(INFO) << "TRAIN_BIN  = " << TRAIN_BIN  << std::endl;
 
   // Read the ports
   std::vector <string> broadcast_ports;
@@ -173,7 +165,7 @@ Server * initFCModelServer(Config & cfg, char * filename){
     listen_ports.push_back(listen);
   }
 
-  Server * s = new FCModelServer(NAME, SOLVER, TRAIN_BIN, GROUPSIZE,
+  Server * s = new FCModelServer(NAME, SOLVER, GROUPSIZE,
     broadcast_ports, listen_ports);
   return s;
 }
@@ -189,7 +181,6 @@ Server * initConvComputeServer(Config & cfg, char * filename){
   string FC_LISTEN_BIND   = cfg.lookup("fc_listen_bind");
   string FC_SEND_BIND     = cfg.lookup("fc_send_bind");
   string SOLVER           = cfg.lookup("solver");
-  string TRAIN_BIN        = cfg.lookup("train_bin");
 
   int    GROUPSIZE = cfg.lookup("group_size");
   int RANK_IN_GROUP= cfg.lookup("rank_in_group");
@@ -200,13 +191,12 @@ Server * initConvComputeServer(Config & cfg, char * filename){
   LOG(INFO) << "FC_LISTEN_BIND   = " << FC_LISTEN_BIND   << std::endl;
   LOG(INFO) << "FC_SEND_BIND     = " << FC_SEND_BIND     << std::endl;
   LOG(INFO) << "SOLVER           = " << SOLVER           << std::endl;
-  LOG(INFO) << "TRAIN_BIN        = " << TRAIN_BIN        << std::endl;
 
   LOG(INFO) << "GROUPSIZE = " << GROUPSIZE << std::endl;
   LOG(INFO) << "RANK      = " << RANK_IN_GROUP << std::endl;
 
   Server * s = new ConvComputeServer(NAME, CONV_LISTEN_BIND, CONV_SEND_BIND, FC_LISTEN_BIND,
-    FC_SEND_BIND, SOLVER, TRAIN_BIN, GROUPSIZE, RANK_IN_GROUP);
+    FC_SEND_BIND, SOLVER, GROUPSIZE, RANK_IN_GROUP);
   return s;
 }
 
