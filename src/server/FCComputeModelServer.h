@@ -58,6 +58,7 @@ public:
     std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
+    // DeepNet::read_full_snapshot(bridges, "/home/software/dcct/experiments//solver_template_1mpg_OPTIMIZER_DECISION_No_Sched/server_input_files-2016-05-09-22-33-32/solver.fc_model_compute_server.prototxt.snapshot_iter100000");
     
     SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
     LogicalCubeFloat * const labels = softmax->p_data_labels;
@@ -211,12 +212,7 @@ public:
           if ( (batch+1) % display_iter == 0 ) {
             float learning_rate = Util::get_learning_rate(solver_param.lr_policy(), solver_param.base_lr(), solver_param.gamma(),
               batch+1, solver_param.stepsize(), solver_param.power(), solver_param.max_iter());
-            
-            std::cout << "Training Status Report (Mini-batch iter " << batch << "), LR = " << learning_rate << std::endl;
-            std::cout << "  \033[1;32m";
-            //std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
-            std::cout << "Loss & Accuracy [Average of Past " << display_iter << " Iterations]\t" << timer.elapsed() << "\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter));
-            std::cout << "\033[0m" << std::endl;
+            std::cout << batch+1 << "\t" << timer.elapsed() << "\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter)) << "\t" << learning_rate << std::endl;
             loss = 0.;
             accuracy = 0.;
           }
@@ -239,17 +235,7 @@ public:
         
           // Check if we should write a snapshot
           if (snapshot > 0 && (batch+1) % snapshot == 0) {
-            time_t rawtime;
-            struct tm * timeinfo;
-            char buffer[80];
-            time (&rawtime);
-            timeinfo = localtime(&rawtime);
-            strftime(buffer,80,"%d-%m-%Y-%I-%M-%S",timeinfo);
-            std::string str(buffer);
-            std::string snapshot_name;
-            snapshot_name = solver_file + "_MODEL." + str;
-            DeepNet::write_model_to_file(bridges, snapshot_name);
-            std::cout << "======= Writing snapshot " << snapshot_name << " =======" << std::endl;
+            DeepNet::write_full_snapshot(bridges, solver_file, batch+1);
           }
         
           ++ batch;

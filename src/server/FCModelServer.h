@@ -65,6 +65,8 @@ public:
     std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
+    //DeepNet::read_full_snapshot(bridges, "/home/software/dcct/m_test/server_input_files-2016-05-06-23-55-45/solver.fc_model_server.prototxt.snapshot_iter500.06-05-2016-11-56-35");
+
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
     // Get the number of fc compute servers
@@ -79,7 +81,8 @@ public:
     const size_t num_groups = broadcast_ports.size();       // AKA number of fc compute servers
     
     // Start a thread for each group
-    const int snapshot = solver_param.snapshot() * 2 * num_groups * 3;   // SHADJIS TODO: Mult by #fc layers (since async fw and bw), not 3 hardcoded
+    const int snapshot_multiplier = 2 * DeepNet::get_num_model_bridges(bridges); // *2 since fw + bw pass;
+    const int snapshot = solver_param.snapshot() * snapshot_multiplier;
     int batch = 0;
     std::vector<std::thread> threads;
     for (size_t thread_idx=0; thread_idx < num_groups; ++thread_idx) {
@@ -145,18 +148,9 @@ public:
           
           // Check if we should write a snapshot
           if (snapshot > 0 && (batch+1) % snapshot == 0) {
-            time_t rawtime;
-            struct tm * timeinfo;
-            char buffer[80];
-            time (&rawtime);
-            timeinfo = localtime(&rawtime);
-            strftime(buffer,80,"%d-%m-%Y-%I-%M-%S",timeinfo);
-            std::string str(buffer);
-            std::string snapshot_name;
-            snapshot_name = solver_file + "_MODEL." + str;
-            DeepNet::write_model_to_file(bridges, snapshot_name);
-            std::cout << "======= Writing snapshot " << snapshot_name << " =======" << std::endl;
+            DeepNet::write_full_snapshot(bridges, solver_file, (batch+1)/snapshot_multiplier);
           }
+
           
           ++ batch;
           hogwild_lock.unlock();

@@ -61,6 +61,8 @@ public:
     std::string output_model_file = "conv_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
+    // DeepNet::read_full_snapshot(bridges, "/home/software/dcct/experiments//solver_template_1mpg_OPTIMIZER_DECISION_No_Sched/server_input_files-2016-05-09-22-33-32/solver.conv_model_compute_server.prototxt.snapshot_iter100000");
+    
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
     // Get the number of conv compute server groups
@@ -68,7 +70,8 @@ public:
     const size_t num_groups = broadcast_ports.size();
     
     // Start a thread for each group
-    const int snapshot = solver_param.snapshot() * 2 * num_groups * 5;   // SHADJIS TODO: Mult by #conv layers (since async fw and bw), not 5 hardcoded
+    const int snapshot_multiplier = 2 * DeepNet::get_num_model_bridges(bridges); // *2 since fw + bw pass;
+    const int snapshot = solver_param.snapshot() * snapshot_multiplier;
     int batch = 0;
     std::vector<std::thread> threads;
     for (size_t thread_idx=0; thread_idx < num_groups; ++thread_idx) {
@@ -134,17 +137,7 @@ public:
           
           // Check if we should write a snapshot
           if (snapshot > 0 && (batch+1) % snapshot == 0) {
-            time_t rawtime;
-            struct tm * timeinfo;
-            char buffer[80];
-            time (&rawtime);
-            timeinfo = localtime(&rawtime);
-            strftime(buffer,80,"%d-%m-%Y-%I-%M-%S",timeinfo);
-            std::string str(buffer);
-            std::string snapshot_name;
-            snapshot_name = solver_file + "_MODEL." + str;
-            DeepNet::write_model_to_file(bridges, snapshot_name);
-            std::cout << "======= Writing snapshot " << snapshot_name << " =======" << std::endl;
+            DeepNet::write_full_snapshot(bridges, solver_file, (batch+1)/snapshot_multiplier);
           }
           
           ++ batch;

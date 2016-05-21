@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # ==============================================================================
 # 
 # opt_main.py
@@ -14,7 +16,7 @@ import sys
 # config file provides all parameters, but here are some extra ones
 
 base_dir = '/home/software/dcct/experiments/'
-hw_type = 'CPU' #'4GPU' 'GPU'
+hw_type = '4GPU' #'4GPU' 'GPU'
 
 random_seeds_phase_0 = [1]  # Seeds matter a lot, but will not search now (save time)
 EXTRA_TIME_FIRST = 0
@@ -347,10 +349,8 @@ def print_estimation_time(random_seeds, group_size, momentum_list, LR_list, time
     else:
         print 'Estimated runtime: ' + str(time_estimate) + ' minutes'
 
-# Only generate LMDB once for each group_size
-First_time_for_this_group_size = {}
-for group_size in group_size_list:
-    First_time_for_this_group_size[group_size] = True
+# Only generate LMDB once for this cluster
+First_Run = True
 
 best_group_size = None
 best_group_size_s = None
@@ -401,7 +401,10 @@ for group_size in reversed(sorted(group_size_list)):
     if LR_list_phase_0:
         LR_list = LR_list_phase_0
     else:
-        LR_list = [initial_LR*10., initial_LR, initial_LR/10.]
+        if single_group:
+            LR_list = [initial_LR*100., initial_LR*10., initial_LR, initial_LR/10., initial_LR/100.]
+        else:
+            LR_list = [best_LR_last_iteration, best_LR_last_iteration/10.]
     
     # Optimization:
     # For the first iteration, run multiple seeds
@@ -501,12 +504,12 @@ for group_size in reversed(sorted(group_size_list)):
                     if (str(m), str(LR), str(s)) in m_LR_s_to_output_dir.keys():
                         print_only = True
                         print '  Found m=' + str(m) + ' LR=' + str(LR) + ' s=' + str(s) + ', skipping command:'
-                        run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_time_for_this_group_size[group_size], m, LR, s, experiment_dir, time_per_exp, print_only)
+                        run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_Run, m, LR, s, experiment_dir, time_per_exp, print_only)
                         full_experiment_dir = m_LR_s_to_output_dir[(str(m), str(LR), str(s))]
                     # otherwise run this command
                     else:
-                        full_experiment_dir = run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_time_for_this_group_size[group_size], m, LR, s, experiment_dir, time_per_exp)
-                        First_time_for_this_group_size[group_size] = False
+                        full_experiment_dir = run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_Run, m, LR, s, experiment_dir, time_per_exp)
+                        First_Run = False
 
                     # Now the command has run, read the output log and parse the final (or average, etc.) loss
                     lines = read_output_by_lines(full_experiment_dir)
@@ -584,7 +587,7 @@ for group_size in reversed(sorted(group_size_list)):
             elif best_m == 0.6:
                 momentum_list = [0.4, 0.5, 0.6, 0.7, 0.8]
             else:
-                assert best_m == 0.9
+                # assert best_m == 0.9
                 momentum_list = [0.7, 0.8, 0.9]
                 
             # Pick a new LR list
@@ -614,20 +617,26 @@ for group_size in reversed(sorted(group_size_list)):
         # Check if this exists
         if os.path.isdir(full_experiment_dir):
             print '  Skipping, already ran'
+            list_of_subdir = os.listdir(full_experiment_dir)
+            if len(list_of_subdir) != 1:
+                print 'Error -- please only put 1 directory in ' + full_experiment_dir + ' (to simplify parsing)'
+                sys.exit(0)
+            output_dir = full_experiment_dir + list_of_subdir[0]
         else:
             # Run the experiment
-            output_dir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_time_for_this_group_size[group_size], best_m, best_LR, best_s, full_experiment_dir, time_per_exp_phase3)
-            # Parse the output
-            lines = read_output_by_lines(output_dir)
-            if 'SOFTMAX' in lines[-1] or 'my_create_zmq' in lines[-1]:
-                print '  Run failed, need to rerun!'
-                continue
-            list_of_all_losses = get_list_of_all_losses(lines, increment)
-            # Calculate the average loss of the last few iterations, e.g. the last 20%
-            last_few_iter = int(len(list_of_all_losses) * 0.2)
-            assert last_few_iter > 0
-            average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(len(list_of_all_losses))
-            print "\n" + 'Final loss for group size ' + str(group_size) + ' = ' + str(average_loss) + "\n"
+            list_of_subdir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_Run, best_m, best_LR, best_s, full_experiment_dir, time_per_exp_phase3)
+        # Parse the output
+        lines = read_output_by_lines(output_dir)
+        if 'SOFTMAX' in lines[-1] or 'my_create_zmq' in lines[-1]:
+            print '  Run failed, need to rerun!'
+            continue
+        list_of_all_losses = get_list_of_all_losses(lines, increment)
+        # Calculate the average loss of the last few iterations, e.g. the last 5 or 10
+        # (but make sure it is consistent across S, otherwise not a fair comparison)
+        last_few_iter = 5
+        assert last_few_iter > 0
+        average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(last_few_iter)
+        print "\n" + 'Final loss for group size ' + str(group_size) + ' = ' + str(average_loss) + "\n"
     else:
         print 'Not running the best for longer, re-using the best from phase 1/2'
         average_loss = m_LR_s_to_loss[(best_m, best_LR, best_s)]
@@ -654,4 +663,4 @@ if os.path.isdir(full_experiment_dir):
     print '  Skipping, already ran'
 else:
     # Run the experiment
-    output_dir = run(best_group_size, hw_type, EXP_NAME + '.OPTIMIZER_DECISION.seed' + str(best_group_size_s), First_time_for_this_group_size[best_group_size], best_group_size_m, best_group_size_LR, best_group_size_s, full_experiment_dir, 600000)
+    output_dir = run(best_group_size, hw_type, EXP_NAME + '.OPTIMIZER_DECISION.seed' + str(best_group_size_s), First_Run, best_group_size_m, best_group_size_LR, best_group_size_s, full_experiment_dir, 600000)
