@@ -16,7 +16,7 @@ import sys
 # config file provides all parameters, but here are some extra ones
 
 base_dir = '/home/software/dcct/experiments/'
-hw_type = '4GPU' #'4GPU' 'GPU'
+hw_type = '4GPU' #'CPU' '4GPU' 'GPU'
 
 random_seeds_phase_0 = [1]  # Seeds matter a lot, but will not search now (save time)
 EXTRA_TIME_FIRST = 0
@@ -495,6 +495,7 @@ for group_size in reversed(sorted(group_size_list)):
                 
                     # Also skip this iteration if LR and m are larger than the previous iteration's optimal LR and m
                     # This is because we run from low to high staleness
+                    # SHADJIS TODO: Remove this heuristic when searching a grid
                     if best_LR_last_iteration is not None and best_m_last_iteration is not None:
                         if LR > best_LR_last_iteration or (LR == best_LR_last_iteration and m > best_m_last_iteration):
                             print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' because of previous iteration (staleness)'
@@ -535,6 +536,9 @@ for group_size in reversed(sorted(group_size_list)):
                     
                     # Calculate average loss for run
                     average_loss = sum(list_of_all_losses) / float(len(list_of_all_losses))
+                    # last_few_iter = 20  # SHADJIS TODO: Use another heuristic?
+                    # assert last_few_iter > 0
+                    # average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(last_few_iter)
                     row = "\t".join([random_seed, momentum, base_lr, str(average_loss)])
                     m_LR_s_to_loss[(float(momentum), float(base_lr), int(random_seed))] = average_loss
                     if average_loss < best_loss:
@@ -572,7 +576,7 @@ for group_size in reversed(sorted(group_size_list)):
                     if LR == original_best_LR and m <= original_best_m:
                         continue
                     # Check if it is within 10%
-                    if (m,LR,s) in m_LR_s_to_loss.keys() and m_LR_s_to_loss[(m,LR,s)] < best_loss*1.1:
+                    if (m,LR,s) in m_LR_s_to_loss.keys() and m_LR_s_to_loss[(m,LR,s)] < best_loss*1.1:  # SHADJIS TODO: Use another heuristic?
                         print 'Adjusting best to m = ' + str(m) + ', LR = ' + str(LR) + ', s = ' + str(s) + ', loss = ' + str(m_LR_s_to_loss[(m,LR,s)])
                         best_LR = LR
                         best_m  = m
@@ -624,7 +628,7 @@ for group_size in reversed(sorted(group_size_list)):
             output_dir = full_experiment_dir + list_of_subdir[0]
         else:
             # Run the experiment
-            list_of_subdir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_Run, best_m, best_LR, best_s, full_experiment_dir, time_per_exp_phase3)
+            output_dir = run(group_size, hw_type, EXP_NAME + '.FINAL_PHASE.seed' + str(best_s), First_Run, best_m, best_LR, best_s, full_experiment_dir, time_per_exp_phase3)
         # Parse the output
         lines = read_output_by_lines(output_dir)
         if 'SOFTMAX' in lines[-1] or 'my_create_zmq' in lines[-1]:
@@ -633,7 +637,7 @@ for group_size in reversed(sorted(group_size_list)):
         list_of_all_losses = get_list_of_all_losses(lines, increment)
         # Calculate the average loss of the last few iterations, e.g. the last 5 or 10
         # (but make sure it is consistent across S, otherwise not a fair comparison)
-        last_few_iter = 5
+        last_few_iter = 5   # SHADJIS TODO: Use another heuristic?
         assert last_few_iter > 0
         average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(last_few_iter)
         print "\n" + 'Final loss for group size ' + str(group_size) + ' = ' + str(average_loss) + "\n"

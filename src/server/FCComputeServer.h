@@ -393,7 +393,11 @@ public:
               for (int b = 0; b < num_bridges_in_this_group; ++b) {
                 model_sizes.push_back ((*bridge_mutable)->get_model_cube()->n_elements);
                 total_model_size +=    (*bridge_mutable)->get_model_cube()->n_elements;
-                bias_sizes .push_back ((*bridge_mutable)->get_bias_cube ()->n_elements);
+                if ((*bridge_mutable)->get_bias_cube()) {
+                  bias_sizes.push_back((*bridge_mutable)->get_bias_cube()->n_elements);
+                } else {
+                  bias_sizes.push_back(0);
+                }
                 ++bridge_mutable; // Update the copy
               }
               // 2. Copy from incoming_msg_new_model->content to each bridge
@@ -402,7 +406,9 @@ public:
               for (int b = 0; b < num_bridges_in_this_group; ++b) {
                 // Copy model and bias
                 DeepNet::set_ith_model_only(bridges, incoming_msg_new_model->content + model_offset, bridge_id_with_model_p + b);
-                DeepNet::set_ith_bias_only (bridges, incoming_msg_new_model->content + total_model_size + bias_offset, bridge_id_with_model_p + b);
+                if (bias_sizes[b]) {
+                  DeepNet::set_ith_bias_only (bridges, incoming_msg_new_model->content + total_model_size + bias_offset, bridge_id_with_model_p + b);
+                }
                 model_offset += model_sizes[b];
                 bias_offset  += bias_sizes[b];
               }
@@ -641,9 +647,15 @@ public:
               for (int b = 0; b < num_bridges_in_this_group; ++b) {
                 model_sizes.push_back ((*bridge_mutable)->get_model_cube()->n_elements);
                 total_model_size    += (*bridge_mutable)->get_model_cube()->n_elements;
-                bias_sizes .push_back ((*bridge_mutable)->get_bias_cube ()->n_elements);
+                if ((*bridge_mutable)->get_bias_cube()) {
+                  bias_sizes.push_back((*bridge_mutable)->get_bias_cube()->n_elements);
+                } else {
+                  bias_sizes.push_back(0);
+                }
                 total_model_and_bias_size += (*bridge_mutable)->get_model_cube()->n_elements;
-                total_model_and_bias_size += (*bridge_mutable)->get_bias_cube()->n_elements;
+                if ((*bridge_mutable)->get_bias_cube()) {
+                  total_model_and_bias_size += (*bridge_mutable)->get_bias_cube()->n_elements;
+                }
                 ++bridge_mutable; // Update the copy
               }
               outgoing_msg_send_model_grad->bridgeid = bridge_id_no_model_p;
@@ -658,7 +670,9 @@ public:
                 const int b_idx = num_bridges_in_this_group - 1 - b;
                 // Copy model and bias
                 DeepNet::get_ith_gradient_model_only(bridges, outgoing_msg_send_model_grad->content + model_offset, bridge_id_with_model_p - b_idx);
-                DeepNet::get_ith_gradient_bias_only (bridges, outgoing_msg_send_model_grad->content + total_model_size + bias_offset, bridge_id_with_model_p - b_idx);
+                if (bias_sizes [b_idx]) {
+                  DeepNet::get_ith_gradient_bias_only (bridges, outgoing_msg_send_model_grad->content + total_model_size + bias_offset, bridge_id_with_model_p - b_idx);
+                }
                 model_offset += model_sizes[b_idx];
                 bias_offset  += bias_sizes [b_idx];
               }

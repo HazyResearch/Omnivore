@@ -111,6 +111,7 @@ public:
     // free that cube and replace it with a dummy cube, or specify more intelligently
     // when a layer should not own its output cubes. E.g. we also would not want to if
     // the output of the bridge never needs to get copied back to the host.
+    // Edit: fixed now, set_p_data() now frees the old cube
     
     // It is necessary to open the reader before loading data to initialize
     // cursor, transaction and environment data

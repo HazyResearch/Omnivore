@@ -212,7 +212,7 @@ public:
           if ( (batch+1) % display_iter == 0 ) {
             float learning_rate = Util::get_learning_rate(solver_param.lr_policy(), solver_param.base_lr(), solver_param.gamma(),
               batch+1, solver_param.stepsize(), solver_param.power(), solver_param.max_iter());
-            std::cout << batch+1 << "\t" << timer.elapsed() << "\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter)) << "\t" << learning_rate << std::endl;
+            std::cout << batch+1 << "\t" << timer.elapsed() << "\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter)) << std::endl;
             loss = 0.;
             accuracy = 0.;
           }

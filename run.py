@@ -48,6 +48,9 @@ double_subscribe_cc = False#True
 CM_and_FCM_together = True
 
 
+# Set this if running on a single machine (i.e. for simulations, otherwise just use CcT)
+all_on_single_machine = False
+
 
 # ------------------------------------------------------------------------------
 # Script parameters
@@ -686,6 +689,8 @@ lines_for_current_layer = []
 lines_for_current_layer_no_gpu = []
 f = open(train_proto)
 num_fc_layers_found = 0
+processing_first_fc_layer = False
+data_name = ''
 for line in f:
     # Check if this is the start of a new layer
     # SHADJIS TODO: I think proto can skip a line before the curly brace but I'll ignore that for now
@@ -753,6 +758,24 @@ for line in f:
             
     # Otherwise this is part of a layer
     else:
+        
+        # 3 checks, 
+        #  - lines_for_current_layer to make sure we are in a layer (not the name of the network on line 1)
+        #  - not data_name so we only set it once
+        #  - data_section so we get the data name
+        if lines_for_current_layer and not data_name and data_section:
+            match = re.search(r'name\s*:\s*"\s*(\S+)\s*"', line, flags=re.IGNORECASE)
+            if match:
+                data_name = match.group(1)
+        
+        if processing_first_fc_layer:
+            match = re.search(r'bottom\s*:\s*"\s*(\S+)\s*"', line, flags=re.IGNORECASE)
+            if match:
+                old_bottom = match.group(1)
+                assert data_name
+                line = line.replace(old_bottom, data_name)
+                processing_first_fc_layer = False
+    
         lines_for_current_layer.append(line)
         lines_for_current_layer_no_gpu.append(line)
         
@@ -769,6 +792,8 @@ for line in f:
                     data_section = False
                     conv_section = True
             elif 'INNERPRODUCT' in type.upper():
+                if num_fc_layers_found == 0:
+                    processing_first_fc_layer = True
                 num_fc_layers_found += 1
                 data_section = False
                 conv_section = False
@@ -786,7 +811,11 @@ for line in f:
             #      type: "gaussian"     <----
             #      std: 0.01
             #    }
-            if type.upper() in ['INNERPRODUCT', 'RELU', 'DROPOUT', 'POOLING', 'CONVOLUTION', 'LRN']:
+            
+            # Note: We assume FC is a straight line, i.e. we transition to FC phase @ 1st FC,
+            # meaning we can't have grouping for FC (FC and on must be a straight line/chain)
+            
+            if type.upper() in ['INNERPRODUCT', 'RELU', 'DROPOUT', 'POOLING', 'CONVOLUTION', 'LRN', 'BATCHNORM', 'SCALE', 'ELTWISE', 'CONCAT']:
             
                 # Conv can use up to 4 GPUs
                 if conv_section:
@@ -801,7 +830,7 @@ for line in f:
 ''')
                 # FC can use up to 1 GPU with model parallelism disabled,
                 # and all the GPUs with model parallelism enabled
-                elif fc_section and type.upper() != 'SOFTMAXWITHLOSS':
+                elif fc_section and type.upper() != 'SOFTMAXWITHLOSS' and type.upper() != 'SOFTMAX':
                     if single_FC_server:
                         if use_1_gpu or (use_4_gpu and not multi_gpu_model_parallelism):
                             lines_for_current_layer.append('''  gpu_0_batch_proportion: 1.0
@@ -1290,7 +1319,10 @@ f = open('rerun_experiment.sh', 'w')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
     cfg_file = cmd_param[1]
-    cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &'
+    if all_on_single_machine:
+        cmd = './dcct ' + cfg_file + ' &> ' + cfg_file +'.out &'
+    else:
+        cmd = 'ssh ' + user + '@' + machine + ' \'' + extra_cmd + ' ./dcct ' + cfg_file + ' &> ' + cfg_file +'.out\' &'
     f.write(cmd + "\n")
     print cmd
     os.system(cmd)
@@ -1314,8 +1346,11 @@ f.close()
 f = open('kill_servers.sh', 'w')
 for cmd_param in cmd_params:
     machine  = cmd_param[0]
-    # f.write('ssh ' + user + '@' + machine + ' \'pkill dcct; fuser -k 5555/tcp; fuser -k 5556/tcp;\' &' + "\n")
-    f.write('ssh ' + user + '@' + machine + ' \'pkill dcct;\' &' + "\n")
+    if all_on_single_machine:
+        f.write('pkill dcct' + "\n")
+    else:
+        # f.write('ssh ' + user + '@' + machine + ' \'pkill dcct; fuser -k 5555/tcp; fuser -k 5556/tcp;\' &' + "\n")
+        f.write('ssh ' + user + '@' + machine + ' \'pkill dcct;\' &' + "\n")
 f.close()
 
 print '''
