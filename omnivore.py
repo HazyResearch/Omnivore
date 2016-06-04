@@ -2,11 +2,11 @@
 
 # ==============================================================================
 # 
-# opt_main.py
+# omnivore.py
 # 
 # usage:
 # 
-# $ python  opt_main.py  config.txt
+# $ python  omnivore.py  config.txt
 # 
 # ==============================================================================
 
@@ -64,7 +64,7 @@ TODO:
 expected_num_args = 2
 if len(sys.argv) not in [expected_num_args, expected_num_args+1]:
     print '''
-Usage:  >>> python  opt_main.py  config.txt
+Usage:  >>> python  omnivore.py  config.txt
 
 Example config.txt:
 
