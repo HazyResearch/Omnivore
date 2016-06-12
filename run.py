@@ -4,7 +4,7 @@
 # 
 # usage:
 # 
-# $ python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc    (map_fcc_to_cc=)1|0    base_dir
+# $ python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc    (map_fcc_to_cc=)1|0    base_dir    snapshot_input_dir(=None)   snapshot_input_iter(=None)
 # 
 # ==============================================================================
 
@@ -254,7 +254,7 @@ fc server (running on master)
 # Parse arguments
 # ==============================================================================
 
-EXPECTED_NUM_ARGS = 8
+EXPECTED_NUM_ARGS = 10
 if len(sys.argv) not in [EXPECTED_NUM_ARGS,EXPECTED_NUM_ARGS+1]:
     # SHADJIS TODO: map_fcc_to_cc is only used if many_fc is set.
     # Eventually there will also be an option to map fcm and cm to the same machine,
@@ -277,7 +277,7 @@ if len(sys.argv) not in [EXPECTED_NUM_ARGS,EXPECTED_NUM_ARGS+1]:
     # then it is clear how machines should be assigned. The scheduler will then eventually
     # generate this file (e.g. a JSON format which specifies each server, its machine,
     # its GPUs, etc.)
-    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc  (map_fcc_to_cc=)1|0  base_dir'
+    print 'Usage: >>> python run.py  path/to/solver.prototxt  path/to/machine_list.txt  machines_per_batch  CPU|1GPU|4GPU  single_fc|many_fc  (map_fcc_to_cc=)1|0  base_dir    snapshot_input_dir(="none" to ignore)   snapshot_input_iter(="none" to ignore)'
     sys.exit(0)
 
 # Check that the distributed cct binary exists before running this script
@@ -313,6 +313,16 @@ else:
 base_dir = sys.argv[7]
 if base_dir[-1] != '/':
     base_dir += '/'
+
+snapshot_input_dir = sys.argv[8]
+if snapshot_input_dir == "none":
+    snapshot_input_dir = None
+elif snapshot_input_dir[-1] != '/':
+    snapshot_input_dir += '/'
+
+snapshot_input_iter = sys.argv[9]
+if snapshot_input_iter == "none":
+    snapshot_input_iter = None
 
 if len(sys.argv) == EXPECTED_NUM_ARGS+1 and sys.argv[EXPECTED_NUM_ARGS] == 's':
     skip_lmdb_generation = True
@@ -1043,7 +1053,6 @@ if not single_FC_server:
 
 def open_new_write_lmdb_helper(new_lmdb_name, num_imgs, map_size):
     os.system('rm -rf ' + new_lmdb_name)
-    os.system('rm -rf ' + new_lmdb_name + '.bin')
     write_env = lmdb.open(new_lmdb_name, readonly=False, lock=False, map_size=map_size)
     write_txn = write_env.begin(write=True)
     print '  Writing ' + str(num_imgs) + ' images to ' + new_lmdb_name
@@ -1176,7 +1185,12 @@ if single_FC_server:
 type = "FCComputeModelServer";
 solver = "''' + fc_server_solver_file + '''";
 group_size = ''' + str(machines_per_batch) + ''';
-
+''')
+    if snapshot_input_dir:
+        f.write('snapshot_input_dir = "' + snapshot_input_dir + '"' + "\n")
+    if snapshot_input_iter:
+        f.write('snapshot_input_iter = ' + snapshot_input_iter + "\n")
+    f.write('''
 ports = (
 ''')
     for i in range(num_groups):
@@ -1201,7 +1215,12 @@ else:
 type = "FCModelServer";
 solver = "''' + fcm_server_solver_file + '''";
 group_size = 1;
-
+''')
+    if snapshot_input_dir:
+        f.write('snapshot_input_dir = "' + snapshot_input_dir + '"' + "\n")
+    if snapshot_input_iter:
+        f.write('snapshot_input_iter = ' + snapshot_input_iter + "\n")
+    f.write('''
 ports = (
 ''')
     for i in range(num_groups):
@@ -1225,7 +1244,12 @@ f.write('''name = "ConvModelServer on tcp://''' + conv_model_server_machine + ''
 type = "ConvModelServer";
 solver = "''' + conv_model_server_solver_file + '''";
 group_size = ''' + str(machines_per_batch) + ''';
-
+''')
+if snapshot_input_dir:
+    f.write('snapshot_input_dir = "' + snapshot_input_dir + '"' + "\n")
+if snapshot_input_iter:
+    f.write('snapshot_input_iter = ' + snapshot_input_iter + "\n")
+f.write('''
 ports = (
 ''')
 for i in range(num_groups):
@@ -1278,7 +1302,6 @@ fc_listen_bind = "tcp://'''   + fc_bind_machine + ''':''' + str(fc_ports[2*group
 fc_send_bind = "tcp://'''     + fc_bind_machine + ''':''' + str(fc_ports[2*group_of_this_machine    ]) + '''";
 type = "ConvComputeServer";
 solver = "''' + conv_compute_server_solver_files[i] + '''";
-train_bin = "''' + conv_compute_server_train_lmdb_names[i] + '''.bin";
 group_size = ''' + str(machines_per_batch) + ''';
 rank_in_group = ''' + str(i%machines_per_batch) + ''';
 ''')

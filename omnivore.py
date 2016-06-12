@@ -12,11 +12,12 @@
 
 import os
 import sys
+import re   # Regex
 
 # config file provides all parameters, but here are some extra ones
 
-base_dir = '/home/software/dcct/experiments/'
-hw_type = '4GPU' #'CPU' '4GPU' 'GPU'
+base_dir = '/home/software/dcct/full_run_Dan/'
+hw_type = 'CPU' #'CPU' '4GPU' 'GPU'
 
 random_seeds_phase_0 = [1]  # Seeds matter a lot, but will not search now (save time)
 EXTRA_TIME_FIRST = 0
@@ -27,6 +28,15 @@ FCC = False
 momentum_list_phase_0 = []
 LR_list_phase_0 = []
 
+# Epoch duration can be fixed (e.g. 1h) or a multiplier of optimizer time (e.g. 10x)
+optimizer_duration = 10000
+# optimizer_factor = 10
+
+snap_frequency = 0.07
+
+# Get HE measurements
+group_size_to_time = {}
+
 
 # ==============================================================================
 # Description
@@ -35,7 +45,15 @@ LR_list_phase_0 = []
 
 This reads an input config file and calls run.py for a number of configurations
 
-TODO:
+Enhancements:
+- Rather than read in list of #m/g, read the machine list file like in run.py to figure out # conv compute machine which will be used
+  (this code existe already in run.py, just copy it here)
+- Rather than read times (phase 1 2 3) as input, run for 1 minute at a time, checkpoint at the end of the minute, and then repeat that until there is a clear winner
+- Read snapshot: move forward in the dataset (now we restart), this is important if implementing 1 minute at a time change
+- Now if momentum goes to 0, we increase # groups. Verify this makes sense, or maybe negative momemtum etc. is a better strategy. Also, can force a "phase 2" to try
+  momentum of 0.1, 0.2 etc. if momentum 0 is chosen. Finally, understand what LR and momemtum to search once we hit m=0 and decrease #groups
+
+Older TODO items: (some of these may be done now)
 - Once we finish tuning for G groups, and we are about to start for 2G, can
   reduce params to search since we know LR cannot be greater (momentum can
   however if LR goes down)
@@ -74,7 +92,6 @@ Example config.txt:
   time_per_exp_phase2 = 0
   time_per_exp_phase3 = 300
 
-
 '''
     sys.exit(0)
 # Pass in a D or d at the end to run in debug
@@ -88,7 +105,11 @@ if len(sys.argv) == expected_num_args+1 and sys.argv[expected_num_args] in ['d',
 
 # Params we need to read
 solver_template = ''
+machine_list = ''
 group_size_list = []
+
+# SHADJIS TODO: Rather than read these times as input, run for 1 minute at a time and
+# checkpoint at the end of the minute, and then repeat that until there is a clear winner
 time_per_exp_phase1 = 0
 time_per_exp_phase2 = 0
 time_per_exp_phase3 = 0
@@ -110,6 +131,8 @@ config_file = open(sys.argv[1])
 for line in config_file:
     if 'solver_template' in line:
         solver_template = parse_val(line, str)
+    elif 'machine_list' in line:
+        machine_list = parse_val(line, str)
     elif 'group_size_list' in line:
         group_size_list = parse_list(line, int)
     elif 'time_per_exp_phase1' in line:
@@ -139,18 +162,18 @@ LR_list = []
 # Parse some parameters:
 # - initial LR, used as a guess for tuning (note: not assuming this is tuned for 1 machine)
 # - increment: used to parse log file at the end
-initial_LR = 0
+# initial_LR = 0
 increment = 0
 f = open(solver_template)
 def parse_proto_val(line, type_to_convert_to):
     return type_to_convert_to( line.strip().split(':')[-1].strip() )
 for line in f:
-    if 'base_lr' in line:
-        initial_LR = parse_proto_val(line, float)
-    elif 'display' in line:
+    #if 'base_lr' in line:
+    #    initial_LR = parse_proto_val(line, float)
+    if 'display' in line:
         increment = parse_proto_val(line, int)
 f.close()
-assert initial_LR and initial_LR > 0
+# assert initial_LR and initial_LR > 0
 assert increment
 
 
@@ -190,11 +213,12 @@ def read_output_by_lines(run_dir):
     return lines
 
 
-def get_list_of_all_losses(lines, increment):
+def get_list_of_all_losses(lines, increment, group_size = 0):
     # For each line, parse the loss
     started_iterations = False
     # If this line has a loss, append it to a list
     list_of_all_losses = []
+    list_of_all_times = []
     for line in lines:
         if line.strip().split():
             if not started_iterations:
@@ -202,8 +226,23 @@ def get_list_of_all_losses(lines, increment):
                     started_iterations = True
                 else:
                     continue
+            if 'Writing snapshot' in line:
+                continue
             loss_this_iter = float(line.strip().split()[2])
             list_of_all_losses.append(loss_this_iter)
+            # Also check time
+            time_this_iter = float(line.strip().split()[1])
+            list_of_all_times.append(time_this_iter)
+    
+    # Edit: also measure the hardware efficiency for this run
+    if group_size > 0 and len(list_of_all_times) > 1:
+        if group_size not in group_size_to_time.keys():
+            burn_in = int(len(list_of_all_times) * 0.5)
+            burn_in = max(burn_in, 1)
+            last_few_iter = len(list_of_all_times) - burn_in
+            group_size_to_time[group_size] = (list_of_all_times[-1] - list_of_all_times[-last_few_iter])/float(last_few_iter-1)/float(increment)
+            assert group_size_to_time[group_size] > 0
+    
     return list_of_all_losses
 
 
@@ -250,7 +289,7 @@ def get_lr_m_s(lines, group_size):
 #   base_lr: ''' + str(LR) + '''
 #   momentum: ''' + str(momentum) + '''
 #   random_seed: ''' + str(random_seed) + '''
-def make_solver(momentum, LR, fname, random_seed):
+def make_solver(momentum, LR, fname, random_seed, snapshot_interval):
     
     # Read in the file and swap in the parameters
     output_str = ''
@@ -269,11 +308,16 @@ def make_solver(momentum, LR, fname, random_seed):
         elif 'random_seed' in line and line.strip()[0] != '#':
             # We will insert our own later
             pass
+        elif snapshot_interval > 0 and 'snapshot' in line and line.strip()[0] != '#':
+            # We will insert our own later
+            pass
         else:
             output_str += line
     assert found_LR
     assert found_m
     output_str += ( 'random_seed: ' + str(random_seed) + "\n" )
+    if snapshot_interval > 0:
+        output_str += ( 'snapshot: ' + str(int(snapshot_interval)) + "\n" )
     f.close()
     
     # Write to a new file
@@ -284,7 +328,10 @@ def make_solver(momentum, LR, fname, random_seed):
 
 # Launch a run
 # Currently serial but maybe we will want to do in parallel later
-def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output_dir_base, run_time, print_only = False):
+def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output_dir_base, run_time, print_only = False, snapshot_interval = 0, snapshot_input_dir = 'none', snapshot_input_iter = 'none'):
+
+    global total_optimizer_time
+    total_optimizer_time += run_time    # SHADJIS TODO: Can count 30s overhead (15 + 15) or eliminate it in ZeroMQ
 
     # Check if we should make a new lmdb
     if First and MAKE_LMDB_FIRST:
@@ -298,14 +345,15 @@ def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output
     # Create the command to run
     os.system('mkdir -p logs')
     logfile_out = 'logs/log.' + hw_type + run_id
-    run_experiment_command = 'python ' + script_name + ' ' + fname + ' example/machine_list.txt ' + str(group_size) + ' ' + hw_type + ' ' + fc_type + ' ' + map_fcc_to_cc + ' ' + output_dir_base + ' ' + skip_string + ' > ' + logfile_out + ' 2>&1'
+    # SHADJIS TODO: should make a config file rather than pass 100 arguments I think
+    run_experiment_command = 'python ' + script_name + ' ' + fname + ' ' + machine_list + ' ' + str(group_size) + ' ' + hw_type + ' ' + fc_type + ' ' + map_fcc_to_cc + ' ' + output_dir_base + ' ' + snapshot_input_dir + ' ' + str(snapshot_input_iter) + ' ' + skip_string + ' > ' + logfile_out + ' 2>&1'
 
     if print_only:
         print '  ' + run_experiment_command
         return None
     
     # Make solver
-    make_solver(momentum, LR, fname, seed)
+    make_solver(momentum, LR, fname, seed, snapshot_interval)
     
     # Extra commands to wait and then kill servers
     if First:
@@ -336,10 +384,6 @@ def run(group_size, hw_type, experiment_label, First, momentum, LR, seed, output
     return output_dir
     
 
-# ==============================================================================
-# Main script
-# ==============================================================================
-
 def print_estimation_time(random_seeds, group_size, momentum_list, LR_list, time_per_exp):
     time_for_1_run = int( time_per_exp + 15 + 15 )
     time_estimate = time_for_1_run*len(random_seeds)*len(momentum_list)*len(LR_list)
@@ -349,72 +393,10 @@ def print_estimation_time(random_seeds, group_size, momentum_list, LR_list, time
     else:
         print 'Estimated runtime: ' + str(time_estimate) + ' minutes'
 
-# Only generate LMDB once for this cluster
-First_Run = True
 
-best_group_size = None
-best_group_size_s = None
-best_group_size_m = None
-best_group_size_LR = None
-best_loss_across_staleness = 10000000000
-
-# Iterate over each group_size setting and optimize each separately
-# Iterate in order from low staleness to high staleness (i.e. large to small groups)
-# This is because we know that the optimal parameters will be smaller as S increases
-best_LR_last_iteration = None
-best_m_last_iteration = None
-# For the seed, just run multiple seeds with no staleness and then use the best
-# one for other staleness values
-best_seed_last_iteration = None
-
-# SHADJIS TODO: For now I assume the first iteration is a single group, i.e. I assume
-# that when sorting group sizes from largest to smallest the largest group is all machines.
-# This might not be true so can verify. But when running 1 group, don't tune m 
-# Note: it is possible that for S=0, i.e. 1 group, the best momentum is not 0.9, e.g. it is 
-# possible that LR 0.001, m 0.9 does not diverge, and also that LR 0.01, m 0.3 does not diverge.
-# However our contribution is tuning parameters to compensate for staleness, so the optimizer
-# can ignore tuning momentum for the case of no staleness to save time.
-single_group = True
-
-for group_size in reversed(sorted(group_size_list)):
-
-    print ''
-    print '-----------------------------------------------------------------------------------' 
-    print 'Beginning optimization for ' + str(group_size) + ' machines per group' 
-    print '-----------------------------------------------------------------------------------' 
-
-    EXP_NAME = solver_name + '_' + str(group_size) + 'mpg'  # Parse the name of the solver for log file names
-
-    # The optimization procedure consists of a number of iteration phases
-    # Each phase we will zoom in on the optimal parameters
-    phase = 0
-    if momentum_list_phase_0:
-        momentum_list = momentum_list_phase_0
-    else:
-        if single_group:
-            # Optimization:
-            # See comment above, if S=0 we can choose to skip momentum tuning
-            momentum_list = [0.9]
-        else:
-            momentum_list = [0.0, 0.3, 0.6, 0.9]
-        
-    if LR_list_phase_0:
-        LR_list = LR_list_phase_0
-    else:
-        if single_group:
-            LR_list = [initial_LR*100., initial_LR*10., initial_LR, initial_LR/10., initial_LR/100.]
-        else:
-            LR_list = [best_LR_last_iteration, best_LR_last_iteration/10.]
+def grid_search_parameters(EXP_NAME, group_size, momentum_list, LR_list, random_seeds, best_m_last_iteration, best_LR_last_iteration, snapshot_input_dir = 'none', snapshot_input_iter = 'none', exit_early_time_threshold = 100000., buffer = 1.0): # No buffer for cold start since loss is still high for all, and gap is small
     
-    # Optimization:
-    # For the first iteration, run multiple seeds
-    # Then pick the best one for later runs
-    if single_group:
-        random_seeds = random_seeds_phase_0
-    else:
-        random_seeds = [best_seed_last_iteration]
-        
-    
+    global First_Run
     for phase in [0,1]:
     
         # Estimate runtime for this phase
@@ -448,7 +430,7 @@ for group_size in reversed(sorted(group_size_list)):
                 full_experiment_dir = experiment_dir + subdir + '/'
                 lines = read_output_by_lines(full_experiment_dir)
                 base_lr, momentum, random_seed = get_lr_m_s(lines, group_size)
-                list_of_all_losses = get_list_of_all_losses(lines, increment)
+                list_of_all_losses = get_list_of_all_losses(lines, increment, group_size)
                 # Check for errors
                 if not base_lr or not momentum or not random_seed or not list_of_all_losses:
                     # This one didn't finish properly, so rerun it later
@@ -500,22 +482,24 @@ for group_size in reversed(sorted(group_size_list)):
                         if LR > best_LR_last_iteration or (LR == best_LR_last_iteration and m > best_m_last_iteration):
                             print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' because of previous iteration (staleness)'
                             continue
+                        if LR < best_LR_last_iteration and m < best_m_last_iteration:   # SHADJIS TODO: Check this
+                            print '  Skipping LR = ' + str(LR) + ', m = ' + str(m) + ', s = ' + str(s) + ' because too low'
+                            continue
                 
                     # if this seed/momentum/LR ran already, skip it
                     if (str(m), str(LR), str(s)) in m_LR_s_to_output_dir.keys():
-                        print_only = True
                         print '  Found m=' + str(m) + ' LR=' + str(LR) + ' s=' + str(s) + ', skipping command:'
-                        run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_Run, m, LR, s, experiment_dir, time_per_exp, print_only)
+                        run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_Run, m, LR, s, experiment_dir, time_per_exp, print_only = True, snapshot_input_dir = snapshot_input_dir, snapshot_input_iter = snapshot_input_iter)
                         full_experiment_dir = m_LR_s_to_output_dir[(str(m), str(LR), str(s))]
                     # otherwise run this command
                     else:
-                        full_experiment_dir = run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_Run, m, LR, s, experiment_dir, time_per_exp)
+                        full_experiment_dir = run(group_size, hw_type, EXP_NAME + '.PHASE' + str(phase) + '.seed' + str(s), First_Run, m, LR, s, experiment_dir, time_per_exp, snapshot_input_dir = snapshot_input_dir, snapshot_input_iter = snapshot_input_iter)
                         First_Run = False
 
                     # Now the command has run, read the output log and parse the final (or average, etc.) loss
                     lines = read_output_by_lines(full_experiment_dir)
                     base_lr, momentum, random_seed = get_lr_m_s(lines, group_size)
-                    list_of_all_losses = get_list_of_all_losses(lines, increment)
+                    list_of_all_losses = get_list_of_all_losses(lines, increment, group_size)
                     # Check for errors
                     if not base_lr or not momentum or not random_seed or not list_of_all_losses:
                         print "\t".join([random_seed, momentum, base_lr, 'ERROR ' + full_experiment_dir])
@@ -526,6 +510,11 @@ for group_size in reversed(sorted(group_size_list)):
                     assert momentum == str(m)
                     assert random_seed == str(s)
                     
+                    # If this did not speed up, exit early
+                    assert group_size in group_size_to_time.keys() and group_size_to_time[group_size] > 0
+                    if group_size_to_time[group_size] > exit_early_time_threshold:
+                        return 0, 0, 0, m_LR_s_to_loss, True
+                    
                     # Check also if there was a nan in this result
                     # If so, we know not to run a higher momentum, although 
                     if contains_nan(list_of_all_losses):
@@ -535,10 +524,10 @@ for group_size in reversed(sorted(group_size_list)):
                         continue
                     
                     # Calculate average loss for run
-                    average_loss = sum(list_of_all_losses) / float(len(list_of_all_losses))
-                    # last_few_iter = 20  # SHADJIS TODO: Use another heuristic?
-                    # assert last_few_iter > 0
-                    # average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(last_few_iter)
+                    # average_loss = sum(list_of_all_losses) / float(len(list_of_all_losses))
+                    last_few_iter = 10  # SHADJIS TODO: Use another heuristic?
+                    assert last_few_iter > 0
+                    average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(last_few_iter)
                     row = "\t".join([random_seed, momentum, base_lr, str(average_loss)])
                     m_LR_s_to_loss[(float(momentum), float(base_lr), int(random_seed))] = average_loss
                     if average_loss < best_loss:
@@ -575,17 +564,21 @@ for group_size in reversed(sorted(group_size_list)):
                     # at the same LR, only pick a larger m
                     if LR == original_best_LR and m <= original_best_m:
                         continue
-                    # Check if it is within 10%
-                    if (m,LR,s) in m_LR_s_to_loss.keys() and m_LR_s_to_loss[(m,LR,s)] < best_loss*1.1:  # SHADJIS TODO: Use another heuristic?
+                    # Check if it is within buffer range
+                    if (m,LR,s) in m_LR_s_to_loss.keys() and m_LR_s_to_loss[(m,LR,s)] < best_loss*buffer:  # SHADJIS TODO: Use another heuristic?
                         print 'Adjusting best to m = ' + str(m) + ', LR = ' + str(LR) + ', s = ' + str(s) + ', loss = ' + str(m_LR_s_to_loss[(m,LR,s)])
                         best_LR = LR
                         best_m  = m
                         best_s  = s
         
         if phase == 0:
+        
             # Pick new momentum list:
             if best_m == 0.0:
                 momentum_list = [0.0, 0.1, 0.2]
+                # SHADJIS TODO: If this function is being called during steady-state optimizer, can force a finer momentum grid here.
+                # Specifically, add an input argument to this function "steady_state" (default False, or alternatively "cold_start" default true)
+                # and if we are in steady state, then here set the time for second phase to be > 0 if it is not already
             elif best_m == 0.3:
                 momentum_list = [0.1, 0.2, 0.3, 0.4, 0.5]
             elif best_m == 0.6:
@@ -613,7 +606,92 @@ for group_size in reversed(sorted(group_size_list)):
     print '  s*  = ' + str(best_s)
     print '  m*  = ' + str(best_m)
     print '  LR* = ' + str(best_LR)
+
+    return best_s, best_m, best_LR, m_LR_s_to_loss, False
+
+# ==============================================================================
+# Cold Start Phase
+# ==============================================================================
+
+print ''
+print '========================================================================================================' 
+print 'Cold Start Optimization' 
+print '========================================================================================================' 
+
+# Only generate LMDB once for this cluster
+time_threshold = 0.10    # SHADJIS TODO: Heuristic, this is how much faster we need to be to consider a larger #groups
+First_Run = True
+
+best_group_size = None
+best_group_size_s = None
+best_group_size_m = None
+best_group_size_LR = None
+best_loss_across_staleness = 10000000000
+total_optimizer_time = 0
+
+# Iterate over each group_size setting and optimize each separately
+# Iterate in order from low staleness to high staleness (i.e. large to small groups)
+# This is because we know that the optimal parameters will be smaller as S increases
+best_LR_last_iteration = None
+best_m_last_iteration = None
+# For the seed, just run multiple seeds with no staleness and then use the best
+# one for other staleness values
+best_seed_last_iteration = None
+
+# SHADJIS TODO: For now I assume the first iteration is a single group, i.e. I assume
+# that when sorting group sizes from largest to smallest the largest group is all machines.
+# This might not be true so can verify. But when running 1 group, don't tune m 
+# Note: it is possible that for S=0, i.e. 1 group, the best momentum is not 0.9, e.g. it is 
+# possible that LR 0.001, m 0.9 does not diverge, and also that LR 0.01, m 0.3 does not diverge.
+# However our contribution is tuning parameters to compensate for staleness, so the optimizer
+# can ignore tuning momentum for the case of no staleness to save time.
+single_group = True
+
+time_for_prev_group_size = 1000000.
+for group_size in reversed(sorted(group_size_list)):
+
+    print ''
+    print '-----------------------------------------------------------------------------------' 
+    print 'Beginning optimization for ' + str(group_size) + ' machines per group' 
+    print '-----------------------------------------------------------------------------------' 
+
+    EXP_NAME = solver_name + '_' + str(group_size) + 'mpg_COLD'  # Parse the name of the solver for log file names
+
+    # The optimization procedure consists of a number of iteration phases
+    # Each phase we will zoom in on the optimal parameters
+    if momentum_list_phase_0:
+        momentum_list = momentum_list_phase_0
+    else:
+        if single_group:
+            # Optimization:
+            # See comment above, if S=0 we can choose to skip momentum tuning
+            momentum_list = [0.9]
+        else:
+            momentum_list = [0.0, 0.3, 0.6, 0.9]
+        
+    if LR_list_phase_0:
+        LR_list = LR_list_phase_0
+    else:
+        if single_group:
+            LR_list = [0.1, 0.01, 0.001, 0.0001]    # SHADJIS TODO: use finer grid for LR so momentum will not increase again
+            # LR_list = [initial_LR*100., initial_LR*10., initial_LR, initial_LR/10., initial_LR/100.]
+        else:
+            LR_list = [best_LR_last_iteration, best_LR_last_iteration/10.]
     
+    # Optimization:
+    # For the first iteration, run multiple seeds
+    # Then pick the best one for later runs
+    if single_group:
+        random_seeds = random_seeds_phase_0
+    else:
+        random_seeds = [best_seed_last_iteration]
+        
+    best_s, best_m, best_LR, m_LR_s_to_loss, early_exit = grid_search_parameters(EXP_NAME, group_size, momentum_list, LR_list, random_seeds, best_m_last_iteration, best_LR_last_iteration, exit_early_time_threshold = time_for_prev_group_size/(1. + time_threshold))
+    
+    if early_exit:
+        print "\n" + 'Skipping remaining group sizes because FC saturation was reached'
+        break
+        
     # Now run a final experiment with these
     if time_per_exp_phase3 > 0:
         print 'Running for ' + str(time_per_exp_phase3) + ' seconds...'
@@ -634,10 +712,10 @@ for group_size in reversed(sorted(group_size_list)):
         if 'SOFTMAX' in lines[-1] or 'my_create_zmq' in lines[-1]:
             print '  Run failed, need to rerun!'
             continue
-        list_of_all_losses = get_list_of_all_losses(lines, increment)
+        list_of_all_losses = get_list_of_all_losses(lines, increment, group_size)
         # Calculate the average loss of the last few iterations, e.g. the last 5 or 10
         # (but make sure it is consistent across S, otherwise not a fair comparison)
-        last_few_iter = 5   # SHADJIS TODO: Use another heuristic?
+        last_few_iter = 10   # SHADJIS TODO: Use another heuristic?
         assert last_few_iter > 0
         average_loss = sum(list_of_all_losses[-last_few_iter:]) / float(last_few_iter)
         print "\n" + 'Final loss for group size ' + str(group_size) + ' = ' + str(average_loss) + "\n"
@@ -658,13 +736,157 @@ for group_size in reversed(sorted(group_size_list)):
     best_LR_last_iteration = best_LR
     best_m_last_iteration = best_m
     best_seed_last_iteration = best_s
+    assert group_size in group_size_to_time.keys() and group_size_to_time[group_size] > 0
+    time_for_prev_group_size = group_size_to_time[group_size]
+    
 
 print ''
-print 'Finished optimizer, best result is group size ' + str(best_group_size)
-print 'Running this one *without a timeout* (Ctrl-C will (1) stop the job and (2) run kill script)'
-full_experiment_dir = base_dir + '/' + EXP_NAME + '_OPTIMIZER_DECISION/'
+print 'Finished cold-start optimizer, best result is group size ' + str(best_group_size)
+print 'Total optimizer time (seconds) was ' + str(total_optimizer_time)
+EXP_NAME = solver_name + '_' + str(best_group_size) + 'mpg_COLD'
+time_to_run = optimizer_duration #max(total_optimizer_time*optimizer_factor, 600) #max(optimizer_duration-total_optimizer_time, 600)
+print 'Running this setting for ' + str(time_to_run) + ' seconds (Ctrl-C will (1) stop the job and (2) run kill script)'
+full_experiment_dir = base_dir + '/' + EXP_NAME + '_DECISION/'
+
+# Snapshot: For this run we need to save a snapshot
+# We know we will run for time_to_run seconds, so calculate the number of iterations in that time:
+assert best_group_size in group_size_to_time.keys() and group_size_to_time[best_group_size] > 0
+num_iterations = time_to_run / group_size_to_time[best_group_size]
+snapshot_interval = num_iterations*snap_frequency # Could write more frequently as well in case something fails
+
 if os.path.isdir(full_experiment_dir):
     print '  Skipping, already ran'
+    list_of_subdir = os.listdir(full_experiment_dir)
+    if len(list_of_subdir) != 1:
+        print 'Error -- please only put 1 directory in ' + full_experiment_dir + ' (to simplify parsing)'
+        sys.exit(0)
+    output_dir = full_experiment_dir + list_of_subdir[0]
 else:
     # Run the experiment
-    output_dir = run(best_group_size, hw_type, EXP_NAME + '.OPTIMIZER_DECISION.seed' + str(best_group_size_s), First_Run, best_group_size_m, best_group_size_LR, best_group_size_s, full_experiment_dir, 600000)
+    output_dir = run(best_group_size, hw_type, EXP_NAME + '._DECISION.seed' + str(best_group_size_s), First_Run, best_group_size_m, best_group_size_LR, best_group_size_s, full_experiment_dir, time_to_run, snapshot_interval = snapshot_interval)
+
+
+# ==============================================================================
+# Steady-State Optimizer
+# ==============================================================================
+
+"""
+g = most async until FC saturation
+while True (user can stop once sufficiently converged)
+    load checkpoint from last run
+    grid search momentum and LR (seed irrelevant since starting from checkpoint)
+    while momentum = 0 and g > 1
+        g = g / 2
+        grid search momentum and LR (seed irrelevant since starting from checkpoint)
+    train model and save checkpoint at end (set checkpoint based on iteration time)
+"""
+
+print ''
+print '========================================================================================================' 
+print 'Steady-State Optimizer' 
+print '========================================================================================================' 
+
+time_per_exp_phase1 = 200   # We do 5 runs, so 1000 seconds in optimizer, then run for 10000 seconds, i.e. 10% overhead
+
+run_number = 1
+last_experiment_dir = output_dir
+last_m = best_group_size_m
+last_LR = best_group_size_LR
+last_s = best_group_size_s      # Not needed because initialization comes from snapshot
+total_optimizer_time = 0
+
+# Use HE results to find the fastest group size (within tolerance)
+print 'Iteration time for each group size:'
+current_group_size = 0
+last_iter_time = 100000000.
+for group_size in reversed(sorted(group_size_list)):
+    if group_size in group_size_to_time.keys():
+        print '   group size ' + str(group_size) + ':  ' + str(group_size_to_time[group_size])
+        if group_size_to_time[group_size] < last_iter_time/(1. + time_threshold):
+            last_iter_time = group_size_to_time[group_size]
+            current_group_size = group_size
+print 'Initial choice for group size: ' + str(group_size)
+assert current_group_size > 0
+
+# Begin iteration
+while current_group_size <= max(group_size_list):
+    # Look through the last experiment directory and find the latest snapshot
+    assert os.path.isdir(last_experiment_dir)
+    latest_snapshot_iter = -1
+    for f in os.listdir(last_experiment_dir):
+        if 'snapshot_iter' in f:
+            match = re.search(r'snapshot_iter(\d+)', f, flags=re.IGNORECASE)
+            if match:
+                f_snap_iter = int(match.group(1))
+                if f_snap_iter > latest_snapshot_iter:
+                    latest_snapshot_iter = f_snap_iter
+    assert latest_snapshot_iter >= 0    # Assert we found a snapshot
+
+    # Search momentum and LR
+    while current_group_size <= max(group_size_list):
+        print ''
+        print 'Current group size is ' + str(current_group_size) + ' machines per group' 
+
+        EXP_NAME = solver_name + '_' + str(current_group_size) + 'mpg_OPT' + str(run_number)
+
+        # The optimization procedure consists of a number of iteration phases
+        # Each phase we will zoom in on the optimal parameters
+        if momentum_list_phase_0:
+            momentum_list = momentum_list_phase_0
+        else:
+            momentum_list = [0.0, 0.3, 0.6, 0.9]
+            
+        if LR_list_phase_0:
+            LR_list = LR_list_phase_0
+        else:
+            # SHADJIS TODO: Not sure yet based on theory what to do here. How are LR and m related?
+            # If m is 0, then LR will go down, and m will go back up, so m might never be 0.
+            # Should I try negative momentum? Or not decrease LR, but if m goes to 0, then increase # groups?
+            LR_list = [last_LR, last_LR/10.]
+
+        random_seeds = [last_s]
+
+        best_s, best_m, best_LR, unused_1, unused_2 = grid_search_parameters(EXP_NAME, current_group_size, momentum_list, LR_list, random_seeds, last_m, last_LR, snapshot_input_dir = last_experiment_dir, snapshot_input_iter = latest_snapshot_iter, buffer = 1.01) # buffer because slope is larger after cold start
+        
+        if best_m == 0:
+            last_LR = best_LR
+            current_group_size = current_group_size * 2
+            
+            # SHADJIS TODO: Heuristic. Idea is that if we make #groups bigger, maybe momentum can be a bit bigger too.
+            # Choosing 0.6 here puts the 0.0 just chosen in the center of the next search range
+            # Maybe we can pick an even higher momentum, or even search a higher learning rate (since we are making # groups smaller)
+            # Or maybe we can keep the #groups same, but use negative momentum. Maybe we can reparameterize and keep the learning rate constant, etc.
+            best_m = 0.6
+            last_m = best_m
+        else:
+            break
+        
+    # Run for the next optimizer epoch
+    print 'Total optimizer time (seconds) was ' + str(total_optimizer_time)
+    EXP_NAME = solver_name + '_' + str(current_group_size) + 'mpg_OPT' + str(run_number)
+    time_to_run = optimizer_duration #max(total_optimizer_time*optimizer_factor, 600) #max(optimizer_duration-total_optimizer_time, 600)
+    print 'Running this setting for ' + str(time_to_run) + ' seconds (Ctrl-C will (1) stop the job and (2) run kill script)'
+    full_experiment_dir = base_dir + '/' + EXP_NAME + '_DECISION/'
+
+    # Snapshot: For this run we need to save a snapshot
+    # We know we will run for time_to_run seconds, so calculate the number of iterations in that time:
+    num_iterations = time_to_run / group_size_to_time[current_group_size]
+    snapshot_interval = num_iterations*snap_frequency # Could write more frequently as well in case something fails
+    if os.path.isdir(full_experiment_dir):
+        print '  Skipping, already ran'
+        list_of_subdir = os.listdir(full_experiment_dir)
+        if len(list_of_subdir) != 1:
+            print 'Error -- please only put 1 directory in ' + full_experiment_dir + ' (to simplify parsing)'
+            sys.exit(0)
+        output_dir = full_experiment_dir + list_of_subdir[0]
+    else:
+        # Run the experiment
+        output_dir = run(current_group_size, hw_type, EXP_NAME + '.OPTIMIZER_DECISION', First_Run, best_m, best_LR, best_s, full_experiment_dir, time_to_run, snapshot_interval = snapshot_interval, snapshot_input_dir = last_experiment_dir, snapshot_input_iter = latest_snapshot_iter)
+    
+    # Update for next iter
+    run_number += 1
+    last_experiment_dir = output_dir
+    last_m = best_m
+    last_LR = best_LR
+    total_optimizer_time = 0
+

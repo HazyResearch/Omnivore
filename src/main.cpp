@@ -31,6 +31,17 @@ Server * initConvModelServer(Config & cfg, char * filename){
   string SOLVER    = cfg.lookup("solver");
   int    GROUPSIZE = cfg.lookup("group_size");
   
+  // Snapshot
+  string snapshot_input_dir;
+  if (cfg.exists("snapshot_input_dir")) {
+    string tmp = cfg.lookup("snapshot_input_dir");
+    snapshot_input_dir = tmp;
+  }
+  int snapshot_input_iter = 0;
+  if (cfg.exists("snapshot_input_iter")) {
+    snapshot_input_iter = cfg.lookup("snapshot_input_iter");
+  }
+
   // Now parse each group of ports
   // Recall a conv model server has 2 ports per conv compute group
   // (1 port for broadcasting, 1 for listening)
@@ -58,7 +69,7 @@ Server * initConvModelServer(Config & cfg, char * filename){
   }
 
   Server * s = new ConvModelServer(NAME, SOLVER, GROUPSIZE,
-    broadcast_ports, listen_ports);
+    broadcast_ports, listen_ports, snapshot_input_dir, snapshot_input_iter);
   return s;
 }
 
@@ -70,6 +81,17 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
   string NAME      = cfg.lookup("name");
   string SOLVER    = cfg.lookup("solver");
   int    GROUPSIZE = cfg.lookup("group_size");
+
+  // Snapshot
+  string snapshot_input_dir;
+  if (cfg.exists("snapshot_input_dir")) {
+    string tmp = cfg.lookup("snapshot_input_dir");
+    snapshot_input_dir = tmp;
+  }
+  int snapshot_input_iter = 0;
+  if (cfg.exists("snapshot_input_iter")) {
+    snapshot_input_iter = cfg.lookup("snapshot_input_iter");
+  }
 
   // Now parse each group of ports
   // Recall a conv model server has 2 ports per conv compute group
@@ -98,7 +120,7 @@ Server * initFCComputeModelServer(Config & cfg, char * filename){
   }
 
   Server * s = new FCComputeModelServer(NAME, SOLVER, GROUPSIZE,
-    broadcast_ports, listen_ports);
+    broadcast_ports, listen_ports, snapshot_input_dir, snapshot_input_iter);
   return s;
 }
 
@@ -138,6 +160,17 @@ Server * initFCModelServer(Config & cfg, char * filename){
   string NAME      = cfg.lookup("name");
   string SOLVER    = cfg.lookup("solver");
   int    GROUPSIZE = cfg.lookup("group_size");
+  
+  // Snapshot
+  string snapshot_input_dir;
+  if (cfg.exists("snapshot_input_dir")) {
+    string tmp = cfg.lookup("snapshot_input_dir");
+    snapshot_input_dir = tmp;
+  }
+  int snapshot_input_iter = 0;
+  if (cfg.exists("snapshot_input_iter")) {
+    snapshot_input_iter = cfg.lookup("snapshot_input_iter");
+  }
 
   // Now parse each group of ports
   // Recall a conv model server has 2 ports per conv compute group
@@ -166,7 +199,7 @@ Server * initFCModelServer(Config & cfg, char * filename){
   }
 
   Server * s = new FCModelServer(NAME, SOLVER, GROUPSIZE,
-    broadcast_ports, listen_ports);
+    broadcast_ports, listen_ports, snapshot_input_dir, snapshot_input_iter);
   return s;
 }
 

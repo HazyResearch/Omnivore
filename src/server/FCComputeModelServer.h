@@ -33,11 +33,16 @@ public:
   std::vector <std::string> broadcast_ports;
   std::vector <std::string> listen_ports;
 
+  std::string snapshot_input_dir;
+  int snapshot_input_iter;
+  
   FCComputeModelServer(string _name, std::string _solver_file,
-    int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports) : 
+    int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports,
+    std::string _snapshot_input_dir, int _snapshot_input_iter) : 
     name(_name), solver_file(_solver_file),
     nfloats(0), group_size(_groupsize),
-    broadcast_ports(_broadcast_ports), listen_ports(_listen_ports) {}
+    broadcast_ports(_broadcast_ports), listen_ports(_listen_ports),
+    snapshot_input_dir(_snapshot_input_dir), snapshot_input_iter(_snapshot_input_iter) {}
 
   /**
    * An FCComputeModelServer does two things
@@ -58,7 +63,9 @@ public:
     std::string output_model_file = "fc_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
-    // DeepNet::read_full_snapshot(bridges, "/home/software/dcct/experiments//solver_template_1mpg_OPTIMIZER_DECISION_No_Sched/server_input_files-2016-05-09-22-33-32/solver.fc_model_compute_server.prototxt.snapshot_iter100000");
+    if (snapshot_input_dir.length()) {
+      DeepNet::read_full_snapshot(bridges, snapshot_input_dir + "/solver.fc_model_compute_server.prototxt.snapshot_iter" + std::to_string(snapshot_input_iter));
+    }
     
     SoftmaxBridge * const softmax = (SoftmaxBridge *) bridges.back();
     LogicalCubeFloat * const labels = softmax->p_data_labels;
@@ -210,8 +217,8 @@ public:
 
           // Check if we should print batch status
           if ( (batch+1) % display_iter == 0 ) {
-            float learning_rate = Util::get_learning_rate(solver_param.lr_policy(), solver_param.base_lr(), solver_param.gamma(),
-              batch+1, solver_param.stepsize(), solver_param.power(), solver_param.max_iter());
+            //float learning_rate = Util::get_learning_rate(solver_param.lr_policy(), solver_param.base_lr(), solver_param.gamma(),
+            //  batch+1, solver_param.stepsize(), solver_param.power(), solver_param.max_iter());
             std::cout << batch+1 << "\t" << timer.elapsed() << "\t" << loss/float(display_iter) << "\t" << float(accuracy)/(float(display_iter)) << std::endl;
             loss = 0.;
             accuracy = 0.;

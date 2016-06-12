@@ -32,11 +32,16 @@ public:
   int nfloats;  // For both model and gradient buffers
   int group_size;
 
+  std::string snapshot_input_dir;
+  int snapshot_input_iter;
+  
   ConvModelServer(string _name, std::string _solver_file,
-    int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports) : 
+    int _groupsize, std::vector <std::string> _broadcast_ports, std::vector <std::string> _listen_ports,
+    std::string _snapshot_input_dir, int _snapshot_input_iter) : 
     name(_name), solver_file(_solver_file),
     broadcast_ports(_broadcast_ports), listen_ports(_listen_ports),
-    nfloats(0), group_size(_groupsize) {}
+    nfloats(0), group_size(_groupsize),
+    snapshot_input_dir(_snapshot_input_dir), snapshot_input_iter(_snapshot_input_iter) {}
 
   /**
    * A ConvModelServer does two things
@@ -61,7 +66,9 @@ public:
     std::string output_model_file = "conv_model.bin";
     BridgeVector bridges; cnn::SolverParameter solver_param; cnn::NetParameter net_param;
     Corpus * const corpus = DeepNet::load_network(solver_file.c_str(), solver_param, net_param, bridges, true);
-    // DeepNet::read_full_snapshot(bridges, "/home/software/dcct/experiments//solver_template_1mpg_OPTIMIZER_DECISION_No_Sched/server_input_files-2016-05-09-22-33-32/solver.conv_model_compute_server.prototxt.snapshot_iter100000");
+    if (snapshot_input_dir.length()) {
+      DeepNet::read_full_snapshot(bridges, snapshot_input_dir + "/solver.conv_model_server.prototxt.snapshot_iter" + std::to_string(snapshot_input_iter));
+    }
     
     // SHADJIS TODO: Corpus is unused but the param files are used. We can parse those files without having to read the corpus.
 
