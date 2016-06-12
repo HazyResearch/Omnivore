@@ -852,7 +852,7 @@ while current_group_size <= max(group_size_list):
             last_LR = best_LR
             current_group_size = current_group_size * 2
             
-            # SHADJIS TODO: Heuristic. Idea is that if we make #groups bigger, maybe momentum can be a bit bigger too.
+            # SHADJIS TODO: Heuristic. Idea is that if we make #groups smaller, maybe momentum can be a bit bigger.
             # Choosing 0.6 here puts the 0.0 just chosen in the center of the next search range
             # Maybe we can pick an even higher momentum, or even search a higher learning rate (since we are making # groups smaller)
             # Or maybe we can keep the #groups same, but use negative momentum. Maybe we can reparameterize and keep the learning rate constant, etc.
