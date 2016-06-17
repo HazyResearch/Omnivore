@@ -16,7 +16,6 @@ Install the following dependencies
 
   - zeromq
      - The zeromq website seems to be out of date. If so, you can try [this helpful blog post](https://tuananh.org/2015/06/16/how-to-install-zeromq-on-ubuntu/)
-  - glog
   - [libconfig++](http://www.hyperrealm.com/libconfig/)
   - Python library: Protobuf 3.0.0, e.g. using the command `pip install protobuf==3.0.0a3` (the C++ library still needs to be installed below)
   - Python library: LMDB, e.g. using the command `pip install lmdb` (the C++ library still needs to be installed below)
