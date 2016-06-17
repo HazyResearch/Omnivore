@@ -1,4 +1,4 @@
-# Omnivore Optimizer and Distributed CcT Prototype System
+# Omnivore Optimizer and Distributed CcT
 
 ### Compilation
 

@@ -33,7 +33,7 @@ user = 'root'
 #  - cd into correct directory
 #  - path commands in .bashrc (ssh does not source .bashrc so its load libary 
 #    commands may need to be included here, see the example below)
-extra_cmd = 'cd /home/software/dcct/; export PATH=$PATH:/usr/local/cuda-7.0/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-7.0/lib64;'
+extra_cmd = 'cd /home/software/Omnivore/; export PATH=$PATH:/usr/local/cuda-7.0/bin; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-7.0/lib64;'
 
 # These 3 meaningless if FCC
 FCCM_and_CM_to_CC = False

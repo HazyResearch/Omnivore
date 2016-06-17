@@ -2,3 +2,4 @@ master
 node001
 node002
 node003
+node004

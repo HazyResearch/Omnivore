@@ -16,7 +16,7 @@ import re   # Regex
 
 # config file provides all parameters, but here are some extra ones
 
-base_dir = '/home/software/dcct/full_run_Dan/'
+base_dir = '/home/software/Omnivore/my_run/'
 hw_type = 'CPU' #'CPU' '4GPU' 'GPU'
 
 random_seeds_phase_0 = [1]  # Seeds matter a lot, but will not search now (save time)
