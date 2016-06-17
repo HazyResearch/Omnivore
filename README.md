@@ -1,5 +1,9 @@
 # Omnivore Optimizer and Distributed CcT
 
+This is our Omnivore optimizer implemented for distributed [CaffeConTroll](https://github.com/HazyResearch/CaffeConTroll)
+
+See our paper [Omnivore: An Optimizer for Multi-device Deep Learning on CPUs and GPUs](https://arxiv.org/abs/1606.04487)
+
 ### Compilation
 
 Download the repository as well as the CaffeConTroll submodule
